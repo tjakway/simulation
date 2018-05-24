@@ -1,0 +1,11 @@
+.~lock.*
+*.bib.bak
+*-blx.bib
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.run.xml
+Export.*

@@ -1,0 +1,43 @@
+\documentclass[12pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage[ampersand]{easylist}
+\usepackage{amsfonts} %need for set symbols
+\usepackage{mathtools}
+
+\usepackage{ThomasDiscreteMath}
+\usepackage{ThomasNotes}
+
+
+
+\title{}
+\author{Thomas Jakway}
+\date{}
+\begin{document}
+\maketitle
+
+
+g(a): m/s^2 [acceleration] = gravity at altitude
+
+resultant force = thrust - weight
+acceleration = resultant force (Newtons) / mass (kilograms)
+
+as fuel is burned the rocket becomes lighter
+
+
+p(t) = position as a function of time
+p(t)
+
+acceleration(t) = acceleration as a function of time
+acceleration(t) = rocket thrust - gravity 
+
+^ need to add a function for propellant decreasing:
+    
+
+speed(t) = a(t) + speed(t - 1)
+
+speed is a fold over speed (just like position is a fold over position + speed)
+but acceleration doesn't contain reference to previous acceleration
+
+\end{document}
