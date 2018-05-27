@@ -1,7 +1,6 @@
 package com.jakway.term
 
-import scala.{math => M}
-import com.jakway.term.NumericTypeFactory.TrigFunctions
+import com.jakway.term.numeric.types.NumericType
 
 trait Term
 
