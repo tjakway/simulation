@@ -4,10 +4,12 @@ import java.lang.{Math => M}
 import com.jakway.term.NumericTypeFactory.TrigFunctions
 
 trait Function[N <: NumericType[M], M, F] {
-  def eval: F
+  def compute: F
 }
 
-//such that I is the inverse of F
+/**
+  * such that I is the inverse of F
+  */
 trait InvertibleFunction[N <: NumericType[M], M, F, I] extends Function[N, M, F] {
   def inverse: Function[N, M, I]
 }
@@ -44,6 +46,12 @@ trait NumericType[A] {
 }
 
 object NumericTypeFactory {
+  //TODO: think about how to handle inverses
+  case class ArithmeticOperations[A](
+                                   // plus: A => A => A,
+                                   // times: A => A => A
+                                    )
+
   case class TrigFunctions[A](
       sin: A => A,
       cos: A => A,
@@ -68,28 +76,28 @@ class NumericTypeFactory[A](t: NumericTypeFactory.TrigFunctions[A],
     new TrigFunction {
       override def inverse = arcsin
 
-      override def eval = t.sin
+      override def compute = t.sin
     }
 
   override val cos: TrigFunction =
     new TrigFunction {
       override def inverse = arccos
 
-      override def eval = t.cos
+      override def compute = t.cos
     }
 
   override val tan: TrigFunction =
     new TrigFunction {
       override def inverse = arctan
 
-      override def eval = t.tan
+      override def compute = t.tan
     }
 
   override val arcsin: TrigFunction =
     new TrigFunction {
       override def inverse = sin
 
-      override def eval = t.arcsin
+      override def compute = t.arcsin
     }
 
 
@@ -97,20 +105,20 @@ class NumericTypeFactory[A](t: NumericTypeFactory.TrigFunctions[A],
     new TrigFunction {
       override def inverse = cos
 
-      override def eval = t.arccos
+      override def compute = t.arccos
     }
 
   override val arctan: TrigFunction =
     new TrigFunction {
       override def inverse = tan
 
-      override def eval = t.arctan
+      override def compute = t.arctan
     }
 
   //other misc. things
   override val pow: BinaryMathFunction =
     new BinaryMathFunction {
-      override def eval = pPow
+      override def compute = pPow
 
       override def inverse = root
     }
@@ -118,7 +126,7 @@ class NumericTypeFactory[A](t: NumericTypeFactory.TrigFunctions[A],
 
   override val root: BinaryMathFunction =
     new BinaryMathFunction {
-      override def eval: A => A => A = pRoot
+      override def compute: A => A => A = pRoot
 
       override def inverse = pow
     }
