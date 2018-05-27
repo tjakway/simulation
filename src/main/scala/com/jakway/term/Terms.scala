@@ -13,6 +13,8 @@ case class Literal[N <: NumericType[M], M](value: M)
 case class Variable[N <: NumericType[M], M](name: String, description: String)
   extends NumericTerm[N, M]
 
+case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
+  extends NumericTerm[N, M]
 
 
 class NumericFunctionApplication[N <: NumericType[M], M, F](

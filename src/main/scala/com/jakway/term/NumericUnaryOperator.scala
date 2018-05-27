@@ -2,6 +2,7 @@ package com.jakway.term
 
 import java.lang.{Math => M}
 import com.jakway.term.NumericTypeFactory.TrigFunctions
+import scala.language.postfixOps
 
 trait Function[N <: NumericType[M], M, F] {
   def compute: F
@@ -132,14 +133,7 @@ class NumericTypeFactory[A](t: NumericTypeFactory.TrigFunctions[A],
     }
 }
 
-object DoublePrecision extends NumericTypeFactory[Double](
-  TrigFunctions(
-    M.sin, M.cos, M.tan,
-    M.asin, M.acos, M.atan
-  ),
-  DoublePrecision.power _.curried,
-  DoublePrecision.root _.curried) {
-
+private object DoublePrecisionImplementation {
   /**
     * takes the nth root of under
     * @param under would be passed to e.g. sqrt ("under the radical")
@@ -159,6 +153,16 @@ object DoublePrecision extends NumericTypeFactory[Double](
   }
 
   def power(base: Double, exp: Double) = Math.pow(base, exp)
+}
+
+object DoublePrecision extends NumericTypeFactory[Double](
+  TrigFunctions(
+    M.sin, M.cos, M.tan,
+    M.asin, M.acos, M.atan
+  ),
+  DoublePrecisionImplementation.power _ curried,
+  DoublePrecisionImplementation.root _ curried) {
+
 }
 
 class EnvParameters {
