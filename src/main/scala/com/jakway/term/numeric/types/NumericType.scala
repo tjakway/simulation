@@ -1,6 +1,6 @@
 package com.jakway.term.numeric.types
 
-import com.jakway.term.numeric.{NumericBinaryInvertibleFunction, NumericUnaryInvertibleFunction}
+import com.jakway.term.numeric.{NumericBinaryInvertibleFunction, NumericChiralBinaryInvertibleFunction, NumericUnaryInvertibleFunction}
 
 trait NumericType[A] {
   type TrigFunction = NumericUnaryInvertibleFunction[NumericType[A], A]
@@ -13,6 +13,12 @@ trait NumericType[A] {
   val arctan: TrigFunction
 
   type BinaryMathFunction = NumericBinaryInvertibleFunction[NumericType[A], A]
+  type ChiralBinaryMathFunction =
+    NumericChiralBinaryInvertibleFunction[NumericType[A], A]
+
   val pow: BinaryMathFunction
   val root: BinaryMathFunction
+
+  val plus: ChiralBinaryMathFunction
+  val times: ChiralBinaryMathFunction
 }

@@ -23,7 +23,7 @@ object NumericTypeFactory {
   * @param t
   * @tparam A
   */
-class NumericTypeFactory[A](t: NumericTypeFactory.TrigFunctions[A],
+abstract class NumericTypeFactory[A](t: NumericTypeFactory.TrigFunctions[A],
                             pPow: A => A => A,
                             pRoot: A => A => A) extends NumericType[A] {
   //trig functions

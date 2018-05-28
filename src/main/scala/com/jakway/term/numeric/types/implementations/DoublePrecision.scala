@@ -1,11 +1,30 @@
 package com.jakway.term.numeric.types.implementations
 
 
-import com.jakway.term.numeric.types.NumericTypeFactory
+import com.jakway.term
+import com.jakway.term.{ChiralInvertible, InvertibleFunction, Term}
+import com.jakway.term.numeric.types.{NumericType, NumericTypeFactory}
 import com.jakway.term.numeric.types.NumericTypeFactory.TrigFunctions
-import scala.{math => M}
 
+import scala.{math => M}
 import scala.language.postfixOps
+
+abstract class PlusTerm[N <: NumericType[M], M] extends ChiralInvertible[N => N] {
+
+  type SingleArgFunction = M => M
+
+  class Minus(right: Term, inverseF: term.Function[SingleArgFunction])
+    extends InvertibleFunction[SingleArgFunction, SingleArgFunction] {
+
+    override def compute: SingleArgFunction = (a: M) => a - right
+
+    override def inverse: term.Function[SingleArgFunction] = inverseF
+  }
+
+
+
+
+}
 
 object DoublePrecision extends NumericTypeFactory[Double](
   TrigFunctions(
@@ -15,6 +34,12 @@ object DoublePrecision extends NumericTypeFactory[Double](
   DoublePrecisionImplementation.power _ curried,
   DoublePrecisionImplementation.root _ curried) {
 
+
+  override val plus: ChiralBinaryMathFunction = new ChiralBinaryMathFunction {
+    override def inverse: term.Function[NumericType[Double], Double, Double => Double => Double] = ???
+
+    override def compute: Double => Double => Double = ???
+  }
 }
 
 private object DoublePrecisionImplementation {

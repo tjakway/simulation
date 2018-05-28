@@ -10,3 +10,11 @@ trait NumericBinaryInvertibleFunction[N <: NumericType[M], M]
     NumericFunctionApplication[N, M, M => M => M] =
       DoubleArgFunctionApplication(this, first, second)
 }
+
+trait NumericChiralBinaryInvertibleFunction[N <: NumericType[M], M]
+  extends InvertibleFunction[N, M, M => M => M, M => M => M] {
+
+  def apply(first: NumericTerm[N, M], second: NumericTerm[N, M]):
+  NumericFunctionApplication[N, M, M => M => M] =
+    DoubleArgFunctionApplication(this, first, second)
+}

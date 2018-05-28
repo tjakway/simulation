@@ -16,6 +16,20 @@ case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
 
 
+trait InvertibleTerm extends Term {
+  def inverse: Term
+}
+
+trait BinaryTerm extends Term {
+  val left: Term
+  val right: Term
+}
+
+trait ChiralInvertible[F] extends BinaryTerm with InvertibleTerm {
+  def inverseLeft: Function[F]
+  def inverseRight: Function[F]
+}
+
 class NumericFunctionApplication[N <: NumericType[M], M, F](
   function: Function[N, M, F], args: Seq[NumericTerm[N, M]])
   extends NumericTerm[N, M]
