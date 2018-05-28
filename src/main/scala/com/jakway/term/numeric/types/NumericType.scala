@@ -1,6 +1,6 @@
 package com.jakway.term.numeric.types
 
-import com.jakway.term.numeric.{NumericBinaryInvertibleFunction, NumericChiralBinaryInvertibleFunction, NumericUnaryInvertibleFunction}
+import com.jakway.term.numeric.{NumericBinaryInvertibleFunction, NumericChiralBinaryInvertibleFunction}
 
 trait NumericType[A] {
   type TrigFunction = NumericUnaryInvertibleFunction[NumericType[A], A]
