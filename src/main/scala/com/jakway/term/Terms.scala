@@ -25,24 +25,33 @@ trait BinaryTerm extends Term {
   val right: Term
 }
 
-trait ChiralInvertible[F] extends BinaryTerm with InvertibleTerm {
-  def inverseLeft: Function[F]
-  def inverseRight: Function[F]
+trait ChiralInvertible extends BinaryTerm with InvertibleTerm {
+  def inverseLeft: Term
+  def inverseRight: Term
 }
 
-class NumericFunctionApplication[N <: NumericType[M], M, F](
-  function: Function[N, M, F], args: Seq[NumericTerm[N, M]])
-  extends NumericTerm[N, M]
 
-case class SingleArgFunctionApplication[N <: NumericType[M], M, F](
-  function: Function[N, M, F], arg: NumericTerm[N, M])
-  extends NumericFunctionApplication[N, M, F](function, Seq(arg))
+case class Add[N <: NumericType[M], M](
+                override val left: InvertibleTerm,
+                override val right: InvertibleTerm)
+  extends NumericTerm[N, M] with ChiralInvertible {
 
-case class DoubleArgFunctionApplication[N <: NumericType[M], M, F](
-  function: Function[N, M, F],
-  first: NumericTerm[N, M], second: NumericTerm[N, M])
-  extends NumericFunctionApplication[N, M, F](function, Seq(first, second))
+  override def inverseLeft: Term = left.inverse
+  override def inverseRight: Term = right.inverse
 
+  override def inverse: Term = Negative(Add(left, right))
+}
+
+
+case class Multiply(override val left: InvertibleTerm,
+                override val right: InvertibleTerm)
+  extends ChiralInvertible {
+
+  override def inverseLeft: Term = left.inverse
+  override def inverseRight: Term = right.inverse
+
+  override def inverse: Term = Negative(Multiply(left, right))
+}
 
 //equals is NOT a term--it's an equation
 case class Equals(left: Term, right: Term)
