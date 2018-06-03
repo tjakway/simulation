@@ -4,9 +4,20 @@ import com.jakway.term.numeric.types.NumericType
 
 trait Term
 
-trait NumericTerm[N <: NumericType[M], M]
+trait Operation extends Term {
+  def inverse: Term => Term
+  def identity: Term
+}
 
-case class Literal[N <: NumericType[M], M](value: M)
+trait NumericTerm[N <: NumericType[M], M] extends Term
+
+trait NumericOperation[N <: NumericType[M], M] extends Operation {
+  def litIdentity: Literal[N, M]
+
+  override def identity: Term = litIdentity
+}
+
+case class Literal[N <: NumericType[M], M](value: String)
   extends NumericTerm[N, M]
 
 case class Variable[N <: NumericType[M], M](name: String, description: String)
@@ -15,42 +26,48 @@ case class Variable[N <: NumericType[M], M](name: String, description: String)
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
 
-
-trait InvertibleTerm extends Term {
-  def inverse: Term
+trait BinaryTerm[T <: Term] extends Term {
+  val left: T
+  val right: T
 }
 
-trait BinaryTerm extends Term {
-  val left: Term
-  val right: Term
+trait ChiralInvertible[T <: Term] extends BinaryTerm[T] with Term {
+  def inverseLeft: T
+  def inverseRight: T
 }
 
-trait ChiralInvertible extends BinaryTerm with InvertibleTerm {
-  def inverseLeft: Term
-  def inverseRight: Term
+trait BinaryNumericOperation[N <: NumericType[M], M]
+  extends NumericOperation[N, M]
+  with ChiralInvertible[NumericTerm[N, M]] {
+  override def inverseLeft: NumericTerm[N, M] = inverse(left).asInstanceOf[NumericTerm[N, M]]
+  override def inverseRight: NumericTerm[N, M] = inverse(right).asInstanceOf[NumericTerm[N, M]]
 }
 
 
 case class Add[N <: NumericType[M], M](
-                override val left: InvertibleTerm,
-                override val right: InvertibleTerm)
-  extends NumericTerm[N, M] with ChiralInvertible {
+                override val left: NumericTerm[N, M],
+                override val right: NumericTerm[N, M])
+  extends BinaryNumericOperation[N, M] {
 
-  override def inverseLeft: Term = left.inverse
-  override def inverseRight: Term = right.inverse
+  override def inverse: Term => Term =
+    (term: Term) =>
+      Add(Negative(term.asInstanceOf[NumericTerm[N, M]]),
+        term.asInstanceOf[NumericTerm[N, M]])
 
-  override def inverse: Term = Negative(Add(left, right))
+  override def litIdentity: Literal[N, M] = Literal[N, M]("0")
 }
 
+case class Multiply[N <: NumericType[M], M](
+                                        override val left: NumericTerm[N, M],
+                                        override val right: NumericTerm[N, M])
+  extends BinaryNumericOperation[N, M] {
 
-case class Multiply(override val left: InvertibleTerm,
-                override val right: InvertibleTerm)
-  extends ChiralInvertible {
+  override def inverse: Term => Term =
+    (term: Term) =>
+      Multiply(Negative(term.asInstanceOf[NumericTerm[N, M]]),
+        term.asInstanceOf[NumericTerm[N, M]])
 
-  override def inverseLeft: Term = left.inverse
-  override def inverseRight: Term = right.inverse
-
-  override def inverse: Term = Negative(Multiply(left, right))
+  override def litIdentity: Literal[N, M] = Literal[N, M]("1")
 }
 
 //equals is NOT a term--it's an equation
