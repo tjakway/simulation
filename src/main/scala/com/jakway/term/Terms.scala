@@ -70,5 +70,32 @@ case class Multiply[N <: NumericType[M], M](
   override def litIdentity: Literal[N, M] = Literal[N, M]("1")
 }
 
+object IdentityFunction extends Term
+
+trait NumericFunction[N <: NumericType[M], M] extends Operation {
+  override def identity: Term = IdentityFunction
+}
+
+trait TrigFunction[N <: NumericType[M], M] extends NumericFunction[N, M]
+
+case class Sin[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+  override def inverse: Term => Term = Arcsin.apply
+}
+case class Cos[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+  override def inverse: Term => Term = Arccos.apply
+}
+case class Tan[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+  override def inverse: Term => Term = Arctan.apply
+}
+case class Arcsin[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+  override def inverse: Term => Term = Sin.apply
+}
+case class Arccos[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+  override def inverse: Term => Term = Cos.apply
+}
+case class Arctan[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+  override def inverse: Term => Term = Sin.apply
+}
+
 //equals is NOT a term--it's an equation
 case class Equals(left: Term, right: Term)
