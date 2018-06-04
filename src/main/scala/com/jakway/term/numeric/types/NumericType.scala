@@ -1,5 +1,6 @@
 package com.jakway.term.numeric.types
 
+import com.jakway.term.Literal
 import com.jakway.term.numeric.{NumericBinaryInvertibleFunction, NumericChiralBinaryInvertibleFunction}
 
 trait NumericType[A] {
@@ -21,4 +22,6 @@ trait NumericType[A] {
 
   val plus: ChiralBinaryMathFunction
   val times: ChiralBinaryMathFunction
+
+  val readLiteral: Literal[NumericType[A], A] => A
 }
