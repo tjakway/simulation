@@ -2,43 +2,41 @@ package com.jakway.term.numeric.types.implementations
 
 
 import com.jakway.term
-import com.jakway.term.{ChiralInvertible, InvertibleFunction, Term}
-import com.jakway.term.numeric.types.{NumericType, NumericTypeFactory}
-import com.jakway.term.numeric.types.NumericTypeFactory.TrigFunctions
+import com.jakway.term.numeric.types
+import com.jakway.term.numeric.types.{NumericType, NumericTypeImplementation, SimError}
 
+import scala.util.{Either, Left, Right}
 import scala.{math => M}
 import scala.language.postfixOps
 
-abstract class PlusTerm[N <: NumericType[M], M] extends ChiralInvertible[N => N] {
 
-  type SingleArgFunction = M => M
+//TODO: refactor error classes into their own package
+case class DivideByZeroError[M](numerator: M, denominator: M)
+  extends SimError(s"Divide by zero error with numerator=$numerator and denominator=$denominator")
 
-  class Minus(right: Term, inverseF: term.Function[SingleArgFunction])
-    extends InvertibleFunction[SingleArgFunction, SingleArgFunction] {
+case class CouldNotReadLiteralError(x: String)
+  extends SimError(s"Could not read the string $x as a literal value")
 
-    override def compute: SingleArgFunction = (a: M) => a - right
+object DoublePrecision extends NumericTypeImplementation[Double] {
+  override val sin: TrigFunction = total2(M.sin)
+  override val cos: TrigFunction = total2(M.cos)
+  override val tan: TrigFunction = total2(M.tan)
+  override val arcsin: TrigFunction = total2(M.asin)
+  override val arccos: TrigFunction = total2(M.acos)
+  override val arctan: TrigFunction = total2(M.atan)
 
-    override def inverse: term.Function[SingleArgFunction] = inverseF
-  }
+  override val pow: BinaryMathFunction = (x: Double) => (y: Double) => Right(M.pow(x, y))
+  override val root: BinaryMathFunction = total3(DoublePrecisionImplementation.root)
+  override val plus: BinaryMathFunction = total3(DoublePrecisionImplementation.plus)
+  override val times: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
+  override val div: BinaryMathFunction = DoublePrecisionImplementation.div
 
-
-
-
-}
-
-object DoublePrecision extends NumericTypeFactory[Double](
-  TrigFunctions(
-    M.sin, M.cos, M.tan,
-    M.asin, M.acos, M.atan
-  ),
-  DoublePrecisionImplementation.power _ curried,
-  DoublePrecisionImplementation.root _ curried) {
-
-
-  override val plus: ChiralBinaryMathFunction = new ChiralBinaryMathFunction {
-    override def inverse: term.Function[NumericType[Double], Double, Double => Double => Double] = ???
-
-    override def compute: Double => Double => Double = ???
+  override val readLiteral: String => Either[SimError, Double] = { x: String =>
+    try {
+      Right(x.toDouble)
+    } catch {
+      case _: Throwable => Left(CouldNotReadLiteralError(x))
+    }
   }
 }
 
@@ -49,7 +47,7 @@ private object DoublePrecisionImplementation {
     * @param n the root to take (e.g. 2 for square root, 3 for cube root)
     * @return
     */
-  def root(under: Double, n: Double) = {
+  def root(under: Double)(n: Double) = {
     //convenient built-ins for 2 and 3
     if(n == 2) {
       Math.sqrt(under)
@@ -61,5 +59,12 @@ private object DoublePrecisionImplementation {
     }
   }
 
-  def power(base: Double, exp: Double) = Math.pow(base, exp)
+  def plus(a: Double)(b: Double) = a + b
+  def times(a: Double)(b: Double) = a * b
+
+  def div(a: Double)(b: Double): Either[SimError, Double] = if(b == 0) {
+    Left(DivideByZeroError(a, b))
+  } else {
+    Right(a / b)
+  }
 }

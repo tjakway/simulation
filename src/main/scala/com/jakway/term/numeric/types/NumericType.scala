@@ -1,10 +1,14 @@
 package com.jakway.term.numeric.types
 
-import com.jakway.term.Literal
-import com.jakway.term.numeric.{NumericBinaryInvertibleFunction, NumericChiralBinaryInvertibleFunction}
+import com.jakway.term.{Literal, Term}
 
-trait NumericType[A] {
-  type TrigFunction = NumericUnaryInvertibleFunction[NumericType[A], A]
+class SimError(val msg: String)
+  extends RuntimeException(msg)
+
+trait NumericType[M] {
+  type UnaryFunction = M => Either[SimError, M]
+  type TrigFunction = UnaryFunction
+
   val sin: TrigFunction
   val cos: TrigFunction
   val tan: TrigFunction
@@ -13,15 +17,38 @@ trait NumericType[A] {
   val arccos: TrigFunction
   val arctan: TrigFunction
 
-  type BinaryMathFunction = NumericBinaryInvertibleFunction[NumericType[A], A]
-  type ChiralBinaryMathFunction =
-    NumericChiralBinaryInvertibleFunction[NumericType[A], A]
+  type BinaryMathFunction = M => M => Either[SimError, M]
 
   val pow: BinaryMathFunction
   val root: BinaryMathFunction
 
-  val plus: ChiralBinaryMathFunction
-  val times: ChiralBinaryMathFunction
+  val plus: BinaryMathFunction
+  val times: BinaryMathFunction
+  val div: BinaryMathFunction
 
-  val readLiteral: Literal[NumericType[A], A] => A
+  val readLiteral: String => Either[SimError, M]
+}
+
+trait NumericTypeImplementation[M] extends NumericType[M] {
+  /**
+    * helper method for functions that can't fail
+    * @param f
+    * @return
+    */
+  def total2(f: M => M): M => Either[SimError, M] = (x: M) => Right(f(x))
+  def total3(f: M => M => M): M => M => Either[SimError, M] =
+    (x: M) => (y: M) => Right(f(x)(y))
+}
+
+/**
+  *
+  * @param n the interpreter takes an instance of the numeric type
+  *          used to do actual calculations
+  * @tparam N
+  * @tparam M
+  */
+class Interpreter[N <: NumericType[M], M](n: NumericType[M]) {
+  def eval(t: Term) = t match {
+    case _ => ???
+  }
 }
