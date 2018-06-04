@@ -35,8 +35,8 @@ trait NumericTypeImplementation[M] extends NumericType[M] {
     * @param f
     * @return
     */
-  def total(f: M => M): M => Either[SimError, M] = (x: M) => Right(f(x))
-  def total(f: M => M => M): M => M => Either[SimError, M] =
+  def total2(f: M => M): M => Either[SimError, M] = (x: M) => Right(f(x))
+  def total3(f: M => M => M): M => M => Either[SimError, M] =
     (x: M) => (y: M) => Right(f(x)(y))
 }
 
@@ -49,6 +49,6 @@ trait NumericTypeImplementation[M] extends NumericType[M] {
   */
 class Interpreter[N <: NumericType[M], M](n: NumericType[M]) {
   def eval(t: Term) = t match {
-
+    case _ => ???
   }
 }

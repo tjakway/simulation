@@ -18,17 +18,17 @@ case class CouldNotReadLiteralError(x: String)
   extends SimError(s"Could not read the string $x as a literal value")
 
 object DoublePrecision extends NumericTypeImplementation[Double] {
-  override val sin: TrigFunction = total(M.sin)
-  override val cos: TrigFunction = total(M.cos)
-  override val tan: TrigFunction = total(M.tan)
-  override val arcsin: TrigFunction = total(M.asin)
-  override val arccos: TrigFunction = total(M.acos)
-  override val arctan: TrigFunction = total(M.atan)
+  override val sin: TrigFunction = total2(M.sin)
+  override val cos: TrigFunction = total2(M.cos)
+  override val tan: TrigFunction = total2(M.tan)
+  override val arcsin: TrigFunction = total2(M.asin)
+  override val arccos: TrigFunction = total2(M.acos)
+  override val arctan: TrigFunction = total2(M.atan)
 
-  override val pow: BinaryMathFunction = total(M.pow _.curried)
-  override val root: BinaryMathFunction = total(DoublePrecisionImplementation.root)
-  override val plus: BinaryMathFunction = total(DoublePrecisionImplementation.plus)
-  override val times: BinaryMathFunction = total(DoublePrecisionImplementation.times)
+  override val pow: BinaryMathFunction = (x: Double) => (y: Double) => Right(M.pow(x, y))
+  override val root: BinaryMathFunction = total3(DoublePrecisionImplementation.root)
+  override val plus: BinaryMathFunction = total3(DoublePrecisionImplementation.plus)
+  override val times: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
   override val div: BinaryMathFunction = DoublePrecisionImplementation.div
 
   override val readLiteral: String => Either[SimError, Double] = { x: String =>
