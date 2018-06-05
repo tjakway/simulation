@@ -2,9 +2,11 @@ package com.jakway.term
 
 import com.jakway.term.numeric.types.NumericType
 
-trait Term
+trait Term {
+  def contains(t: Term): Boolean
+}
 
-trait Operation extends Term {
+trait Operation extends Term with HasSubterms {
   def inverse: Term => Term
   def identity: Term
 }
@@ -17,18 +19,37 @@ trait NumericOperation[N <: NumericType[M], M] extends Operation {
   override def identity: Term = litIdentity
 }
 
+/**
+  * if a term doesn't contain any subterms then just
+  * check if this is the term we're looking for
+  */
+trait UnnestedTerm extends Term {
+  override def contains(t: Term): Boolean = equals(t)
+}
+
 case class Literal[N <: NumericType[M], M](value: String)
   extends NumericTerm[N, M]
+  with UnnestedTerm
 
 case class Variable[N <: NumericType[M], M](name: String, description: String)
   extends NumericTerm[N, M]
+  with UnnestedTerm
 
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
+  with UnnestedTerm
 
-trait BinaryTerm[T <: Term] extends Term {
+trait HasSubterms extends Term {
+  val subterms: Seq[Term]
+
+  override def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
+}
+
+trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   val left: T
   val right: T
+
+  override val subterms: Seq[Term] = Seq(left, right)
 }
 
 trait ChiralInvertible[T <: Term] extends BinaryTerm[T] with Term {
@@ -70,30 +91,41 @@ case class Multiply[N <: NumericType[M], M](
   override def litIdentity: Literal[N, M] = Literal[N, M]("1")
 }
 
-object IdentityFunction extends Term
+object IdentityFunction extends UnnestedTerm
 
 trait NumericFunction[N <: NumericType[M], M] extends Operation {
   override def identity: Term = IdentityFunction
 }
 
-trait TrigFunction[N <: NumericType[M], M] extends NumericFunction[N, M]
 
-case class Sin[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+//TODO: ...is this the right way to do this?
+trait OneArgumentFunction extends Operation {
+  //trig functions only take 1 argument
+  val argument: Term
+
+  override val subterms: Seq[Term] = Seq(argument)
+}
+
+trait TrigFunction[N <: NumericType[M], M]
+  extends NumericFunction[N, M]
+  with OneArgumentFunction
+
+case class Sin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arcsin.apply
 }
-case class Cos[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+case class Cos[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arccos.apply
 }
-case class Tan[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+case class Tan[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arctan.apply
 }
-case class Arcsin[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+case class Arcsin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Sin.apply
 }
-case class Arccos[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+case class Arccos[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Cos.apply
 }
-case class Arctan[N <: NumericType[M], M](t: Term) extends TrigFunction[N, M] {
+case class Arctan[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Sin.apply
 }
 
