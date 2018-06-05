@@ -13,7 +13,10 @@ trait Operation extends Term with HasSubterms {
 
 trait NumericTerm[N <: NumericType[M], M] extends Term
 
-trait NumericOperation[N <: NumericType[M], M] extends Operation {
+trait NumericOperation[N <: NumericType[M], M]
+  extends Operation
+  with NumericTerm[N, M] {
+
   def litIdentity: Literal[N, M]
 
   override def identity: Term = litIdentity
@@ -96,7 +99,9 @@ case class Multiply[N <: NumericType[M], M](
 
 object IdentityFunction extends UnnestedTerm
 
-trait NumericFunction[N <: NumericType[M], M] extends Operation {
+trait NumericFunction[N <: NumericType[M], M]
+  extends Operation
+  with NumericTerm[N, M] {
   override def identity: Term = IdentityFunction
 }
 
@@ -140,4 +145,9 @@ case class Arctan[N <: NumericType[M], M](override val argument: Term) extends T
 case class Equation(left: Term, right: Term)
   extends HasSubterms {
   override val subterms: Seq[Term] = Seq(left, right)
+}
+
+class Examples[N <: NumericType[M], M] {
+  val x: Equation = Equation(Variable("x", "foo"),
+    Add(Sin(Literal("200")), Cos(Literal("250"))))
 }
