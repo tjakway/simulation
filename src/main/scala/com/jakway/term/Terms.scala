@@ -39,10 +39,13 @@ case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
   with UnnestedTerm
 
-trait HasSubterms extends Term {
+/**
+  * this is intentionally not an instance of Term so that Equation can implement it
+  */
+trait HasSubterms {
   val subterms: Seq[Term]
 
-  override def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
+  def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
 }
 
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
@@ -129,5 +132,12 @@ case class Arctan[N <: NumericType[M], M](override val argument: Term) extends T
   override def inverse: Term => Term = Sin.apply
 }
 
-//equals is NOT a term--it's an equation
-case class Equals(left: Term, right: Term)
+/**
+  * Equation is intentionally not an instance of Term
+  * @param left
+  * @param right
+  */
+case class Equation(left: Term, right: Term)
+  extends HasSubterms {
+  override val subterms: Seq[Term] = Seq(left, right)
+}
