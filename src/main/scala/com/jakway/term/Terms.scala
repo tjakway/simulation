@@ -189,7 +189,10 @@ object HasSubterms {
     Some(h.subterms)
 }
 
-trait HasSubterms extends Term {
+/**
+  * this is intentionally not an instance of Term so that Equation can implement it
+  */
+trait HasSubterms {
   val subterms: Seq[Term]
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
