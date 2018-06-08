@@ -44,6 +44,8 @@ class Interpreter[N <: NumericType[M], M](n: NumericType[M]) {
     * type for values we've looked up in the current evaluation context
     * @param value
     */
-  case class Raw(value: M) extends NumericTerm[N, M]
+  case class Raw(value: M) extends NumericTerm[N, M] {
+    override def contains(t: Term): Boolean = equals(t)
+  }
 }
 
