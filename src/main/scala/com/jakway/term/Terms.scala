@@ -34,7 +34,7 @@ case class Literal[N <: NumericType[M], M](value: String)
   extends NumericTerm[N, M]
   with UnnestedTerm
 
-class Variable[N <: NumericType[M], M](name: String, description: Option[String])
+case class Variable[N <: NumericType[M], M](name: String, description: Option[String])
   extends NumericTerm[N, M]
   with UnnestedTerm
 
