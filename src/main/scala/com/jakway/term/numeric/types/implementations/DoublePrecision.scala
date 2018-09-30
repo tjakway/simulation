@@ -21,7 +21,7 @@ object DoublePrecision extends NumericTypeImplementation[Double] {
 
   override val pow: BinaryMathFunction = (x: Double) => (y: Double) => Right(M.pow(x, y))
   override val root: BinaryMathFunction = total3(DoublePrecisionImplementation.root)
-  override val plus: BinaryMathFunction = total3(DoublePrecisionImplementation.plus)
+  override val add: BinaryMathFunction = total3(DoublePrecisionImplementation.add)
   override val times: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
   override val div: BinaryMathFunction = DoublePrecisionImplementation.div
 
@@ -53,7 +53,7 @@ private object DoublePrecisionImplementation {
     }
   }
 
-  def plus(a: Double)(b: Double) = a + b
+  def add(a: Double)(b: Double) = a + b
   def times(a: Double)(b: Double) = a * b
 
   def div(a: Double)(b: Double): Either[SimError, Double] = if(b == 0) {
