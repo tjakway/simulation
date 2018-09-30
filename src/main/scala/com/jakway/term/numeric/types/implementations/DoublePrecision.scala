@@ -2,6 +2,7 @@ package com.jakway.term.numeric.types.implementations
 
 
 import com.jakway.term
+import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError}
 import com.jakway.term.numeric.types
 import com.jakway.term.numeric.types.{NumericType, NumericTypeImplementation, SimError}
 
@@ -9,13 +10,6 @@ import scala.util.{Either, Left, Right}
 import scala.{math => M}
 import scala.language.postfixOps
 
-
-//TODO: refactor error classes into their own package
-case class DivideByZeroError[M](numerator: M, denominator: M)
-  extends SimError(s"Divide by zero error with numerator=$numerator and denominator=$denominator")
-
-case class CouldNotReadLiteralError(x: String)
-  extends SimError(s"Could not read the string $x as a literal value")
 
 object DoublePrecision extends NumericTypeImplementation[Double] {
   override val sin: TrigFunction = total2(M.sin)
