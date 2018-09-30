@@ -108,21 +108,26 @@ object IdentityFunction extends UnnestedTerm
 trait NumericFunction[N <: NumericType[M], M]
   extends Operation
   with NumericTerm[N, M] {
+
   override def identity: Term = IdentityFunction
+
+  val arguments: Seq[Term]
+
+  //a functions arguments are subterms
+  override val subterms: Seq[Term] = arguments
 }
 
 
-//TODO: ...is this the right way to do this?
-trait OneArgumentFunction extends Operation {
+trait OneArgumentFunction[N <: NumericType[M], M] extends NumericFunction[N, M] {
   //trig functions only take 1 argument
   val argument: Term
+  override val arguments: Seq[Term] = Seq(argument)
 
   override val subterms: Seq[Term] = Seq(argument)
 }
 
 trait TrigFunction[N <: NumericType[M], M]
-  extends NumericFunction[N, M]
-  with OneArgumentFunction
+  extends OneArgumentFunction[N, M]
 
 case class Sin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arcsin.apply
