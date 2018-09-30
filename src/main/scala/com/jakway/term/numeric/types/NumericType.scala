@@ -22,7 +22,7 @@ trait NumericType[M] {
   val pow: BinaryMathFunction
   val root: BinaryMathFunction
 
-  val plus: BinaryMathFunction
+  val add: BinaryMathFunction
   val times: BinaryMathFunction
   val div: BinaryMathFunction
 
