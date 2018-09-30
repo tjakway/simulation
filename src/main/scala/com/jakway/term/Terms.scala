@@ -34,9 +34,15 @@ case class Literal[N <: NumericType[M], M](value: String)
   extends NumericTerm[N, M]
   with UnnestedTerm
 
-case class Variable[N <: NumericType[M], M](name: String, description: String)
+case class Variable[N <: NumericType[M], M](name: String, description: Option[String])
   extends NumericTerm[N, M]
   with UnnestedTerm
+
+object Variable {
+  def apply[N <: NumericType[M], M](name: String): Variable[N, M] = new Variable[N, M](name, None)
+  def apply[N <: NumericType[M], M](name: String, description: String): Variable[N, M]
+    = new Variable[N, M](name, Some(description))
+}
 
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
