@@ -22,7 +22,7 @@ class Rewriter {
   }
 }
 
-class TermOperations[N <: NumericType[M], M] {
+object TermOperations {
 
   /**
     * *** XXX WARNING: *** it is the caller's responsibility to ensure that
