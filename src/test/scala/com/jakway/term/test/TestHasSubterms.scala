@@ -22,8 +22,6 @@ object TestHasSubterms {
 class TestHasSubterms extends FlatSpec with Matchers {
   import TestHasSubterms._
 
-  val asserter = this
-
   class MapAllTest(
     val description: String,
     val expected: Term,
