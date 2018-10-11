@@ -24,6 +24,13 @@ class Rewriter {
 
 class TermOperations[N <: NumericType[M], M] {
 
+  /**
+    * *** XXX WARNING: *** it is the caller's responsibility to ensure that
+    * mapped types conform to the expectation of enclosing terms
+    * @param t
+    * @param f
+    * @return
+    */
   def mapAll(t: Term)(f: Term => Term): Term = t match {
     case x: HasSubterms => x.newInstance(x.subterms.map(f))
     case x => f(x)
