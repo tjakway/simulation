@@ -32,7 +32,7 @@ object TermOperations {
     * @return
     */
   def mapAll(t: Term)(f: Term => Term): Term = t match {
-    case x: HasSubterms => x.newInstance(x.subterms.map(f))
+    case x: HasSubterms => f(x.newInstance(x.subterms.map(f)))
     case x => f(x)
   }
 }
