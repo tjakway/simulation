@@ -41,6 +41,7 @@ abstract class TestHasSubterms[N <: NumericType[M], M]
       case Add(x, y) => Multiply(x, y)
       case x => x
     }
+  }
 
     new MapAllTest(
       description = "change add to multiply",
