@@ -4,6 +4,13 @@ import com.jakway.term.numeric.types.NumericType
 
 trait Term {
   def contains(t: Term): Boolean
+
+  def foldLeftSpecified[B](foldOverBranches: Boolean)
+                          (a: B)
+                          (f: (B, Term) => B): B
+}
+
+object Term {
 }
 
 trait Operation extends Term with HasSubterms {
@@ -28,6 +35,18 @@ trait NumericOperation[N <: NumericType[M], M]
   */
 trait UnnestedTerm extends Term {
   override def contains(t: Term): Boolean = equals(t)
+
+  /**
+    * don't recurse any further
+    *
+    * @param a
+    * @param f
+    * @tparam B
+    * @return
+    */
+  /*override def foldLeft[B](a: B)(f: (B, Term) => B): B =
+    f(a, this)*/
+
 }
 
 case class Literal[N <: NumericType[M], M](value: String)
@@ -55,6 +74,18 @@ trait HasSubterms {
   val subterms: Seq[Term]
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
+
+  def newInstance(withSubterms: Seq[Term]): Term
+
+  def foldLeft[B](a: B)(f: (B, Term) => B): B =
+    subterms.foldLeft[B](a)(f)
+
+  def foldLeftSpecified[B](foldOverBranches: Boolean)
+                           (a: B)
+                           (f: (B, Term) => B): B =
+    subterms.foldLeft[B](a) {
+      case (acc, thisTerm) => thisTerm.foldLeftSpecified(foldOverBranches)(a)(f)
+    }
 }
 
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
@@ -62,6 +93,10 @@ trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   val right: T
 
   override val subterms: Seq[Term] = Seq(left, right)
+
+  override def foldLeftSpecified[B](foldOverBranches:  Boolean)
+                                   (a:  B)
+                                   (f:  (B, _root_.com.jakway.term.Term) => B): B = super.foldLeftSpecified(foldOverBranches)(a)(f)
 }
 
 trait ChiralInvertible[T <: Term] extends BinaryTerm[T] with Term {
