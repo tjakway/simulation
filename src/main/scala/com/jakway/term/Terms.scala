@@ -111,18 +111,6 @@ trait NumericOperation[N <: NumericType[M], M]
   */
 trait UnnestedTerm extends Term {
   override def contains(t: Term): Boolean = equals(t)
-
-  /**
-    * don't recurse any further
-    *
-    * @param a
-    * @param f
-    * @tparam B
-    * @return
-    */
-  /*override def foldLeft[B](a: B)(f: (B, Term) => B): B =
-    f(a, this)*/
-
 }
 
 case class Literal[N <: NumericType[M], M](value: String)
@@ -207,9 +195,6 @@ object HasSubterms {
     Some(h.subterms)
 }
 
-/**
-  * this is intentionally not an instance of Term so that Equation can implement it
-  */
 trait HasSubterms {
   val subterms: Seq[Term]
 
@@ -228,10 +213,6 @@ trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   val right: T
 
   override val subterms: Seq[Term] = Seq(left, right)
-
-  override def foldLeftSpecified[B](foldOverBranches:  Boolean)
-                                   (a:  B)
-                                   (f:  (B, _root_.com.jakway.term.Term) => B): B = super.foldLeftSpecified(foldOverBranches)(a)(f)
 }
 
 object NewInstanceHelpers {
