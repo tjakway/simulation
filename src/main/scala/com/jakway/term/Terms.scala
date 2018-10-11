@@ -1,13 +1,11 @@
 package com.jakway.term
 
-import com.jakway.term.numeric.types.NumericType
+import com.jakway.term.numeric.types.{NumericType, SimError}
+
+import scala.reflect.ClassTag
 
 trait Term {
   def contains(t: Term): Boolean
-
-  def foldLeftSpecified[B](foldOverBranches: Boolean)
-                          (a: B)
-                          (f: (B, Term) => B): B
 }
 
 object Term {
@@ -35,18 +33,6 @@ trait NumericOperation[N <: NumericType[M], M]
   */
 trait UnnestedTerm extends Term {
   override def contains(t: Term): Boolean = equals(t)
-
-  /**
-    * don't recurse any further
-    *
-    * @param a
-    * @param f
-    * @tparam B
-    * @return
-    */
-  /*override def foldLeft[B](a: B)(f: (B, Term) => B): B =
-    f(a, this)*/
-
 }
 
 case class Literal[N <: NumericType[M], M](value: String)
@@ -67,25 +53,35 @@ case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
   with UnnestedTerm
 
-/**
-  * this is intentionally not an instance of Term so that Equation can implement it
-  */
 trait HasSubterms {
   val subterms: Seq[Term]
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
 
-  def newInstance(withSubterms: Seq[Term]): Term
+  type NewInstanceF = Seq[Term] => Term
+  def newInstance: NewInstanceF
 
-  def foldLeft[B](a: B)(f: (B, Term) => B): B =
-    subterms.foldLeft[B](a)(f)
+  case class NewInstanceException(override val msg: String)
+    extends SimError(msg)
 
-  def foldLeftSpecified[B](foldOverBranches: Boolean)
-                           (a: B)
-                           (f: (B, Term) => B): B =
-    subterms.foldLeft[B](a) {
-      case (acc, thisTerm) => thisTerm.foldLeftSpecified(foldOverBranches)(a)(f)
+  protected def assertArity(arity: Int, subterms: Seq[Term]): Seq[Term] =
+    if(subterms.length != arity) {
+      throw new NewInstanceException(s"Expected arity of $arity" +
+        s" but got new subterms: $subterms")
+    } else subterms
+
+  protected def assertCast[A <: Term](t: Term)(implicit tag: ClassTag[A]): A = {
+    try {
+      t.asInstanceOf[A]
+    } catch {
+      case e: Throwable => {
+        val newException = NewInstanceException(s"Error while casting $t " +
+          s"to " + tag.runtimeClass.getName)
+        newException.addSuppressed(e)
+        throw newException
+      }
     }
+  }
 }
 
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
@@ -93,10 +89,6 @@ trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   val right: T
 
   override val subterms: Seq[Term] = Seq(left, right)
-
-  override def foldLeftSpecified[B](foldOverBranches:  Boolean)
-                                   (a:  B)
-                                   (f:  (B, _root_.com.jakway.term.Term) => B): B = super.foldLeftSpecified(foldOverBranches)(a)(f)
 }
 
 trait ChiralInvertible[T <: Term] extends BinaryTerm[T] with Term {
@@ -109,6 +101,15 @@ trait BinaryNumericOperation[N <: NumericType[M], M]
   with ChiralInvertible[NumericTerm[N, M]] {
   override def inverseLeft: NumericTerm[N, M] = inverse(left).asInstanceOf[NumericTerm[N, M]]
   override def inverseRight: NumericTerm[N, M] = inverse(right).asInstanceOf[NumericTerm[N, M]]
+
+  protected def mkNewInstance[X <: BinaryNumericOperation[N, M]]
+    (constructor: (NumericTerm[N, M], NumericTerm[N, M]) => X): NewInstanceF = {
+
+    (withSubterms: Seq[Term]) => {
+      val Seq (l, r) = assertArity (2, withSubterms).take (2)
+      constructor(assertCast(l), assertCast(r))
+    }
+  }
 }
 
 
@@ -123,6 +124,8 @@ case class Add[N <: NumericType[M], M](
         term.asInstanceOf[NumericTerm[N, M]])
 
   override def litIdentity: Literal[N, M] = Literal[N, M]("0")
+
+  override def newInstance: NewInstanceF = mkNewInstance(Add.apply)
 }
 
 case class Multiply[N <: NumericType[M], M](
@@ -136,6 +139,8 @@ case class Multiply[N <: NumericType[M], M](
         term.asInstanceOf[NumericTerm[N, M]])
 
   override def litIdentity: Literal[N, M] = Literal[N, M]("1")
+
+  override def newInstance: NewInstanceF = mkNewInstance(Multiply.apply)
 }
 
 object IdentityFunction extends UnnestedTerm
@@ -159,6 +164,16 @@ trait OneArgumentFunction[N <: NumericType[M], M] extends NumericFunction[N, M] 
   override val arguments: Seq[Term] = Seq(argument)
 
   override val subterms: Seq[Term] = Seq(argument)
+
+
+  protected def mkNewInstance[X <: OneArgumentFunction[N, M]]
+    (constructor: NumericTerm[N, M] => X): NewInstanceF = {
+
+    (withSubterms: Seq[Term]) => {
+      val Seq (a) = assertArity (1, withSubterms).take (1)
+      constructor(assertCast(a))
+    }
+  }
 }
 
 trait TrigFunction[N <: NumericType[M], M]
@@ -166,21 +181,33 @@ trait TrigFunction[N <: NumericType[M], M]
 
 case class Sin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arcsin.apply
+
+  override def newInstance: NewInstanceF = mkNewInstance[Sin[N,M]](Sin.apply)
 }
 case class Cos[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arccos.apply
+
+  override def newInstance: NewInstanceF = mkNewInstance[Cos[N,M]](Cos.apply)
 }
 case class Tan[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Arctan.apply
+
+  override def newInstance: NewInstanceF = mkNewInstance[Tan[N,M]](Tan.apply)
 }
 case class Arcsin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Sin.apply
+
+  override def newInstance: NewInstanceF = mkNewInstance[Arcsin[N,M]](Arcsin.apply)
 }
 case class Arccos[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Cos.apply
+
+  override def newInstance: NewInstanceF = mkNewInstance[Arccos[N,M]](Arccos.apply)
 }
 case class Arctan[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
   override def inverse: Term => Term = Sin.apply
+
+  override def newInstance: NewInstanceF = mkNewInstance[Arctan[N,M]](Arctan.apply)
 }
 
 /**
@@ -188,9 +215,10 @@ case class Arctan[N <: NumericType[M], M](override val argument: Term) extends T
   * @param left
   * @param right
   */
-case class Equation(left: Term, right: Term)
-  extends HasSubterms {
-  override val subterms: Seq[Term] = Seq(left, right)
+case class Equation(left: Term, right: Term) {
+
+  def contains(t: Term): Boolean =
+    left.contains(t) || right.contains(t)
 }
 
 class Examples[N <: NumericType[M], M] {
