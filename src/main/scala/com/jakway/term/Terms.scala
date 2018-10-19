@@ -53,7 +53,7 @@ case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
   with UnnestedTerm
 
-trait HasSubterms {
+trait HasSubterms extends Term {
   val subterms: Seq[Term]
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)

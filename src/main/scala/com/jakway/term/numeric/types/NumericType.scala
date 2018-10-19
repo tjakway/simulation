@@ -3,7 +3,18 @@ package com.jakway.term.numeric.types
 import com.jakway.term.{Literal, Term}
 
 class SimError(val msg: String)
-  extends RuntimeException(msg)
+  extends RuntimeException(msg) {
+
+  def this(msg: String, t: Throwable) = {
+    this(msg)
+    addSuppressed(t)
+  }
+
+  def this(t: Throwable) {
+    this(s"Caught throwable: $t")
+  }
+}
+
 
 trait NumericType[M] {
   type UnaryFunction = M => Either[SimError, M]

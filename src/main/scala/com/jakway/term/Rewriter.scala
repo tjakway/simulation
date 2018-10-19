@@ -3,6 +3,7 @@ package com.jakway.term
 import com.jakway.term.numeric.types.{NumericType, SimError}
 
 import scala.annotation.tailrec
+import scala.util.{Success, Failure, Try}
 
 class Rewriter {
   case class TermNotFoundError(refactorFor: Term, equation: Equation)
@@ -26,6 +27,9 @@ class Rewriter {
 }
 
 object TermOperations {
+  case class CastHasSubtermsError(castTerm: Term, t: Throwable)
+    extends SimError(s"Error casting $castTerm to an instance of HasSubterms",
+      t)
 
   /**
     * *** XXX WARNING: *** it is the caller's responsibility to ensure that
@@ -37,6 +41,25 @@ object TermOperations {
   def mapAll(t: Term)(f: Term => Term): Term = t match {
     case x: HasSubterms => f(x.newInstance(x.subterms.map(f)))
     case x => f(x)
+  }
+
+  def foreach(t: Term)(f: Term => Unit): Unit =
+    mapAll(t) { a =>
+      f(a)
+      a
+    }
+
+  def replaceSubterms(replace: HasSubterms => Seq[Term] => Seq[Term])
+                     (h: HasSubterms): Either[SimError, HasSubterms] = {
+    Try {
+      h.newInstance(replace(h)(h.subterms)).asInstanceOf[HasSubterms]
+    } match {
+      case Success(x) => Right(x)
+      case Failure(e) if e.isInstanceOf[ClassCastException] => {
+        Left(CastHasSubtermsError(h, e))
+      }
+      case Failure(x) => Left(new SimError(x))
+    }
   }
 }
 
