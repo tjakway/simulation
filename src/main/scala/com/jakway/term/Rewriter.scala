@@ -16,7 +16,10 @@ class Rewriter {
     } else if(equation.left == refactorFor) {
       Right(equation)
     } else {
-
+      //TODO XXX
+      TermOperations.mapAll(equation.left) {
+        ???
+      }
       ???
     }
   }
