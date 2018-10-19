@@ -3,6 +3,15 @@ package com.jakway.term.interpreter
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import com.jakway.term.{Literal, NumericTerm, Term, Variable}
 
+
+/**
+  * type for values we've looked up in the current evaluation context
+  * @param value
+  */
+case class Raw[N <: NumericType[M], M](value: M) extends NumericTerm[N, M] {
+  override def contains(t: Term): Boolean = equals(t)
+}
+
 /**
   *
   * @param n the interpreter takes an instance of the numeric type
@@ -25,11 +34,4 @@ class Eval[N <: NumericType[M], M](n: NumericType[M])
       case _ => ???
     }
 
-    /**
-      * type for values we've looked up in the current evaluation context
-      * @param value
-      */
-    case class Raw(value: M) extends NumericTerm[N, M] {
-      override def contains(t: Term): Boolean = equals(t)
-    }
   }
