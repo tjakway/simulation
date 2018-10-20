@@ -61,6 +61,25 @@ object TermOperations {
       case Failure(x) => Left(new SimError(x))
     }
   }
+
+  def foldSubterms[B](t: Term)(z: B)(f: (B, Term) => B): B = t match {
+      //fold over the top level term then subterms
+    case h: HasSubterms => h.subterms.foldLeft(f(z, h))(f)
+    case _ => f(z, t)
+  }
+
+  def findVariables[N <: NumericType[M], M](t: Term): Seq[Variable[N, M]] = {
+    val empty: Seq[Variable[N, M]] = Seq()
+
+    //accumulate variables
+    foldSubterms(t)(empty) {
+      case (variables, x@Variable(_, _)) => {
+        variables :+ x
+      }
+      case (variables, _) => variables
+    }
+  }
+
 }
 
 class Simplifier {
