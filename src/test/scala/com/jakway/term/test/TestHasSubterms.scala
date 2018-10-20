@@ -13,7 +13,7 @@ abstract class TestHasSubterms[N <: NumericType[M], M]
   extends FlatSpec with Matchers with NumericTypeTest[N, M] {
   import TestHasSubterms._
 
-  val expr = new Expressions[N, M]()
+  val expr = new TestExpressions[N, M]()
 
   class MapAllTest(
     val description: String,

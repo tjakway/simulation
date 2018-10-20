@@ -9,7 +9,12 @@ abstract class TestFindVariables[N <: NumericType[M], M]
   (override val numericType: N)
   extends FlatSpec with Matchers with NumericTypeTest[N, M] {
 
-  val expr = new Expressions[N, M]()
+  val expr = new TestExpressions[N, M]()
+
+  def testExpression(e: Expression[N, M]): Unit = {
+    TermOperations.findVariables[N, M](e.term) shouldEqual
+      e.variables
+  }
 
   "findVariables" should "return Seq() for literals" in {
     TermOperations
@@ -17,8 +22,10 @@ abstract class TestFindVariables[N <: NumericType[M], M]
   }
 
   it should "find variables in an unnested expression" in {
-    TermOperations
-      .findVariables[N, M](expr.addTwoVariables.term) shouldEqual
-        expr.addTwoVariables.variables
+    testExpression(expr.addTwoVariables)
+  }
+
+  it should "find variables in a nested expression 1 level deep" in {
+    testExpression(expr.addThreeVariables)
   }
 }
