@@ -14,7 +14,12 @@ libraryDependencies ++=
       //scalatest
       //see http://www.scalatest.org/install
       "org.scalatest" %% "scalatest" % "3.0.4" % "test",
-      "org.scalactic" %% "scalactic" % "3.0.4" % "test"
+      "org.scalactic" %% "scalactic" % "3.0.4" % "test",
+
+      //enable reflection
+      //otherwise can't import scala.reflect.runtime
+      //see https://stackoverflow.com/questions/25189608/cant-import-scala-reflect-runtime-universe
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
       )
 
 //enable more warnings
