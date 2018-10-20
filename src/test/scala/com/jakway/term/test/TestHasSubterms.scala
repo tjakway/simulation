@@ -5,22 +5,15 @@ import com.jakway.term.numeric.types.NumericType
 import org.scalatest.{FlatSpec, Matchers}
 
 object TestHasSubterms {
-  val addTwoLiterals: Term =
-    Add(Literal("5"), Literal("2"))
-
-  val allExpressions: Seq[Term] = Seq(
-    addTwoLiterals
-  )
-
   def id: Term => Term = x => x
 }
 
-/**
-  * TODO: parameterize for N and M then create a runner that
-  * instantiates tests for each instance of NumericType
-  */
-class TestHasSubterms extends FlatSpec with Matchers {
+abstract class TestHasSubterms[N <: NumericType[M], M]
+  (override val numericType: N)
+  extends FlatSpec with Matchers with NumericTypeTest[N, M] {
   import TestHasSubterms._
+
+  val expr = new Expressions[N, M]()
 
   class MapAllTest(
     val description: String,
@@ -33,13 +26,10 @@ class TestHasSubterms extends FlatSpec with Matchers {
     }
   }
 
-  type M = Double
-  type N = NumericType[M]
-
   val addZeroTest = new MapAllTest(
     description = "let literals be replaced",
     expected = Add(Literal("50"), Literal("20")),
-    input = addTwoLiterals,
+    input = expr.addTwoLiterals,
     function = t => t match {
         case Literal(x) => Literal(x + "0")
         case x => x
@@ -61,13 +51,13 @@ class TestHasSubterms extends FlatSpec with Matchers {
         addZeroTest.expected.asInstanceOf[HasSubterms].subterms(1)
           .asInstanceOf[NumericTerm[N, M]]
       ),
-      input = addTwoLiterals,
+      input = expr.addTwoLiterals,
       function = f _ compose(addZeroTest.function)
     )
   }
 
   "mapAll" should "apply id correctly" in {
-    allExpressions.foreach(
+    expr.allExpressions.foreach(
       x => TermOperations.mapAll(x)(id) shouldEqual x)
   }
 }
