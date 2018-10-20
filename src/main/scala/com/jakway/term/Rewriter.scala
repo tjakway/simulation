@@ -80,7 +80,7 @@ object TermOperations {
     val expectedVariableTypetag = typeTag[Variable[N, M]]
 
     def matches[A](x: A)(implicit ev: TypeTag[A]): Boolean =
-      typeOf[A] =:= ev.tpe
+      typeOf[A] <:< expectedVariableTypetag.tpe
 
     //accumulate variables
     foldSubterms(t)(empty) {

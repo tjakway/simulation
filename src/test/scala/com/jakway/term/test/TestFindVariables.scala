@@ -7,6 +7,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 abstract class TestFindVariables[N <: NumericType[M], M]
   (override val numericType: N)
+  (implicit ev: TypeTag[Variable[N, M]])
   extends FlatSpec with Matchers with NumericTypeTest[N, M] {
 
   val expr = new TestExpressions[N, M]()
