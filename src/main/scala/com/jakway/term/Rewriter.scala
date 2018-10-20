@@ -1,9 +1,11 @@
 package com.jakway.term
 
+import scala.reflect.runtime.universe._
 import com.jakway.term.numeric.types.{NumericType, SimError}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 class Rewriter {
   case class TermNotFoundError(refactorFor: Term, equation: Equation)
@@ -30,6 +32,8 @@ object TermOperations {
   case class CastHasSubtermsError(castTerm: Term, t: Throwable)
     extends SimError(s"Error casting $castTerm to an instance of HasSubterms",
       t)
+
+  val logger: Logger = LoggerFactory.getLogger(getClass())
 
   /**
     * *** XXX WARNING: *** it is the caller's responsibility to ensure that
@@ -68,15 +72,36 @@ object TermOperations {
     case _ => f(z, t)
   }
 
-  def findVariables[N <: NumericType[M], M](t: Term): Seq[Variable[N, M]] = {
+  def findVariables[N <: NumericType[M], M](t: Term)
+                                           (implicit ev: TypeTag[Variable[N, M]])
+    : Seq[Variable[N, M]] = {
+
     val empty: Seq[Variable[N, M]] = Seq()
+    val expectedVariableTypetag = typeTag[Variable[N, M]]
+
+    def matches[A](x: A)(implicit ev: TypeTag[A]): Boolean =
+      typeOf[A] =:= ev.tpe
 
     //accumulate variables
     foldSubterms(t)(empty) {
-      case (variables, x@Variable(_, _)) => {
-        variables :+ x
+      case (variables, x) => {
+
+        //need to check reified types to get around type erasure
+        if(matches(x)) {
+          variables :+ x.asInstanceOf[Variable[N, M]]
+        }
+        else {
+          //sanity check: if there are Variable instances that don't
+          //match our type tag, it's probably an error
+          if(x.isInstanceOf[Variable[N @unchecked, M @unchecked]]) {
+            logger.warn(s"Variable instance $x doesn't match our type tag, this is" +
+              s" probably an error since it doesn't make sense to mix " +
+              s"variables of different NumericTypes")
+          }
+
+          variables
+        }
       }
-      case (variables, _) => variables
     }
   }
 
