@@ -73,32 +73,19 @@ object TermOperations {
   }
 
   def findVariables[N <: NumericType[M], M](t: Term)
-                                           (implicit ev: TypeTag[Variable[N, M]])
     : Seq[Variable[N, M]] = {
 
     val empty: Seq[Variable[N, M]] = Seq()
-    val expectedVariableTypetag = typeTag[Variable[N, M]]
-
-    def matches[A](x: A)(implicit ev: TypeTag[A]): Boolean =
-      typeOf[A] <:< expectedVariableTypetag.tpe
 
     //accumulate variables
     foldSubterms(t)(empty) {
       case (variables, x) => {
 
         //need to check reified types to get around type erasure
-        if(matches(x)) {
+        if(x.isInstanceOf[Variable[N @unchecked, M @unchecked]]) {
           variables :+ x.asInstanceOf[Variable[N, M]]
         }
         else {
-          //sanity check: if there are Variable instances that don't
-          //match our type tag, it's probably an error
-          if(x.isInstanceOf[Variable[N @unchecked, M @unchecked]]) {
-            logger.warn(s"Variable instance $x doesn't match our type tag, this is" +
-              s" probably an error since it doesn't make sense to mix " +
-              s"variables of different NumericTypes")
-          }
-
           variables
         }
       }
