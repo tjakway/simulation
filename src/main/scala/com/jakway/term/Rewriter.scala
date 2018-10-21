@@ -1,11 +1,6 @@
 package com.jakway.term
 
-import scala.reflect.runtime.universe._
 import com.jakway.term.numeric.types.{NumericType, SimError}
-import org.slf4j.{Logger, LoggerFactory}
-
-import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
 
 class Rewriter {
   case class TermNotFoundError(refactorFor: Term, equation: Equation)
