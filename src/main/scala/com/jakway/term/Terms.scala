@@ -1,15 +1,17 @@
 package com.jakway.term
 
+import java.util.UUID
+
 import com.jakway.term.numeric.types.{NumericType, SimError}
 
 import scala.reflect.ClassTag
 
 trait Term {
   def contains(t: Term): Boolean
+
+  val uniqueId: UUID = java.util.UUID.randomUUID()
 }
 
-object Term {
-}
 
 trait Operation extends Term with HasSubterms {
   def inverse: Term => Term
