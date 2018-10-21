@@ -53,7 +53,14 @@ object Variable {
 
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends NumericTerm[N, M]
-  with UnnestedTerm
+  with HasSubterms {
+  override val subterms: Seq[Term] = Seq(arg)
+
+  override def newInstance: NewInstanceF =
+    subterms => {
+      Negative(assertCast[NumericTerm[N,M]](assertArity(1, subterms)(0)))
+    }
+}
 
 trait HasSubterms extends Term {
   val subterms: Seq[Term]
