@@ -72,6 +72,16 @@ class Solver[N <: NumericType[M], M] {
 
       Seq(ApplyToTerm(toReplace, newTerm), ApplyToEquation(applyToEquation))
     }
+
+    def applyFunctions(to: Equation, fs: Seq[SubstituteFunction]) = {
+      fs.map { x => x match {
+        case ApplyToTerm(replaceTerm, replaceWith) => {
+          to.left
+        }
+        case ApplyToEquation(f) => ???
+      }
+      }
+    }
   }
 
 
