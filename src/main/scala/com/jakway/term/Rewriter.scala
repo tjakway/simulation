@@ -66,10 +66,17 @@ object TermOperations {
     }
   }
 
-  def foldSubterms[B](t: Term)(z: B)(f: (B, Term) => B): B = t match {
+  def foldSubterms[B](t: Term)(z: B)(f: (B, Term) => B): B = {
+    t match {
       //fold over the top level term then subterms
-    case h: HasSubterms => h.subterms.foldLeft(f(z, h))(f)
-    case _ => f(z, t)
+      case h: HasSubterms => {
+        val start = f(z, h)
+        h.subterms.foldLeft(start) {
+          case (acc, thisTerm) => foldSubterms(thisTerm)(acc)(f)
+        }
+      }
+      case _ => f(z, t)
+    }
   }
 
   def findVariables[N <: NumericType[M], M](t: Term)
