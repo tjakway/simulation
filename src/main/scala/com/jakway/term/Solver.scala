@@ -47,15 +47,20 @@ class Solver[N <: NumericType[M], M] {
     }
   }
 
+  sealed trait SubstituteFunction
+  case class ApplyToTerm(
+                replaceTerm: Term, replaceWith: Term => Either[SimError, Term])
+    extends SubstituteFunction
+  case class ApplyToEquation(f: Seq[Term] => Term) extends SubstituteFunction
+
   object SubstituteFunction {
-    sealed trait SubstituteFunctionInput
-    case class ApplyToTerm(x: Term)
-    case object ApplyToEquation
-
-
     def mkSubstituteFunctions(toReplace: Term, parent: HasSubterms,
                               identity: Term): Seq[SubstituteFunction] = {
-      val newTerm = patchSubterms(parent.subterms, toReplace, identity)
+
+      val newTerm = { (inputToReplace: Term) =>
+        patchSubterms(parent.subterms, inputToReplace, identity).map(parent.newInstance)
+      }
+
       val applyToEquation =
         (orig: Seq[Term]) => {
           val keepIndex = parent.subterms.indexOf(toReplace)
@@ -64,24 +69,9 @@ class Solver[N <: NumericType[M], M] {
           val newArgs = left ++ Seq(toKeep) ++ right
           parent.newInstance(newArgs)
         }
+
+      Seq(ApplyToTerm(toReplace, newTerm), ApplyToEquation(applyToEquation))
     }
-
-    def applyFunctions(fs: Seq[SubstituteFunction]) = {
-      fs.map { x => x.toApplyTo match {
-        case  ApplyToTerm(t) => {
-
-        }
-        case ApplyToEquation => ???
-      }
-      }
-      //patchSubterms(parent.subterms, x, replaceWith)
-    }
-  }
-
-
-  class SubstituteFunction
-          (val toApplyTo: SubstituteFunction.SubstituteFunctionInput,
-           val replaceWith: Term) {
   }
 
 
