@@ -28,4 +28,8 @@ abstract class TestFindVariables[N <: NumericType[M], M]
   it should "find variables in a nested expression 1 level deep" in {
     testExpression(expr.addThreeVariables)
   }
+
+  it should "find variables in a deeply nested expression" in {
+    testExpression(expr.deeplyNestedVariables)
+  }
 }
