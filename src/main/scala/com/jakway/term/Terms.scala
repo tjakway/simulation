@@ -208,6 +208,11 @@ trait HasSubterms {
   }
 }
 
+object HasSubterms {
+  def unapply(h: HasSubterms): Option[Seq[Term]] =
+    Some(h.subterms)
+}
+
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   val left: T
   val right: T
