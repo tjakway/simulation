@@ -43,7 +43,15 @@ case class Literal[N <: NumericType[M], M](value: String)
 
 case class Variable[N <: NumericType[M], M](name: String, description: Option[String])
   extends NumericTerm[N, M]
-  with UnnestedTerm
+  with UnnestedTerm {
+
+  /**
+    * check whether these represent the same variable
+    * @param other
+    * @return
+    */
+  def sameVariable(other: Variable[N, M]) = name == other.name
+}
 
 object Variable {
   def apply[N <: NumericType[M], M](name: String): Variable[N, M] = new Variable[N, M](name, None)
