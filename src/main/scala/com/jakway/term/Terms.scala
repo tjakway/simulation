@@ -50,6 +50,14 @@ trait Operation extends Term with HasSubterms {
         inverseConstructorE(args)
       }
     }
+}
+
+object Operation {
+  case class InverseArgumentsError(override val msg: String)
+    extends SimError(msg)
+
+  case class InverseConstructorCastError(override val msg: String)
+    extends SimError(msg)
 
   /**
     * inverse constructor applied to this Operation's subterms
