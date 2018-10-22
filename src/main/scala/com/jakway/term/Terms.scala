@@ -216,6 +216,13 @@ trait HasSubterms {
   }
 }
 
+trait HasSubterms extends Term {
+  val subterms: Seq[Term]
+
+  def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
+  def newInstance: NewInstanceF
+}
+
 object HasSubterms {
   def unapply(h: HasSubterms): Option[Seq[Term]] =
     Some(h.subterms)
@@ -445,6 +452,11 @@ abstract class TwoArgumentFunction[N <: NumericType[M], M]
       constructor(assertCast(a), assertCast(b))
     }
   }
+
+  type ConstructorArgType = NumericTerm[N, M]
+  def mkInverseConstructorE: ((ConstructorArgType, ConstructorArgType) => Term) =>
+    Seq[Term] => Either[SimError, Term] =
+    InverseConstructorHelpers.arity2MkInverseConstructorE
 }
 
 trait TrigFunction[N <: NumericType[M], M]
