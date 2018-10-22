@@ -421,6 +421,18 @@ case class Power[N <: NumericType[M], M](
   override def newInstance: NewInstanceF = mkNewInstance[Power[N,M]](Power.apply)
 }
 
+class NaturalLogarithm[N <: NumericType[M], M] {
+  //TODO: need to handle this specially
+  val e: NumericTerm[N, M] = Literal("e")
+
+  /**
+    * returns a log in base e
+    * @param of
+    * @return
+    */
+  def naturalLog(of: NumericTerm[N, M]): Logarithm[N, M] =
+    Logarithm(e, of)
+}
 
 
 
