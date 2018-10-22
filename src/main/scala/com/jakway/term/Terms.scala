@@ -422,6 +422,23 @@ abstract class TwoArgumentFunction[N <: NumericType[M], M]
     InverseConstructorHelpers.arity2MkInverseConstructorE
 }
 
+abstract class TwoArgumentFunction[N <: NumericType[M], M]
+  (val arg1: Term, val arg2: Term)
+  extends NumericFunction[N, M] {
+
+  override val arguments: Seq[Term] = Seq(arg1, arg2)
+  override val subterms: Seq[Term] = arguments
+
+  protected def mkNewInstance[X <: OneArgumentFunction[N, M]]
+  (constructor: NumericTerm[N, M] => X): NewInstanceF = {
+
+    (withSubterms: Seq[Term]) => {
+      val Seq (a, b) = assertArity (2, withSubterms).take (2)
+      constructor(assertCast(a), assertCast(b))
+    }
+  }
+}
+
 trait TrigFunction[N <: NumericType[M], M]
   extends OneArgumentFunction[N, M]
 
