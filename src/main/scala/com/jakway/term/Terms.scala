@@ -291,14 +291,17 @@ object InverseConstructorHelpers {
     *
     * takes a 1-arity constructor and returns a function that
     * will construct that type from a Seq[Term]
+    *
+    * see https://stackoverflow.com/questions/50790011/scala-lambda-cannot-be-cast-to-classtag-error
+    * for getting a ClassTag when that generic also needs type constraints
     * @return
     */
-  def arity1MkInverseConstructorE[ConstructorArgType]:
+  def arity1MkInverseConstructorE[ConstructorArgType <: Term : ClassTag]:
   (ConstructorArgType => Term) => Seq[Term] => Either[SimError, Term] = {
     ctor =>
       (args: Seq[Term]) =>
         val numArguments = 1 //arity 1 constructor
-        val Seq(le, re) = args.take(numArguments)
+        val Seq(le) = args.take(numArguments)
         val res: Either[SimError, ConstructorArgType] =
           Operation.checkCast[ConstructorArgType](le)
 
@@ -310,7 +313,7 @@ object InverseConstructorHelpers {
     * mkInverseConstructorE for 2-arity types
     * @return
     */
-  def arity2MkInverseConstructorE[ConstructorArgType]:
+  def arity2MkInverseConstructorE[ConstructorArgType <: Term : ClassTag]:
   ((ConstructorArgType, ConstructorArgType) => Term) => Seq[Term] => Either[SimError, Term] = {
     ctor =>
       (args: Seq[Term]) =>
@@ -411,9 +414,11 @@ case class Logarithm[N <: NumericType[M], M]
 case class Power[N <: NumericType[M], M](
       val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
   extends TwoArgumentFunction[N, M](base, exponent) {
-  override def inverse: Term => Term = ???
 
-  override def newInstance: NewInstanceF = mkNewInstance[NaturalLog[N,M]](NaturalLog.apply)
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Logarithm.apply)
+
+  override def newInstance: NewInstanceF = mkNewInstance[Power[N,M]](Power.apply)
 }
 
 
