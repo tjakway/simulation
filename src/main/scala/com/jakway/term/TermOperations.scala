@@ -76,8 +76,8 @@ object TermOperations {
     }
   }
 
-  def findParentOf(term: Term, in: Term): Option[HasSubterms] = {
-    foldSubterms(term)(None: Option[Term]) {
+  def findParentOf(term: Term, in: HasSubterms): Option[HasSubterms] = {
+    foldSubterms(in)(None: Option[HasSubterms]) {
       case (None, x@HasSubterms(subterms))
           if subterms.contains(term) => Some(x)
         //stop once we've found the parent
