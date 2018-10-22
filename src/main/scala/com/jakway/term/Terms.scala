@@ -2,6 +2,7 @@ package com.jakway.term
 
 import java.util.UUID
 
+import com.jakway.term.HasSubterms.NewInstanceF
 import com.jakway.term.numeric.types.{NumericType, SimError}
 
 import scala.reflect.ClassTag
@@ -109,28 +110,24 @@ case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
 
   override def newInstance: NewInstanceF =
     subterms => {
-      Negative(assertCast[NumericTerm[N,M]](assertArity(1, subterms)(0)))
+      Negative(HasSubterms.assertCast[NumericTerm[N,M]](HasSubterms.assertArity(1, subterms)(0)))
     }
 }
 
-trait HasSubterms extends Term {
-  val subterms: Seq[Term]
-
-  def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
-
+object HasSubterms {
   type NewInstanceF = Seq[Term] => Term
-  def newInstance: NewInstanceF
+
 
   case class NewInstanceException(override val msg: String)
     extends SimError(msg)
 
-  protected def assertArity(arity: Int, subterms: Seq[Term]): Seq[Term] =
+  def assertArity(arity: Int, subterms: Seq[Term]): Seq[Term] =
     if(subterms.length != arity) {
       throw new NewInstanceException(s"Expected arity of $arity" +
         s" but got new subterms: $subterms")
     } else subterms
 
-  protected def assertCast[A <: Term](t: Term)(implicit tag: ClassTag[A]): A = {
+  def assertCast[A <: Term](t: Term)(implicit tag: ClassTag[A]): A = {
     try {
       t.asInstanceOf[A]
     } catch {
@@ -142,6 +139,13 @@ trait HasSubterms extends Term {
       }
     }
   }
+}
+
+trait HasSubterms extends Term {
+  val subterms: Seq[Term]
+
+  def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
+  def newInstance: NewInstanceF
 }
 
 object HasSubterms {
@@ -156,18 +160,26 @@ trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   override val subterms: Seq[Term] = Seq(left, right)
 }
 
+object NewInstanceHelpers {
+  def arity2MkNewInstance[N <: NumericType[M], M, X <: Term]
+  (constructor: (NumericTerm[N, M], NumericTerm[N, M]) => X): NewInstanceF = {
+    (withSubterms: Seq[Term]) => {
+      val Seq (l, r) = HasSubterms.assertArity (2, withSubterms).take (2)
+      constructor(HasSubterms.assertCast(l), HasSubterms.assertCast(r))
+    }
+  }
+
+  trait Arity2MkNewInstance[N <: NumericType[M], M] {
+    type ConstructorArgType = NumericTerm[N, M]
+    def mkNewInstance[X <: Term]: ((ConstructorArgType, ConstructorArgType) => X) => NewInstanceF
+      = NewInstanceHelpers.arity2MkNewInstance
+  }
+}
+
+
 trait BinaryNumericOperation[N <: NumericType[M], M]
   extends NumericOperation[N, M]
   with BinaryTerm[NumericTerm[N, M]] {
-
-  protected def mkNewInstance[X <: BinaryNumericOperation[N, M]]
-    (constructor: (NumericTerm[N, M], NumericTerm[N, M]) => X): NewInstanceF = {
-
-    (withSubterms: Seq[Term]) => {
-      val Seq (l, r) = assertArity (2, withSubterms).take (2)
-      constructor(assertCast(l), assertCast(r))
-    }
-  }
 
   override val numArguments: Int = 2
 
@@ -257,6 +269,9 @@ object InverseConstructorHelpers {
 
   /**
     * mkInverseConstructorE for 1-arity types
+    *
+    * takes a 1-arity constructor and returns a function that
+    * will construct that type from a Seq[Term]
     * @return
     */
   def arity1MkInverseConstructorE[ConstructorArgType]:
@@ -333,6 +348,11 @@ abstract class TwoArgumentFunction[N <: NumericType[M], M]
       constructor(assertCast(a), assertCast(b))
     }
   }
+
+  type ConstructorArgType = NumericTerm[N, M]
+  def mkInverseConstructorE: ((ConstructorArgType, ConstructorArgType) => Term) =>
+    Seq[Term] => Either[SimError, Term] =
+    InverseConstructorHelpers.arity2MkInverseConstructorE
 }
 
 trait TrigFunction[N <: NumericType[M], M]
@@ -380,9 +400,10 @@ case class Logarithm[N <: NumericType[M], M]
    val of: NumericTerm[N, M])
   extends TwoArgumentFunction[N, M](base, of) {
 
-  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] = ???
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Power.apply)
 
-  override def newInstance: NewInstanceF = mkNewInstance[NaturalLog[N,M]](NaturalLog.apply)
+  override def newInstance: NewInstanceF = mkNewInstance[Logarithm[N,M]](Logarithm.apply)
 }
 
 case class Power[N <: NumericType[M], M](
