@@ -171,14 +171,18 @@ trait BinaryNumericOperation[N <: NumericType[M], M]
 
   type ConstructorArgType = NumericTerm[N, M]
 
+  /**
+    * mkInverseConstructorE for 2-arity types
+    * @return
+    */
   def mkInverseConstructorE:
     ((ConstructorArgType, ConstructorArgType) => Term) => Seq[Term] => Either[SimError, Term] = {
     ctor =>
     (args: Seq[Term]) =>
       val Seq(le, re) = args.take(numArguments)
       val res: Either[SimError, (ConstructorArgType, ConstructorArgType)] = for {
-        l <- assertCast[ConstructorArgType](le)
-        r <- assertCast[ConstructorArgType](re)
+        l <- checkCast[ConstructorArgType](le)
+        r <- checkCast[ConstructorArgType](re)
       } yield (l, r)
 
       res.map(x => ctor(x._1, x._2))
@@ -190,19 +194,6 @@ case class Add[N <: NumericType[M], M](
                 override val left: NumericTerm[N, M],
                 override val right: NumericTerm[N, M])
   extends BinaryNumericOperation[N, M] {
-
-  /*
-  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] = {
-    (args: Seq[Term]) =>
-      val Seq(le, re) = args.take(numArguments)
-      val res: Either[SimError, (NumericTerm[N, M], NumericTerm[N, M])] = for {
-        l <- assertCast[NumericTerm[N, M]](le)
-        r <- assertCast[NumericTerm[N, M]](re)
-      } yield (l, r)
-
-      res.map(x => Subtract.apply(x._1, x._2))
-    }
-    */
 
   override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
     mkInverseConstructorE(Subtract.apply)
@@ -218,8 +209,8 @@ case class Subtract[N <: NumericType[M], M](
                                   override val right: NumericTerm[N, M])
   extends BinaryNumericOperation[N, M] {
 
-  override def inverseConstructor: Seq[Term] => Term = Add.apply
-
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Add.apply)
 
   override def litIdentity: Literal[N, M] = Literal[N, M]("0")
 
@@ -231,10 +222,8 @@ case class Multiply[N <: NumericType[M], M](
                                         override val right: NumericTerm[N, M])
   extends BinaryNumericOperation[N, M] {
 
-  override def inverse: Term => Term =
-    (term: Term) =>
-      Multiply(Negative(term.asInstanceOf[NumericTerm[N, M]]),
-        term.asInstanceOf[NumericTerm[N, M]])
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Divide.apply)
 
   override def litIdentity: Literal[N, M] = Literal[N, M]("1")
 
@@ -249,9 +238,8 @@ case class Divide[N <: NumericType[M], M](
   override val left = dividend
   override val right = numerator
 
-  override def inverse: Term => Term =
-    (term: Term) => Multiply(
-      term.asInstanceOf[NumericTerm[N, M]], Divide(numerator, dividend))
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Multiply.apply)
 
   override def litIdentity: Literal[N, M] = Literal[N, M]("1")
 
@@ -289,6 +277,24 @@ trait OneArgumentFunction[N <: NumericType[M], M] extends NumericFunction[N, M] 
       constructor(assertCast(a))
     }
   }
+
+  override val numArguments: Int = 1
+
+  type ConstructorArgType = NumericTerm[N, M]
+  /**
+    * mkInverseConstructorE for 1-arity types
+    * @return
+    */
+  def mkInverseConstructorE:
+  (ConstructorArgType => Term) => Seq[Term] => Either[SimError, Term] = {
+    ctor =>
+      (args: Seq[Term]) =>
+        val Seq(le, re) = args.take(numArguments)
+        val res: Either[SimError, ConstructorArgType] =
+          checkCast[ConstructorArgType](le)
+
+        res.map(ctor)
+  }
 }
 
 abstract class TwoArgumentFunction[N <: NumericType[M], M]
@@ -312,32 +318,38 @@ trait TrigFunction[N <: NumericType[M], M]
   extends OneArgumentFunction[N, M]
 
 case class Sin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverse: Term => Term = Arcsin.apply
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Arcsin.apply)
 
   override def newInstance: NewInstanceF = mkNewInstance[Sin[N,M]](Sin.apply)
 }
 case class Cos[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverse: Term => Term = Arccos.apply
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Arccos.apply)
 
   override def newInstance: NewInstanceF = mkNewInstance[Cos[N,M]](Cos.apply)
 }
 case class Tan[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverse: Term => Term = Arctan.apply
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Arctan.apply)
 
   override def newInstance: NewInstanceF = mkNewInstance[Tan[N,M]](Tan.apply)
 }
 case class Arcsin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverse: Term => Term = Sin.apply
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Sin.apply)
 
   override def newInstance: NewInstanceF = mkNewInstance[Arcsin[N,M]](Arcsin.apply)
 }
 case class Arccos[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverse: Term => Term = Cos.apply
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Cos.apply)
 
   override def newInstance: NewInstanceF = mkNewInstance[Arccos[N,M]](Arccos.apply)
 }
 case class Arctan[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverse: Term => Term = Sin.apply
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Tan.apply)
 
   override def newInstance: NewInstanceF = mkNewInstance[Arctan[N,M]](Arctan.apply)
 }
@@ -352,14 +364,6 @@ case class NaturalLog[N <: NumericType[M], M](override val argument: Term)
 
 case class Power[N <: NumericType[M], M](
       val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
-  extends TwoArgumentFunction[N, M](base, exponent) {
-  override def inverse: Term => Term = ???
-
-  override def newInstance: NewInstanceF = mkNewInstance[NaturalLog[N,M]](NaturalLog.apply)
-}
-
-case class Power[N <: NumericType[M], M](
-                                          val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
   extends TwoArgumentFunction[N, M](base, exponent) {
   override def inverse: Term => Term = ???
 
