@@ -140,6 +140,11 @@ object HasSubterms {
       }
     }
   }
+
+
+
+  def unapply(h: HasSubterms): Option[Seq[Term]] =
+    Some(h.subterms)
 }
 
 trait HasSubterms extends Term {
@@ -147,11 +152,6 @@ trait HasSubterms extends Term {
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
   def newInstance: NewInstanceF
-}
-
-object HasSubterms {
-  def unapply(h: HasSubterms): Option[Seq[Term]] =
-    Some(h.subterms)
 }
 
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
@@ -326,26 +326,16 @@ object InverseConstructorHelpers {
 }
 
 
-trait OneArgumentFunction[N <: NumericType[M], M] extends NumericFunction[N, M] {
+trait OneArgumentFunction[N <: NumericType[M], M]
+  extends NumericFunction[N, M]
+  with Arity1MkNewInstance[N, M] {
   //trig functions only take 1 argument
   val argument: Term
   override val arguments: Seq[Term] = Seq(argument)
 
   override val subterms: Seq[Term] = Seq(argument)
 
-
-  protected def mkNewInstance[X <: OneArgumentFunction[N, M]]
-    (constructor: NumericTerm[N, M] => X): NewInstanceF = {
-
-    (withSubterms: Seq[Term]) => {
-      val Seq (a) = assertArity (1, withSubterms).take (1)
-      constructor(assertCast(a))
-    }
-  }
-
   override val numArguments: Int = 1
-
-  type ConstructorArgType = NumericTerm[N, M]
 
   def mkInverseConstructorE:
   (ConstructorArgType => Term) => Seq[Term] => Either[SimError, Term] =
@@ -354,21 +344,14 @@ trait OneArgumentFunction[N <: NumericType[M], M] extends NumericFunction[N, M] 
 
 abstract class TwoArgumentFunction[N <: NumericType[M], M]
   (val arg1: Term, val arg2: Term)
-  extends NumericFunction[N, M] {
+  extends NumericFunction[N, M]
+  with Arity2MkNewInstance[N, M] {
 
   override val arguments: Seq[Term] = Seq(arg1, arg2)
   override val subterms: Seq[Term] = arguments
 
-  protected def mkNewInstance[X <: OneArgumentFunction[N, M]]
-  (constructor: NumericTerm[N, M] => X): NewInstanceF = {
+  override val numArguments: Int = 2
 
-    (withSubterms: Seq[Term]) => {
-      val Seq (a, b) = assertArity (2, withSubterms).take (2)
-      constructor(assertCast(a), assertCast(b))
-    }
-  }
-
-  type ConstructorArgType = NumericTerm[N, M]
   def mkInverseConstructorE: ((ConstructorArgType, ConstructorArgType) => Term) =>
     Seq[Term] => Either[SimError, Term] =
     InverseConstructorHelpers.arity2MkInverseConstructorE
