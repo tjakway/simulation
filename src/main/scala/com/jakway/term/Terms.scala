@@ -165,6 +165,23 @@ case class Multiply[N <: NumericType[M], M](
   override def newInstance: NewInstanceF = mkNewInstance(Multiply.apply)
 }
 
+case class Divide[N <: NumericType[M], M](
+   val dividend: NumericTerm[N, M],
+   val numerator: NumericTerm[N, M])
+  extends BinaryNumericOperation[N, M] {
+
+  override val left = dividend
+  override val right = numerator
+
+  override def inverse: Term => Term =
+    (term: Term) => Multiply(
+      term.asInstanceOf[NumericTerm[N, M]], Divide(numerator, dividend))
+
+  override def litIdentity: Literal[N, M] = Literal[N, M]("1")
+
+  override def newInstance: NewInstanceF = mkNewInstance(Divide.apply)
+}
+
 object IdentityFunction extends UnnestedTerm
 
 trait NumericFunction[N <: NumericType[M], M]
@@ -194,6 +211,23 @@ trait OneArgumentFunction[N <: NumericType[M], M] extends NumericFunction[N, M] 
     (withSubterms: Seq[Term]) => {
       val Seq (a) = assertArity (1, withSubterms).take (1)
       constructor(assertCast(a))
+    }
+  }
+}
+
+abstract class TwoArgumentFunction[N <: NumericType[M], M]
+  (val arg1: Term, val arg2: Term)
+  extends NumericFunction[N, M] {
+
+  override val arguments: Seq[Term] = Seq(arg1, arg2)
+  override val subterms: Seq[Term] = arguments
+
+  protected def mkNewInstance[X <: OneArgumentFunction[N, M]]
+  (constructor: NumericTerm[N, M] => X): NewInstanceF = {
+
+    (withSubterms: Seq[Term]) => {
+      val Seq (a, b) = assertArity (2, withSubterms).take (2)
+      constructor(assertCast(a), assertCast(b))
     }
   }
 }
@@ -231,6 +265,33 @@ case class Arctan[N <: NumericType[M], M](override val argument: Term) extends T
 
   override def newInstance: NewInstanceF = mkNewInstance[Arctan[N,M]](Arctan.apply)
 }
+
+case class NaturalLog[N <: NumericType[M], M](override val argument: Term)
+  extends OneArgumentFunction[N, M] {
+
+  override def inverse: Term => Term = ???
+
+  override def newInstance: NewInstanceF = mkNewInstance[NaturalLog[N,M]](NaturalLog.apply)
+}
+
+case class Power[N <: NumericType[M], M](
+      val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
+  extends TwoArgumentFunction[N, M](base, exponent) {
+  override def inverse: Term => Term = ???
+
+  override def newInstance: NewInstanceF = mkNewInstance[NaturalLog[N,M]](NaturalLog.apply)
+}
+
+case class Power[N <: NumericType[M], M](
+                                          val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
+  extends TwoArgumentFunction[N, M](base, exponent) {
+  override def inverse: Term => Term = ???
+
+  override def newInstance: NewInstanceF = mkNewInstance[NaturalLog[N,M]](NaturalLog.apply)
+}
+
+
+
 
 /**
   * Equation is intentionally not an instance of Term
