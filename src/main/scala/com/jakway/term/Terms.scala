@@ -223,11 +223,6 @@ trait HasSubterms extends Term {
   def newInstance: NewInstanceF
 }
 
-object HasSubterms {
-  def unapply(h: HasSubterms): Option[Seq[Term]] =
-    Some(h.subterms)
-}
-
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   val left: T
   val right: T
@@ -444,16 +439,8 @@ abstract class TwoArgumentFunction[N <: NumericType[M], M]
   override val arguments: Seq[Term] = Seq(arg1, arg2)
   override val subterms: Seq[Term] = arguments
 
-  protected def mkNewInstance[X <: OneArgumentFunction[N, M]]
-  (constructor: NumericTerm[N, M] => X): NewInstanceF = {
+  override val numArguments: Int = 2
 
-    (withSubterms: Seq[Term]) => {
-      val Seq (a, b) = assertArity (2, withSubterms).take (2)
-      constructor(assertCast(a), assertCast(b))
-    }
-  }
-
-  type ConstructorArgType = NumericTerm[N, M]
   def mkInverseConstructorE: ((ConstructorArgType, ConstructorArgType) => Term) =>
     Seq[Term] => Either[SimError, Term] =
     InverseConstructorHelpers.arity2MkInverseConstructorE
