@@ -168,7 +168,14 @@ object NewInstanceHelpers {
       constructor(HasSubterms.assertCast(l), HasSubterms.assertCast(r))
     }
   }
+
+  trait Arity2MkNewInstance[N <: NumericType[M], M] {
+    type ConstructorArgType = NumericTerm[N, M]
+    def mkNewInstance[X <: Term]: ((ConstructorArgType, ConstructorArgType) => X) => NewInstanceF
+      = NewInstanceHelpers.arity2MkNewInstance
+  }
 }
+
 
 trait BinaryNumericOperation[N <: NumericType[M], M]
   extends NumericOperation[N, M]
