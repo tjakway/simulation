@@ -22,7 +22,14 @@ class Solver[N <: NumericType[M], M] {
       Right(equation)
     } else {
       //TODO XXX
-      val toSearch: Term = equation.left
+
+      //TODO: use a case to check if equation.left is:
+      // -the term we're looking for
+      // -a different unnested term
+      // -an instance of HasSubterms
+      //and handle appropriately
+      val toSearch: HasSubterms = equation.left
+        .asInstanceOf[HasSubterms]
 
       var replacements: Seq[(Term => Term)] = Seq()
 
@@ -39,6 +46,7 @@ class Solver[N <: NumericType[M], M] {
                   val replaceWith = castParent.identity
                   patchSubterms(parent.subterms, x, replaceWith)
                 }
+              ???
             }
           }
         }
