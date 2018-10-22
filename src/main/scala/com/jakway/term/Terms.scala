@@ -14,8 +14,49 @@ trait Term {
 
 
 trait Operation extends Term with HasSubterms {
-  def inverse: Term => Term
+  def inverseConstructorE: Seq[Term] => Either[SimError, Term]
+
   def identity: Term
+  val numArguments: Int
+
+  class InverseError(override val msg: String)
+    extends SimError(msg)
+
+  case class InverseArgumentsError(override val msg: String)
+    extends SimError(msg)
+
+  case class InverseConstructorCastError(override val msg: String)
+    extends SimError(msg)
+
+  final def inverse: Seq[Term] => Either[SimError, Term] =
+    (args: Seq[Term]) => {
+      if(args.length != numArguments) {
+        Left(new InverseError("Incorrect number of arguments " +
+          s"(expected $numArguments, got ${args.length}: $args"))
+      } else {
+        inverseConstructorE(args)
+      }
+    }
+
+  /**
+    * Like assertCast but return an algebraic error type
+    * @param t
+    * @param tag
+    * @tparam A
+    * @return
+    */
+  def checkCast[A <: Term](t: Term)(implicit tag: ClassTag[A]): Either[SimError, A] = {
+    try {
+      Right(t.asInstanceOf[A])
+    } catch {
+      case e: Throwable => {
+        val newException = InverseConstructorCastError(s"Error while casting $t " +
+          s"to " + tag.runtimeClass.getName + s" caused by $e")
+        newException.addSuppressed(e)
+        Left(newException)
+      }
+    }
+  }
 }
 
 trait NumericTerm[N <: NumericType[M], M] extends Term
@@ -113,16 +154,9 @@ trait BinaryTerm[T <: Term] extends Term with HasSubterms {
   override val subterms: Seq[Term] = Seq(left, right)
 }
 
-trait ChiralInvertible[T <: Term] extends BinaryTerm[T] with Term {
-  def inverseLeft: T
-  def inverseRight: T
-}
-
 trait BinaryNumericOperation[N <: NumericType[M], M]
   extends NumericOperation[N, M]
-  with ChiralInvertible[NumericTerm[N, M]] {
-  override def inverseLeft: NumericTerm[N, M] = inverse(left).asInstanceOf[NumericTerm[N, M]]
-  override def inverseRight: NumericTerm[N, M] = inverse(right).asInstanceOf[NumericTerm[N, M]]
+  with BinaryTerm[NumericTerm[N, M]] {
 
   protected def mkNewInstance[X <: BinaryNumericOperation[N, M]]
     (constructor: (NumericTerm[N, M], NumericTerm[N, M]) => X): NewInstanceF = {
@@ -132,6 +166,23 @@ trait BinaryNumericOperation[N <: NumericType[M], M]
       constructor(assertCast(l), assertCast(r))
     }
   }
+
+  override val numArguments: Int = 2
+
+  type ConstructorArgType = NumericTerm[N, M]
+
+  def mkInverseConstructorE:
+    ((ConstructorArgType, ConstructorArgType) => Term) => Seq[Term] => Either[SimError, Term] = {
+    ctor =>
+    (args: Seq[Term]) =>
+      val Seq(le, re) = args.take(numArguments)
+      val res: Either[SimError, (ConstructorArgType, ConstructorArgType)] = for {
+        l <- assertCast[ConstructorArgType](le)
+        r <- assertCast[ConstructorArgType](re)
+      } yield (l, r)
+
+      res.map(x => ctor(x._1, x._2))
+  }
 }
 
 
@@ -140,14 +191,39 @@ case class Add[N <: NumericType[M], M](
                 override val right: NumericTerm[N, M])
   extends BinaryNumericOperation[N, M] {
 
-  override def inverse: Term => Term =
-    (term: Term) =>
-      Add(Negative(term.asInstanceOf[NumericTerm[N, M]]),
-        term.asInstanceOf[NumericTerm[N, M]])
+  /*
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] = {
+    (args: Seq[Term]) =>
+      val Seq(le, re) = args.take(numArguments)
+      val res: Either[SimError, (NumericTerm[N, M], NumericTerm[N, M])] = for {
+        l <- assertCast[NumericTerm[N, M]](le)
+        r <- assertCast[NumericTerm[N, M]](re)
+      } yield (l, r)
+
+      res.map(x => Subtract.apply(x._1, x._2))
+    }
+    */
+
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Subtract.apply)
+
 
   override def litIdentity: Literal[N, M] = Literal[N, M]("0")
 
   override def newInstance: NewInstanceF = mkNewInstance(Add.apply)
+}
+
+case class Subtract[N <: NumericType[M], M](
+                                  override val left: NumericTerm[N, M],
+                                  override val right: NumericTerm[N, M])
+  extends BinaryNumericOperation[N, M] {
+
+  override def inverseConstructor: Seq[Term] => Term = Add.apply
+
+
+  override def litIdentity: Literal[N, M] = Literal[N, M]("0")
+
+  override def newInstance: NewInstanceF = mkNewInstance(Subtract.apply)
 }
 
 case class Multiply[N <: NumericType[M], M](
