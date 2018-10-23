@@ -62,7 +62,7 @@ class Solver[N <: NumericType[M], M] {
   case class ApplyToTerm(
                 replaceTerm: Term, replaceWith: Term => Either[SimError, Term])
     extends SubstituteFunction
-  case class ApplyToEquation(f: Seq[Term] => Term) extends SubstituteFunction
+  case class ApplyToEquation(f: Term => Term) extends SubstituteFunction
 
   object SubstituteFunction {
     def mkSubstituteFunctions(toReplace: Term, parent: HasSubterms,
@@ -73,11 +73,11 @@ class Solver[N <: NumericType[M], M] {
       }
 
       val applyToEquation =
-        (orig: Seq[Term]) => {
-          val keepIndex = parent.subterms.indexOf(toReplace)
-          val toKeep = parent.subterms(keepIndex)
-          val (left, right) = parent.subterms.splitAt(keepIndex)
-          val newArgs = left ++ Seq(toKeep) ++ right
+        (varToReplace: Term) => {
+          val replaceIndex = parent.subterms.indexOf(varToReplace)
+          val toReplace = parent.subterms(replaceIndex)
+          val (left, right) = parent.subterms.splitAt(replaceIndex)
+          val newArgs = left ++ Seq(varToReplace) ++ right
           parent.newInstance(newArgs)
         }
 
