@@ -59,6 +59,14 @@ class Solver[N <: NumericType[M], M] {
   }
 
   sealed trait SubstituteFunction
+
+  /**
+    * Note that since Terms are immutable we actually apply the function
+    * to the parent of the Variable and create a copy that doesn't contain
+    * the term we want to replace
+    * @param replaceTerm
+    * @param replaceWith
+    */
   case class ApplyToTerm(
                 replaceTerm: Term, replaceWith: Term => Either[SimError, Term])
     extends SubstituteFunction
@@ -149,7 +157,10 @@ class Solver[N <: NumericType[M], M] {
 
             to.copy(left = newLeftTerm)
           }
-          case ApplyToEquation(f) => ???
+            //apply the inverse operation to the right side of the equation
+          case ApplyToEquation(g) => {
+            to.copy(right = g(to.right))
+          }
         }
 
         val warnings: Seq[Warning] =
@@ -169,13 +180,6 @@ class Solver[N <: NumericType[M], M] {
         case Failure(e) => Left(new UnknownError(f, to, e))
       }
 
-      fs.map { x => x match {
-        case ApplyToTerm(replaceTerm, replaceWith) => {
-          to.left
-        }
-        case ApplyToEquation(f) => ???
-      }
-      }
     }
   }
 
