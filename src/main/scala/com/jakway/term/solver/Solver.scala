@@ -39,7 +39,7 @@ class Solver[N <: NumericType[M], M] {
             case Some(parent) => {
               //we're replacing the variable x with the identity
               castToHasIdentity(parent)
-                .flatMap { castParent =>
+                .flatMap { (castParent: NumericOperation[N, M]) =>
                   val replaceWith = castParent.identity
                   patchSubterms(parent.subterms, x, replaceWith)
                 }
@@ -90,7 +90,8 @@ object Solver {
     }
   }
 
-  def castToHasIdentity[N <: NumericType[M], M](parent: HasSubterms): Either[SimError, NumericOperation[N, M]] = {
+  def castToHasIdentity[N <: NumericType[M], M](parent: HasSubterms):
+      Either[SimError, NumericOperation[N, M]] = {
     try {
       Right(parent.asInstanceOf[NumericOperation[N, M]])
     } catch {
