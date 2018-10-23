@@ -59,10 +59,18 @@ class Solver[N <: NumericType[M], M] {
   }
 
   sealed trait SubstituteFunction
+
+  /**
+    * Note that since Terms are immutable we actually apply the function
+    * to the parent of the Variable and create a copy that doesn't contain
+    * the term we want to replace
+    * @param replaceTerm
+    * @param replaceWith
+    */
   case class ApplyToTerm(
                 replaceTerm: Term, replaceWith: Term => Either[SimError, Term])
     extends SubstituteFunction
-  case class ApplyToEquation(f: Seq[Term] => Term) extends SubstituteFunction
+  case class ApplyToEquation(f: Term => Term) extends SubstituteFunction
 
   object SubstituteFunction {
     def mkSubstituteFunctions(toReplace: Term, parent: HasSubterms,
@@ -73,11 +81,11 @@ class Solver[N <: NumericType[M], M] {
       }
 
       val applyToEquation =
-        (orig: Seq[Term]) => {
-          val keepIndex = parent.subterms.indexOf(toReplace)
-          val toKeep = parent.subterms(keepIndex)
-          val (left, right) = parent.subterms.splitAt(keepIndex)
-          val newArgs = left ++ Seq(toKeep) ++ right
+        (varToReplace: Term) => {
+          val replaceIndex = parent.subterms.indexOf(varToReplace)
+          val toReplace = parent.subterms(replaceIndex)
+          val (left, right) = parent.subterms.splitAt(replaceIndex)
+          val newArgs = left ++ Seq(varToReplace) ++ right
           parent.newInstance(newArgs)
         }
 
@@ -149,7 +157,10 @@ class Solver[N <: NumericType[M], M] {
 
             to.copy(left = newLeftTerm)
           }
-          case ApplyToEquation(f) => ???
+            //apply the inverse operation to the right side of the equation
+          case ApplyToEquation(g) => {
+            to.copy(right = g(to.right))
+          }
         }
 
         val warnings: Seq[Warning] =
@@ -169,13 +180,6 @@ class Solver[N <: NumericType[M], M] {
         case Failure(e) => Left(new UnknownError(f, to, e))
       }
 
-      fs.map { x => x match {
-        case ApplyToTerm(replaceTerm, replaceWith) => {
-          to.left
-        }
-        case ApplyToEquation(f) => ???
-      }
-      }
     }
   }
 
