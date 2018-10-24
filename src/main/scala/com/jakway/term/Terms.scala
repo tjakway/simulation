@@ -50,6 +50,13 @@ trait Operation extends Term with HasSubterms {
         inverseConstructorE(args)
       }
     }
+
+  /**
+    * inverse constructor applied to this Operation's subterms
+    * @return
+    */
+  final def inverted: Either[SimError, Term] =
+    inverse(subterms)
 }
 
 object Operation {
