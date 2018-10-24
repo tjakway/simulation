@@ -24,6 +24,13 @@ trait Operation extends Term with HasSubterms {
   class InverseError(override val msg: String)
     extends SimError(msg)
 
+  /**
+    * Calls the constructor of this type's inverse
+    * Read as "the inverse of Add is Subtract",
+    * not "the inverse of 2 + 3 is 2 - 3"
+    * For the latter, called [[inverted]]
+    * @return
+    */
   final def inverse: Seq[Term] => Either[SimError, Term] =
     (args: Seq[Term]) => {
       if(args.length != numArguments) {
@@ -33,6 +40,13 @@ trait Operation extends Term with HasSubterms {
         inverseConstructorE(args)
       }
     }
+
+  /**
+    * inverse constructor applied to this Operation's subterms
+    * @return
+    */
+  final def inverted: Either[SimError, Term] =
+    inverse(subterms)
 }
 
 object Operation {
