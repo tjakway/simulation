@@ -1,6 +1,7 @@
-package com.jakway.term
+package com.jakway.term.simplifier
 
 import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.{BinaryNumericOperation, HasSubterms, Operation, Term}
 
 class Simplifier {
   def simplifiers[A <: Term]: Set[A => Either[SimError, Term]] = ??? //TODO
