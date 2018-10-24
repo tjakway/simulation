@@ -119,7 +119,7 @@ case class Literal[N <: NumericType[M], M](value: String)
 
   override def matches(other: Term) = {
     sameType(other) &&
-      value == other.asInstanceOf[Literal].value
+      value == other.asInstanceOf[Literal[N, M]].value
   }
 }
 
