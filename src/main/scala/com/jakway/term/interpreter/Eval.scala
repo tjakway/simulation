@@ -10,6 +10,10 @@ import com.jakway.term.{Literal, NumericTerm, Term, Variable}
   */
 case class Raw[N <: NumericType[M], M](value: M) extends NumericTerm[N, M] {
   override def contains(t: Term): Boolean = equals(t)
+
+  override def matches(other: Term): Boolean = {
+    sameType(other) && value == other.asInstanceOf[Raw[N, M]].value
+  }
 }
 
 /**
