@@ -12,6 +12,16 @@ trait Term {
   def contains(t: Term): Boolean
 
   val uniqueId: UUID = java.util.UUID.randomUUID()
+
+  /**
+    * equals ignoring UUID
+    * @param other
+    * @return
+    */
+  def matches(other: Term): Boolean
+
+  def sameType(other: Any): Boolean =
+    getClass() == other.getClass()
 }
 
 
@@ -75,6 +85,13 @@ object Operation {
       }
     }
   }
+
+  /**
+    * Extract subterms from an Operation
+    * @param o
+    * @return
+    */
+  def unapply(o: Operation): Option[Seq[Term]] = HasSubterms.unapply(o)
 }
 
 trait NumericTerm[N <: NumericType[M], M] extends Term
@@ -98,7 +115,13 @@ trait UnnestedTerm extends Term {
 
 case class Literal[N <: NumericType[M], M](value: String)
   extends NumericTerm[N, M]
-  with UnnestedTerm
+  with UnnestedTerm {
+
+  override def matches(other: Term) = {
+    sameType(other) &&
+      value == other.asInstanceOf[Literal].value
+  }
+}
 
 case class Variable[N <: NumericType[M], M](name: String, description: Option[String])
   extends NumericTerm[N, M]
@@ -110,6 +133,11 @@ case class Variable[N <: NumericType[M], M](name: String, description: Option[St
     * @return
     */
   def sameVariable(other: Variable[N, M]) = name == other.name
+
+  override def matches(other: Term) = {
+    sameType(other) &&
+      sameVariable(other.asInstanceOf[Variable[N, M]])
+  }
 }
 
 object Variable {
@@ -166,6 +194,12 @@ trait HasSubterms extends Term {
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
   def newInstance: NewInstanceF
+
+
+  override def matches(other: Term): Boolean = {
+    sameType(other) &&
+      subterms == other.asInstanceOf[HasSubterms].subterms
+  }
 }
 
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
@@ -284,7 +318,10 @@ case class Divide[N <: NumericType[M], M](
   override def newInstance: NewInstanceF = mkNewInstance(Divide.apply)
 }
 
-object IdentityFunction extends UnnestedTerm
+object IdentityFunction extends UnnestedTerm {
+  override def matches(other: Term) =
+    sameType(other)
+}
 
 trait NumericFunction[N <: NumericType[M], M]
   extends Operation
