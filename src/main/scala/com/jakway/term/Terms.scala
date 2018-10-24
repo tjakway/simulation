@@ -228,6 +228,12 @@ trait HasSubterms extends Term {
 
   def contains(t: Term): Boolean = equals(t) || subterms.contains(t)
   def newInstance: NewInstanceF
+
+
+  override def matches(other: Term): Boolean = {
+    sameType(other) &&
+      subterms == other.asInstanceOf[HasSubterms].subterms
+  }
 }
 
 trait BinaryTerm[T <: Term] extends Term with HasSubterms {
