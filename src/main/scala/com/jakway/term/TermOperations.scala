@@ -120,4 +120,13 @@ object TermOperations {
       helper(Seq())(term)
     }
   }
+
+  /**
+    * @param a
+    * @param b
+    * @return a list of subterms that aren't shared by its arguments
+    */
+  def getDisjointSubterms(a: HasSubterms, b: HasSubterms): Seq[Term] = {
+    a.subterms.filter(!b.contains(_)) ++ b.subterms.filter(!a.contains(_))
+  }
 }
