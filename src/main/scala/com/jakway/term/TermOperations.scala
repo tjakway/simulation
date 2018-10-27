@@ -129,4 +129,15 @@ object TermOperations {
   def getDisjointSubterms(a: HasSubterms, b: HasSubterms): Seq[Term] = {
     a.subterms.filter(!b.contains(_)) ++ b.subterms.filter(!a.contains(_))
   }
+
+  /**
+    * Opposite of getDisjointSubterms
+    * @param a
+    * @param b
+    * @return
+    */
+  def getOverlappingSubterms(a: HasSubterms, b: HasSubterms): Set[Term] = {
+    (a.subterms.filter(b.subterms.contains(_))
+      ++ b.subterms.filter(a.subterms.contains(_))).toSet
+  }
 }

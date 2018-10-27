@@ -1,8 +1,9 @@
 package com.jakway.term.solver
 
 import com.jakway.term.interpreter.warn.Warning
-import com.jakway.term.{Equation, HasSubterms, Term, TermOperations}
+import com.jakway.term._
 import com.jakway.term.numeric.types.SimError
+import com.jakway.term.simplifier.{InverseIdentitySimplifier, Simplifier}
 import com.jakway.term.solver.SubstituteFunction.Applications.ApplicationType
 
 import scala.util.{Failure, Success, Try}
@@ -21,24 +22,58 @@ case class ApplyToTerm(
   extends SubstituteFunction
 case class ApplyToEquation(f: Term => Term) extends SubstituteFunction
 
-object SubstituteFunction {
-  def mkSubstituteFunctions(toReplace: Term, parent: HasSubterms,
-                            identity: Term): Seq[SubstituteFunction] = {
+case class ApplyInverses(inverse: Term => Either[SimError, Term],
+                         simplify: Simplifier) extends SubstituteFunction
 
-    val newTerm = { (inputToReplace: Term) =>
-      Solver.patchSubterms(parent.subterms, inputToReplace, identity).map(parent.newInstance)
+
+object InvertFor {
+  case class BadOperationError(o: Operation)
+    extends SimError(s"Operation $o has subterms == Seq()")
+
+  def apply(invertingFor: Term, z: Operation):
+    Either[SimError, Term => Either[SimError, Term]] = z match {
+    case o@Operation(xs) if xs.length == 1 => Right {
+      (y: Term) => o.inverse(Seq(y))
     }
+    case o@Operation(xs) if xs.length > 1 => {
+      // XXX TODO
+      ???
+    }
+    case o@Operation(Seq()) => Left(BadOperationError(o))
+  }
+}
 
-    val applyToEquation =
-      (varToReplace: Term) => {
-        val replaceIndex = parent.subterms.indexOf(varToReplace)
-        val toReplace = parent.subterms(replaceIndex)
-        val (left, right) = parent.subterms.splitAt(replaceIndex)
-        val newArgs = left ++ Seq(varToReplace) ++ right
-        parent.newInstance(newArgs)
+
+object SubstituteFunction {
+  case class NotOperationError(t: Term)
+    extends SubstituteFunctionError(
+      s"Expected passed term $t to be an instance of Operation")
+
+  def mkSubstituteFunctions(toReplace: Term, top: HasSubterms,
+                            identity: Term): Either[SimError, Seq[SubstituteFunction]] = {
+
+    val empty: Either[Seq[SimError], Seq[SubstituteFunction]] = Right(Seq())
+
+    val res = TermOperations
+      .parentsOf(toReplace, top)
+      //reverse the list of parents so it's
+      //top -> bottom
+      .reverse
+      .foldLeft(empty) {
+        case (Right(fs), x@Operation(_)) => {
+          val res = InvertFor(toReplace, x)
+            .map(i => ApplyInverses(i, new InverseIdentitySimplifier()))
+            .map(i => fs :+ i)
+
+          Util.mapLeft(res)(e => Seq(e))
+        }
+
+
+        case (Left(acc), x) => Left(acc :+ NotOperationError(x))
+        case (_, x) => Left(Seq(NotOperationError(x)))
       }
 
-    Seq(ApplyToTerm(toReplace, newTerm), ApplyToEquation(applyToEquation))
+    Util.mapLeft(res)(SubstituteFunctionErrors(_))
   }
 
   class Applications(val applications: Seq[Applications.ApplicationType],
