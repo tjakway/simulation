@@ -109,6 +109,16 @@ object Operation {
   def unapply(o: Operation): Option[Seq[Term]] = HasSubterms.unapply(o)
 }
 
+trait CommutativeOperation extends Operation {
+  /**
+    * An iterator over every permutation of this operation's
+    * arguments
+    * @return
+    */
+  def permutations: Iterator[Term] =
+    subterms.permutations.map(newInstance)
+}
+
 trait NumericTerm[N <: NumericType[M], M] extends Term
 
 trait NumericOperation[N <: NumericType[M], M]
