@@ -35,9 +35,9 @@ object InvertFor {
     case o@Operation(xs) if xs.length == 1 => Right {
       (y: Term) => o.inverse(Seq(y))
     }
-    case o@Operation(xs) if xs.length > 1 => {
-      // XXX TODO
-      ???
+    case z@Operation(xs) if xs.length > 1 => Right {
+      (y: Term) => Solver.patchSubterms(xs, invertingFor, y)
+          .flatMap(z.inverse)
     }
     case o@Operation(Seq()) => Left(BadOperationError(o))
   }
@@ -58,6 +58,7 @@ object SubstituteFunction {
       .parentsOf(toReplace, top)
       //reverse the list of parents so it's
       //top -> bottom
+      //aka outermost term -> innermost term
       .reverse
       .foldLeft(empty) {
         case (Right(fs), x@Operation(_)) => {
