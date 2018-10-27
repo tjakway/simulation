@@ -109,6 +109,10 @@ trait CommutativeOperation extends Operation {
     subterms.permutations.map(newInstance)
 }
 
+object CommutativeOperation {
+  def unapply(o: CommutativeOperation): Option[Seq[Term]] = Operation.unapply(o)
+}
+
 trait NumericTerm[N <: NumericType[M], M] extends Term
 
 trait NumericOperation[N <: NumericType[M], M]
