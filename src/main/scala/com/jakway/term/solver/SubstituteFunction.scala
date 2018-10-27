@@ -23,7 +23,7 @@ case class ApplyToTerm(
 case class ApplyToEquation(f: Term => Term) extends SubstituteFunction
 
 case class ApplyInverses(inverse: Term => Either[SimError, Term],
-                         simplify: Simplifier) extends SubstituteFunction
+                         simplifier: Simplifier) extends SubstituteFunction
 
 
 object InvertFor {
