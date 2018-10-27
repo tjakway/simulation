@@ -57,6 +57,11 @@ trait Operation extends Term with HasSubterms {
     */
   final def inverted: Either[SimError, Term] =
     inverse(subterms)
+
+  def inverseClass: Class[_ <: Term] = inverted.map(_.getClass()).right.get
+
+  def isInverseTypeOf(t: Term): Boolean =
+    t.getClass == inverseClass
 }
 
 object Operation {
