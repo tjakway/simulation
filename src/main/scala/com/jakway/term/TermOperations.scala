@@ -3,6 +3,7 @@ package com.jakway.term
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 
 object TermOperations {
@@ -85,4 +86,38 @@ object TermOperations {
     }
   }
 
+  /**
+    * returns all the parent nodes of the passed term
+    * in order from closest -> farthest
+    * (i.e. bottom to top)
+    * @param term
+    * @param in
+    * @return
+    */
+  def parentsOf(term: Term, in: HasSubterms): Seq[HasSubterms] = {
+    if(term == in) {
+      Seq()
+    } else {
+      /**
+        * tail-recursive helper function to walk up the tree
+        * @param acc
+        * @param toFind
+        * @return
+        */
+      @tailrec
+      def helper(acc: Seq[HasSubterms])(toFind: Term): Seq[HasSubterms] = {
+        findParentOf(toFind, in) match {
+            //stop when we reach the top of the tree
+          case None => {
+            assert(toFind == in)
+            acc
+          }
+            //recurse up
+          case Some(next) => helper(acc :+ next)(next)
+        }
+      }
+
+      helper(Seq())(term)
+    }
+  }
 }
