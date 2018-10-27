@@ -152,6 +152,40 @@ object SubstituteFunction {
         case ApplyToEquation(g) => {
           to.copy(right = g(to.right))
         }
+
+        case s@ApplyInverses(inv, simplifier) => {
+          def f(t: Term): Either[SimError, Term] =
+            inv(t).flatMap(simplifier.simplify)
+
+          //make sure we actually simplified something
+          def changed(invL: Term, invR: Term): Either[SimError, Unit] = {
+            case class ExpectedSimplificationError(override val msg: String)
+              extends SimError(msg)
+
+            if(invL == to.left && invR == to.right) {
+              Left(ExpectedSimplificationError(
+                s"Expected applying SimplificationFunction $s" +
+                  s" would result in a different equation"))
+            } else {
+              Right(())
+            }
+          }
+
+          val res = for {
+            invLeft <- f(to.left)
+            invRight <- f(to.right)
+            _ <- changed(invLeft, invRight)
+          } yield {
+            to.copy(left = invLeft)
+              .copy(right = invRight)
+          }
+
+          //TODO: change declaration to return an Either
+          res match {
+            case Right(x) => x
+            case Left(err) => throw err
+          }
+        }
       }
 
       val warnings: Seq[Warning] =
