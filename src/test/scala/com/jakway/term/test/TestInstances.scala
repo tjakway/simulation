@@ -17,4 +17,6 @@ package double {
 
   class DoubleTestHasSubterms extends TestHasSubterms[N, M](inst)
   class DoubleTestFindVariables extends TestFindVariables[N, M](inst)
+  class DoubleTestSubstituteFunctions
+    extends TestSubstituteFunctions[N, M](inst)
 }
