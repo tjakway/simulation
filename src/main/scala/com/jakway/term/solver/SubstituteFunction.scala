@@ -4,7 +4,7 @@ import com.jakway.term.interpreter.warn.Warning
 import com.jakway.term._
 import com.jakway.term.numeric.types.SimError
 import com.jakway.term.simplifier.{InverseIdentitySimplifier, Simplifier}
-import com.jakway.term.solver.SubstituteFunction.Applications.ApplicationType
+import com.jakway.term.solver.SubstituteFunction.Applications.{ApplicationType, Inversion, Simplification}
 import interface.Formatter
 
 import scala.util.{Failure, Success, Try}
@@ -82,7 +82,10 @@ object SubstituteFunction {
                      val start: Equation,
                      val result: Equation)
   object Applications {
-    type ApplicationType = (SubstituteFunction, Equation, Seq[Warning])
+    case class Simplification(before: Term, after: Term)
+    case class Inversion(before: Term, after: Term)
+    type ApplicationType = (SubstituteFunction,
+      Inversion, Simplification, Equation, Seq[Warning])
   }
 
   class SubstituteFunctionError(override val msg: String)
@@ -123,89 +126,53 @@ object SubstituteFunction {
   def applyFunctions(fs: Seq[SubstituteFunction], origEquation: Equation):
   Either[SimError, Applications] = {
 
-    def applyThisFunction(f: SubstituteFunction, to: Equation):
+    def applyThisFunction(subF: SubstituteFunction, to: Equation):
     Either[SimError, ApplicationType] = Try {
 
-      var matchingTerms: Seq[Term] = Seq()
-      val resultingEquation: Equation = f match {
-        case ApplyToTerm(replaceTerm, replaceWith) => {
-
-          //TODO: traversing the entire AST for each substitution function
-          //is very inefficient
-          val newLeftTerm = TermOperations.mapAll(to.left) { thisTerm =>
-            if(thisTerm == replaceTerm) {
-              val substitutePerformed = matchingTerms.length > 0
-
-              matchingTerms = matchingTerms :+ thisTerm
-              if(!substitutePerformed) {
-                //TODO: refactor into something more elegant than
-                //throwing the error here and catching it in the Try block
-                replaceWith(thisTerm).right.get
-              } else {
-                thisTerm
-              }
-            } else {
-              thisTerm
-            }
-          }
-
-          to.copy(left = newLeftTerm)
-        }
-        //apply the inverse operation to the right side of the equation
-        case ApplyToEquation(g) => {
-          to.copy(right = g(to.right))
-        }
-
+      val result: Either[SimError, ApplicationType] =
+        subF match {
         case s@ApplyInverses(inv, simplifier) => {
           def f(t: Term): Either[SimError, Term] =
             inv(t).flatMap(simplifier.simplify)
 
           //make sure we actually simplified something
-          def changed(invL: Term, invR: Term): Either[SimError, Unit] = {
+          def changed(msg: String)(invL: Term, invR: Term): Either[SimError, Unit] = {
             case class ExpectedSimplificationError(override val msg: String)
               extends SimError(msg)
 
             if(invL == to.left && invR == to.right) {
               Left(ExpectedSimplificationError(
                 s"Expected applying SimplificationFunction $s" +
-                  s" would result in a different equation"))
+                  s" would result in a different equation; " + msg))
             } else {
               Right(())
             }
           }
 
-          val res = for {
-            invLeft <- f(to.left)
-            invRight <- f(to.right)
-            _ <- changed(invLeft, invRight)
-          } yield {
-            to.copy(left = invLeft)
-              .copy(right = invRight)
-          }
+          for {
+            invLeft <- inv(to.left)
+            invRight <- inv(to.right)
+            _ <- changed("inversion step changed nothing")(invLeft, invRight)
 
-          //TODO: change declaration to return an Either
-          res match {
-            case Right(x) => x
-            case Left(err) => throw err
+            sLeft <- simplifier.simplify(invLeft)
+            sRight <- simplifier.simplify(invRight)
+            _ <- changed("simplification step changed nothing")(sLeft, sRight)
+          } yield {
+            val newEq = to.copy(left = sLeft)
+                          .copy(right = sRight)
+
+            (subF, Inversion(invLeft, invRight), Simplification(sLeft, sRight),
+              newEq, Seq())
           }
         }
       }
 
-      val warnings: Seq[Warning] =
-        if(matchingTerms.length > 1) {
-          Seq(MultipleTermsMatchSubstitutionFunction(f, to, matchingTerms))
-        } else {
-          Seq()
-        }
-
-      //return the result of the function application and
-      // any warnings we've gathered from it
-      (f, resultingEquation, warnings)
+      result
     } match {
-      case Success(x) => Right(x)
+      case Success(x) => x
       case Failure(e) if e.isInstanceOf[SimError] =>
-        Left(new ReturnedError(f, to, e.asInstanceOf[SimError]))
-      case Failure(e) => Left(new UnknownError(f, to, e))
+        Left(new ReturnedError(subF, to, e.asInstanceOf[SimError]))
+      case Failure(e) => Left(new UnknownError(subF, to, e))
     }
 
 
@@ -220,7 +187,7 @@ object SubstituteFunction {
       //and stop if we get a Left
       case (Right((acc, thisEquation)), thisFunction) =>
         applyThisFunction(thisFunction, thisEquation) match {
-          case Right(res) => Right(acc :+ res, res._2)
+          case Right(res) => Right(acc :+ res, res._4)
           case Left(res) => Left(Seq(res))
         }
 
