@@ -1,18 +1,20 @@
 package com.jakway.term.test
 
-import com.jakway.term.{Add, Equation, Literal, Variable}
+import com.jakway.term._
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.solver.SubstituteFunction
+import com.jakway.term.solver.SubstituteFunction.Applications
 import org.scalatest.{FlatSpec, Matchers}
 
 abstract class TestSubstituteFunctions[N <: NumericType[M], M]
   (override val numericType: N)
   extends FlatSpec with Matchers with NumericTypeTest[N, M] {
 
-  "mkSubstituteFunctions" should "simplify a + b" in {
-    val x = Variable[N, M]("x", None)
-    val left = Add[N, M](x, Variable("y",  None))
-    val right = Literal("1")
+  "mkSubstituteFunctions" should "simplify x + y" in {
+    val x = Variable[N, M]("x")
+    val y = Variable[N, M]("y")
+    val left = Add[N, M](x, y)
+    val right: NumericTerm[N, M] = Literal("1")
     val eq = Equation(left, right)
 
 
@@ -23,8 +25,15 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
       application
     }
 
+    val expectedEquation = Equation(y, Subtract(right, y))
+    def checkApplications(a: Applications): Unit = {
+      a.applications.length shouldEqual 1
+      a.start shouldEqual eq
+      a.result shouldEqual expectedEquation
+    }
+
     res match {
-      case Right(x) => () //TODO: assert
+      case Right(x) => checkApplications(x)
       case Left(e) => throw e
     }
   }
