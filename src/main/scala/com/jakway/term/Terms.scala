@@ -120,8 +120,9 @@ trait CommutativeOperation extends Operation {
     * arguments
     * @return
     */
-  def permutations: Iterator[Term] =
-    subterms.permutations.map(newInstance)
+  def permutations: Iterator[CommutativeOperation] =
+    subterms.permutations
+      .map(newInstance(_).asInstanceOf[CommutativeOperation])
 }
 
 object CommutativeOperation {
