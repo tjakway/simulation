@@ -1,7 +1,9 @@
 package com.jakway.term.simplifier
-import com.jakway.term.{HasSubterms, Operation, Term, TermOperations}
+import com.jakway.term._
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.annotation.tailrec
 
 class InverseIdentitySimplifier extends Simplifier {
   import InverseIdentitySimplifier._
@@ -74,7 +76,31 @@ object InverseIdentitySimplifier {
 
     def apply(h: Operation): Either[SimError, Term] = {
 
-      def simplify(x: Operation): Option[Term] = x match {
+      /**
+        * @param x
+        * @param dontRecurse flag to prevent infinite recursion when evaluating commutative operations
+        * @return
+        */
+      def simplify(x: Operation, dontRecurse: Boolean = false): Option[Term] = x match {
+          //handle commutative operations in the inner term
+        case outer@Operation(Seq(innerT +: _))
+          if dontRecurse == false => {
+
+          //if the inner term is commutative, recurse over every
+          //permutation of its arguments
+          if(innerT.isInstanceOf[CommutativeOperation]) {
+            innerT.asInstanceOf[CommutativeOperation]
+              .permutations
+              //return the first permutation that simplifies
+              .foldLeft(None: Option[Term]) {
+                case (None, t) => simplify(t, true)
+                case (Some(x), _) => Some(x)
+              }
+          } else {
+            simplify(x, true)
+          }
+        }
+
           //see https://stackoverflow.com/questions/6807540/scala-pattern-matching-on-sequences-other-than-lists/19147469#19147469
           //for pattern matching on Seqs
         case outer@Operation(Seq(innerT@Operation(subArgs) +: _)) => {
@@ -108,7 +134,20 @@ object InverseIdentitySimplifier {
         case _ => None
       }
 
-      simplify(h).map(Right(_)).getOrElse(Right(h))
+      h match {
+          //handle commutative operations in the outer term
+        case z: CommutativeOperation =>
+          z.permutations
+            //return the first permutation that simplifies
+            .foldLeft(None: Option[Term]) {
+              case (None, t) => simplify(t)
+              case (Some(x), _) => Some(x)
+            }
+            .map(Right(_))
+            .getOrElse(Right(h))
+        case _ => simplify(h).map(Right(_)).getOrElse(Right(h))
+      }
+
     }
   }
 }
