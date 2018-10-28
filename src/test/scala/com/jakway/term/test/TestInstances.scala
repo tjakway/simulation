@@ -19,4 +19,7 @@ package double {
   class DoubleTestFindVariables extends TestFindVariables[N, M](inst)
   class DoubleTestSubstituteFunctions
     extends TestSubstituteFunctions[N, M](inst)
+
+  class DoubleTestInverseIdentitySimplifier
+    extends TestInverseIdentitySimplifier[N, M](inst)
 }
