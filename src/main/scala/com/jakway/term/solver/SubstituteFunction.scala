@@ -11,18 +11,6 @@ import scala.util.{Failure, Success, Try}
 
 sealed trait SubstituteFunction
 
-/**
-  * Note that since Terms are immutable we actually apply the function
-  * to the parent of the Variable and create a copy that doesn't contain
-  * the term we want to replace
-  * @param replaceTerm
-  * @param replaceWith
-  */
-case class ApplyToTerm(
-                        replaceTerm: Term, replaceWith: Term => Either[SimError, Term])
-  extends SubstituteFunction
-case class ApplyToEquation(f: Term => Term) extends SubstituteFunction
-
 case class ApplyInverses(inverse: Term => Either[SimError, Term],
                          simplifier: Simplifier) extends SubstituteFunction
 
@@ -99,11 +87,6 @@ object SubstituteFunction {
                                                     matchingTerms: Seq[Term])
     extends Warning(in, "Multiple terms matched substitution function" +
       s" $f in equation $in: $matchingTerms")
-
-  class CouldNotFindTermError(f: ApplyToTerm,
-                              in: Equation)
-    extends SubstituteFunctionError(f, in,
-      s"Could not find term ${f.replaceTerm} in $in")
 
   class ReturnedError(f: SubstituteFunction,
                       e: Equation,
