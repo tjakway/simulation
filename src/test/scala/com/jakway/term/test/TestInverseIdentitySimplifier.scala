@@ -3,8 +3,6 @@ package com.jakway.term.test
 import com.jakway.term._
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.simplifier.InverseIdentitySimplifier
-import com.jakway.term.solver.SubstituteFunction
-import com.jakway.term.solver.SubstituteFunction.Applications
 import org.scalatest.{FlatSpec, Matchers}
 
 abstract class TestInverseIdentitySimplifier[N <: NumericType[M], M]
