@@ -31,7 +31,7 @@ object InverseIdentitySimplifier {
     * @param a
     * @param b
     */
-  def assertIdentityLaw(a: Operation, b: Operation): Unit = {
+  def assertIdentityLaw(a: Operation, b: Operation): Boolean = {
     def err(msg: String): Unit = throw IdentityFunctionError(msg ++
       s"\n\tfor a=$a, b=$b")
 
@@ -48,10 +48,13 @@ object InverseIdentitySimplifier {
           "!a.isInverseTypeOf(b)")
       }
     }
+
+    a.isInverseTypeOf(b)
   }
 
   object OneSubterm {
     def apply(h: Operation): Either[SimError, Term] = {
+
       if(h.subterms.length != 1) {
         Left(new InverseIdentitySimplifierError(s"Expected $h" +
           s" to only have 1 subterm"))
@@ -60,10 +63,7 @@ object InverseIdentitySimplifier {
           case outer@Operation(Seq( inner@Operation(Seq(x))))
             //compare the outer and inner ignoring UUID
             //f^-1(f(x)) = x and f(f^-1(x)) = x
-            if outer.inverted.map(_.matches(inner)) == Right(true) ||
-              inner.inverted.map(_.matches(outer)) == Right(true) => {
-            Right(x)
-          }
+            if assertIdentityLaw(outer, inner) => Right(x)
           //return other input as-is
           case x => Right(x)
         }
