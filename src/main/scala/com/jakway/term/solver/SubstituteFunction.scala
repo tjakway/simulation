@@ -4,7 +4,7 @@ import com.jakway.term.interpreter.warn.Warning
 import com.jakway.term._
 import com.jakway.term.numeric.types.SimError
 import com.jakway.term.simplifier.{InverseIdentitySimplifier, Simplifier}
-import com.jakway.term.solver.SubstituteFunction.Applications.{ApplicationType, Inversion, Simplification}
+import com.jakway.term.solver.SubstituteFunction.Applications.{Inversion, Simplification}
 import interface.Formatter
 
 import scala.util.{Failure, Success, Try}
@@ -66,15 +66,20 @@ object SubstituteFunction {
     Util.mapLeft(res)(SubstituteFunctionErrors(_))
   }
 
-  class Applications(val applications: Seq[Applications.ApplicationType],
+  class Applications(val applications: Seq[Applications.Application],
                      val start: Equation,
                      val result: Equation)
   object Applications {
     case class Simplification(before: Term, after: Term)
     case class Inversion(before: Term, after: Term)
-    type ApplicationType = (SubstituteFunction,
-      Inversion, Simplification, Equation, Seq[Warning])
+
+    case class Application(subF: SubstituteFunction,
+                           inversion: Inversion,
+                           simplification: Simplification,
+                           result: Equation,
+                           warnings: Seq[Warning] = Seq())
   }
+  import Applications._
 
   class SubstituteFunctionError(override val msg: String)
     extends SimError(msg) {
@@ -110,9 +115,9 @@ object SubstituteFunction {
   Either[SimError, Applications] = {
 
     def applyThisFunction(subF: SubstituteFunction, to: Equation):
-    Either[SimError, ApplicationType] = Try {
+    Either[SimError, Application] = Try {
 
-      val result: Either[SimError, ApplicationType] =
+      val result: Either[SimError, Application] =
         subF match {
         case s@ApplyInverses(inv, simplifier) => {
           def f(t: Term): Either[SimError, Term] =
@@ -144,7 +149,7 @@ object SubstituteFunction {
             val newEq = to.copy(left = sLeft)
                           .copy(right = sRight)
 
-            (subF, Inversion(invLeft, invRight), Simplification(sLeft, sRight),
+            Application(subF, Inversion(invLeft, invRight), Simplification(sLeft, sRight),
               newEq, Seq())
           }
         }
@@ -163,14 +168,14 @@ object SubstituteFunction {
     //more errors)
     //Left: accumulate errors
     //Right: accumulate results and track the equation to apply the next function to
-    val empty: Either[Seq[SimError], (Seq[Applications.ApplicationType], Equation)] =
+    val empty: Either[Seq[SimError], (Seq[Applications.Application], Equation)] =
       Right(Seq(), origEquation)
     fs.foldLeft(empty) {
       //accumulate function applications in the Either type
       //and stop if we get a Left
       case (Right((acc, thisEquation)), thisFunction) =>
         applyThisFunction(thisFunction, thisEquation) match {
-          case Right(res) => Right(acc :+ res, res._4)
+          case Right(res) => Right(acc :+ res, res.result)
           case Left(res) => Left(Seq(res))
         }
 
