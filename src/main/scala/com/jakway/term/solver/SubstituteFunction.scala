@@ -5,6 +5,7 @@ import com.jakway.term._
 import com.jakway.term.numeric.types.SimError
 import com.jakway.term.simplifier.{InverseIdentitySimplifier, Simplifier}
 import com.jakway.term.solver.SubstituteFunction.Applications.ApplicationType
+import interface.Formatter
 
 import scala.util.{Failure, Success, Try}
 
@@ -114,7 +115,9 @@ object SubstituteFunction {
       s"substitute function: $t")
 
   case class SubstituteFunctionErrors(errors: Seq[SimError])
-    extends SimError(s"Substitute Function errors: $errors")
+    extends SimError(
+      new Formatter()
+        .formatSeqMultiline("Substitute Function errors:")(errors))
 
 
   def applyFunctions(fs: Seq[SubstituteFunction], origEquation: Equation):
