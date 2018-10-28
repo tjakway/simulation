@@ -1,9 +1,9 @@
 package com.jakway.term.simplifier
+
 import com.jakway.term._
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.types.SimError
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.annotation.tailrec
 
 class InverseIdentitySimplifier extends Simplifier {
   import InverseIdentitySimplifier._
