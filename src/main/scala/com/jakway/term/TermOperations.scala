@@ -81,6 +81,10 @@ object TermOperations {
     foldSubterms(in)(None: Option[HasSubterms]) {
       case (None, x@HasSubterms(subterms))
           if subterms.contains(term) => Some(x)
+
+        //ignore other branches
+      case (None, _) => None
+
         //stop once we've found the parent
       case (x@Some(_), _) => x
     }
