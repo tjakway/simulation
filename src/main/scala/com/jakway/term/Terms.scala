@@ -187,14 +187,26 @@ object Variable {
 }
 
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
-  extends NumericTerm[N, M]
-  with HasSubterms {
+  extends OneArgumentFunction[N, M]
+  with NumericOperation[N,M] with HasSubterms {
   override val subterms: Seq[Term] = Seq(arg)
 
   override def newInstance: NewInstanceF =
     subterms => {
       Negative(HasSubterms.assertCast[NumericTerm[N,M]](HasSubterms.assertArity(1, subterms)(0)))
     }
+
+  override def litIdentity: Literal[N, M] = Literal("0")
+
+  override val numArguments: Int = 1
+  override val argument: Term = arg
+
+  /**
+    * Negative is its own inverse
+    * @return
+    */
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Negative.apply)
 }
 
 object HasSubterms {
