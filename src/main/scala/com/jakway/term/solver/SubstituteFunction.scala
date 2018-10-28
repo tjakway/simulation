@@ -70,8 +70,8 @@ object SubstituteFunction {
                      val start: Equation,
                      val result: Equation)
   object Applications {
-    case class Simplification(before: Term, after: Term)
-    case class Inversion(before: Term, after: Term)
+    case class Simplification(left: Term, right: Term)
+    case class Inversion(left: Term, right: Term)
 
     case class Application(subF: SubstituteFunction,
                            inversion: Inversion,
