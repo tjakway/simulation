@@ -16,9 +16,11 @@ abstract class TermBodyFunction[N <: NumericType[M], M]
   val arity: Int = parameters.length
 
   def body: Term
-  def call(values: Seq[Term]): FunctionCall[N, M] = {
-    ??? //TODO
-  }
+  def call(arguments: Seq[Term]): FunctionCall[N, M] =
+    FunctionCall[N, M](this, arguments)
+
+  def call(arguments: Term*): FunctionCall[N, M] =
+    call(arguments)
 
   def apply: Seq[Term] => FunctionCall[N, M] = call
 
