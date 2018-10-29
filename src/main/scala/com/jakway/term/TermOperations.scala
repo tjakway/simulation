@@ -1,6 +1,6 @@
 package com.jakway.term
 
-import com.jakway.term.elements.{HasSubterms, Term, Variable}
+import com.jakway.term.elements.{HasSubterms, Operation, Term, Variable}
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -154,5 +154,10 @@ object TermOperations {
   def getOverlappingSubterms(a: HasSubterms, b: HasSubterms): Set[Term] = {
     (a.subterms.filter(hasMatchingMember(b, _))
       ++ b.subterms.filter(hasMatchingMember(a, _))).toSet
+  }
+
+  def invertTerm(t: Term): Either[SimError, Term] = t match {
+    case o: Operation => o.inverted
+    case _ => Right(t)
   }
 }
