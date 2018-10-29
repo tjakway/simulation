@@ -120,7 +120,7 @@ object InverseIdentitySimplifier {
                 if (disjointTerms.length == 1) {
                   Some(disjointTerms.head)
                 } else if (disjointTerms.length > 1) {
-                  logger.debug(s"Length of disjoint terms of " +
+                  logger.warn(s"Length of disjoint terms of " +
                     s"$outer and $inner is >1")
                   None
                 } else {
