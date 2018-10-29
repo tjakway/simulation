@@ -103,33 +103,53 @@ object InverseIdentitySimplifier {
 
           //see https://stackoverflow.com/questions/6807540/scala-pattern-matching-on-sequences-other-than-lists/19147469#19147469
           //for pattern matching on Seqs
-        case outer@Operation(Seq(innerT@Operation(subArgs) +: _)) => {
-          //for some reason pattern matching this doesn't work
-          val inner = innerT.asInstanceOf[Operation]
-          assertIdentityLaw(outer, inner)
-          if(outer.isInverseTypeOf(inner)) {
+        case outer@Operation(outerArgs) => {
+          def simplifyInnerOperation(inner: Operation): Option[Term] = {
+            assertIdentityLaw(outer, inner)
+            if (outer.isInverseTypeOf(inner)) {
 
-            val overlappingSubterms =
-              TermOperations.getOverlappingSubterms(outer, inner)
+              val overlappingSubterms =
+                TermOperations.getOverlappingSubterms(outer, inner)
 
-            if(outer.subterms.forall(overlappingSubterms.contains)) {
-              val disjointTerms = TermOperations.getDisjointSubterms(outer, inner)
+              if (outer.subterms.forall(overlappingSubterms.contains)) {
+                val disjointTerms = TermOperations.getDisjointSubterms(outer, inner)
 
-              if(disjointTerms.length == 1) {
-                Some(disjointTerms.head)
-              } else if(disjointTerms.length > 1) {
-                logger.debug(s"Length of disjoint terms of " +
-                  s"$outer and $inner is >1")
+                if (disjointTerms.length == 1) {
+                  Some(disjointTerms.head)
+                } else if (disjointTerms.length > 1) {
+                  logger.debug(s"Length of disjoint terms of " +
+                    s"$outer and $inner is >1")
+                  None
+                } else {
+                  None
+                }
+              } else {
                 None
-              } else { None }
-            } else {
+              }
+            }
+            else {
               None
             }
           }
-          else {
-            None
+
+          val empty: Option[Term] = None
+          outerArgs.foldLeft(empty) {
+            case (None, thisArg) => {
+              if(thisArg.isInstanceOf[Operation]) {
+                simplifyInnerOperation(thisArg.asInstanceOf[Operation])
+              } else {
+                None
+              }
+            }
+
+            case (simplifiedTerm@Some(_), t) => {
+              logger.debug(s"Ignoring argument $t of Operation $outer " +
+                s"because we've already produced a simplified term $simplifiedTerm ")
+              simplifiedTerm
+            }
           }
         }
+
 
         case _ => None
       }
