@@ -4,11 +4,15 @@ import com.jakway.term._
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.solver.SubstituteFunction
 import com.jakway.term.solver.SubstituteFunction.Applications
+import com.jakway.term.test.framework.TermMatchers
 import org.scalatest.{FlatSpec, Matchers}
 
 abstract class TestSubstituteFunctions[N <: NumericType[M], M]
   (override val numericType: N)
-  extends FlatSpec with Matchers with NumericTypeTest[N, M] {
+  extends FlatSpec
+    with Matchers
+    with TermMatchers
+    with NumericTypeTest[N, M] {
 
   "mkSubstituteFunctions" should "simplify x + y" in {
     val x = Variable[N, M]("x")
@@ -30,7 +34,7 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
       a.applications.length shouldEqual 1
       val application = a.applications.head
       application.inversion.left should not equal (application.simplification.left)
-      application.inversion.right should not equal (application.simplification.right)
+      application.inversion.right should equal (application.simplification.right)
 
 
       a.start shouldEqual eq
