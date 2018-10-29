@@ -126,12 +126,22 @@ object TermOperations {
   }
 
   /**
+    * contains but using .matches instead of ==
+    * @param x
+    * @param y
+    * @return
+    */
+  def hasMatchingMember(x: HasSubterms, y: Term): Boolean =
+    x.subterms.find(_.matches(y)).isDefined
+
+  /**
     * @param a
     * @param b
     * @return a list of subterms that aren't shared by its arguments
     */
   def getDisjointSubterms(a: HasSubterms, b: HasSubterms): Seq[Term] = {
-    a.subterms.filter(!b.contains(_)) ++ b.subterms.filter(!a.contains(_))
+    a.subterms.filter(!hasMatchingMember(b, _)) ++
+      b.subterms.filter(!hasMatchingMember(a, _))
   }
 
   /**
@@ -141,7 +151,7 @@ object TermOperations {
     * @return
     */
   def getOverlappingSubterms(a: HasSubterms, b: HasSubterms): Set[Term] = {
-    (a.subterms.filter(b.subterms.contains(_))
-      ++ b.subterms.filter(a.subterms.contains(_))).toSet
+    (a.subterms.filter(hasMatchingMember(b, _))
+      ++ b.subterms.filter(hasMatchingMember(a, _))).toSet
   }
 }
