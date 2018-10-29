@@ -13,6 +13,8 @@ abstract class TermBodyFunction[N <: NumericType[M], M]
 
   def name: String = getClass().getName()
 
+  val arity: Int = parameters.length
+
   def body: Term
   def call(values: Seq[Term]): FunctionCall[N, M] = {
     ??? //TODO
