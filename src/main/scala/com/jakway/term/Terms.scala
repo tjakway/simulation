@@ -442,9 +442,6 @@ abstract class TwoArgumentFunction[N <: NumericType[M], M]
     Seq[Term] => Either[SimError, Term] =
     InverseConstructorHelpers.arity2MkInverseConstructorE
 }
-case class Arcsin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
-  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
-    mkInverseConstructorE(Sin.apply)
 
 trait TrigFunction[N <: NumericType[M], M]
   extends OneArgumentFunction[N, M]
