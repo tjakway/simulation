@@ -29,7 +29,7 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
       application
     }
 
-    val expectedEquation = Equation(y, Subtract(right, y))
+    val expectedEquation = Equation(x, Subtract(right, y))
     def checkApplications(a: Applications): Unit = {
       a.applications.length shouldEqual 1
       val application = a.applications.head
