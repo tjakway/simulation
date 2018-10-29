@@ -57,6 +57,11 @@ trait Operation extends Term with HasSubterms {
     */
   final def inverted: Either[SimError, Term] =
     inverse(subterms)
+
+  def inverseClass: Class[_ <: Term] = inverted.map(_.getClass()).right.get
+
+  def isInverseTypeOf(t: Term): Boolean =
+    t.getClass == inverseClass
 }
 
 object Operation {
@@ -92,6 +97,21 @@ object Operation {
     * @return
     */
   def unapply(o: Operation): Option[Seq[Term]] = HasSubterms.unapply(o)
+}
+
+trait CommutativeOperation extends Operation {
+  /**
+    * An iterator over every permutation of this operation's
+    * arguments
+    * @return
+    */
+  def permutations: Iterator[CommutativeOperation] =
+    subterms.permutations
+      .map(newInstance(_).asInstanceOf[CommutativeOperation])
+}
+
+object CommutativeOperation {
+  def unapply(o: CommutativeOperation): Option[Seq[Term]] = Operation.unapply(o)
 }
 
 trait NumericTerm[N <: NumericType[M], M] extends Term
@@ -147,14 +167,26 @@ object Variable {
 }
 
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
-  extends NumericTerm[N, M]
-  with HasSubterms {
+  extends OneArgumentFunction[N, M]
+  with NumericOperation[N,M] with HasSubterms {
   override val subterms: Seq[Term] = Seq(arg)
 
   override def newInstance: NewInstanceF =
     subterms => {
       Negative(HasSubterms.assertCast[NumericTerm[N,M]](HasSubterms.assertArity(1, subterms)(0)))
     }
+
+  override def litIdentity: Literal[N, M] = Literal("0")
+
+  override val numArguments: Int = 1
+  override val argument: Term = arg
+
+  /**
+    * Negative is its own inverse
+    * @return
+    */
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Negative.apply)
 }
 
 object HasSubterms {
@@ -410,6 +442,9 @@ abstract class TwoArgumentFunction[N <: NumericType[M], M]
     Seq[Term] => Either[SimError, Term] =
     InverseConstructorHelpers.arity2MkInverseConstructorE
 }
+case class Arcsin[N <: NumericType[M], M](override val argument: Term) extends TrigFunction[N, M] {
+  override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
+    mkInverseConstructorE(Sin.apply)
 
 trait TrigFunction[N <: NumericType[M], M]
   extends OneArgumentFunction[N, M]
@@ -496,6 +531,19 @@ case class Equation(left: Term, right: Term) {
 
   def contains(t: Term): Boolean =
     left.contains(t) || right.contains(t)
+
+  /**
+    * compares terms using .matches
+    * @param o
+    * @return
+    */
+  override def equals(o: Any): Boolean = {
+    def eq(e: Equation): Boolean = {
+      left.matches(e.left) && right.matches(e.right)
+    }
+
+    o.isInstanceOf[Any] && eq(o.asInstanceOf[Equation])
+  }
 }
 
 class Examples[N <: NumericType[M], M] {

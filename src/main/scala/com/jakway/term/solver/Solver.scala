@@ -80,13 +80,14 @@ object Solver {
     val errPrefix = s"Error patching Seq[Term] $in " +
       s"(replacing $toReplace with $replaceWith): "
 
+    val numToReplace: Int = 1
     val replaceIndex = in.indexOf(toReplace)
     if(replaceIndex >= in.length || replaceIndex < 0) {
       Left(PatchSubtermsError(errPrefix +
         s"replaceIndex out of bounds (replaceIndex == $replaceIndex, " +
         s"expected < ${in.length} && >0)"))
     } else {
-      Right(in.patch(0, Seq(replaceWith), replaceIndex))
+      Right(in.patch(replaceIndex, Seq(replaceWith), numToReplace))
     }
   }
 
