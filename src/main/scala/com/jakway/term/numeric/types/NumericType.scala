@@ -1,6 +1,6 @@
 package com.jakway.term.numeric.types
 
-import com.jakway.term.{Literal, Term}
+import com.jakway.term.elements.Literal
 
 class SimError(val msg: String)
   extends RuntimeException(msg) {

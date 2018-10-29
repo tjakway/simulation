@@ -1,7 +1,7 @@
 package com.jakway.term.interpreter
 
+import com.jakway.term.elements.{Literal, NumericTerm, Term, Variable}
 import com.jakway.term.numeric.types.{NumericType, SimError}
-import com.jakway.term.{Literal, NumericTerm, Term, Variable}
 
 
 /**

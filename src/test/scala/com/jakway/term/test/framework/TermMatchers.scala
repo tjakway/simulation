@@ -1,6 +1,6 @@
 package com.jakway.term.test.framework
 
-import com.jakway.term.Term
+import com.jakway.term.elements.Term
 import com.jakway.term.numeric.types.SimError
 import org.scalatest.matchers.{MatchResult, Matcher}
 

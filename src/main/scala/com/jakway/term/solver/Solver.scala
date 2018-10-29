@@ -1,6 +1,7 @@
 package com.jakway.term.solver
 
 import com.jakway.term._
+import com.jakway.term.elements._
 import com.jakway.term.interpreter.warn.Warning
 import com.jakway.term.numeric.types.{NumericType, SimError}
 
