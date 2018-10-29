@@ -111,8 +111,11 @@ object InverseIdentitySimplifier {
               val overlappingSubterms =
                 TermOperations.getOverlappingSubterms(outer, inner)
 
-              if (outer.subterms.forall(overlappingSubterms.contains)) {
-                val disjointTerms = TermOperations.getDisjointSubterms(outer, inner)
+              if (overlappingSubterms.forall(outer.subterms.contains)) {
+                //exclude the inner operation from the set of disjoint subterms
+                val disjointTerms =
+                  TermOperations.getDisjointSubterms(outer, inner)
+                                .filterNot(_ == inner)
 
                 if (disjointTerms.length == 1) {
                   Some(disjointTerms.head)
