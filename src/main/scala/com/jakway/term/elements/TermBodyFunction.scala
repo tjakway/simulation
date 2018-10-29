@@ -42,7 +42,7 @@ object TermBodyFunction {
 
 case class FunctionCall[N <: NumericType[M], M]
             (function: TermBodyFunction[N, M], arguments: Seq[Term])
-  extends Term {
+  extends NumericTerm[N, M] {
 
   def inverse: Either[SimError, FunctionCall[N, M]] = {
     function.inverseFunction
