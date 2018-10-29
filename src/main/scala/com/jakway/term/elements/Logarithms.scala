@@ -36,3 +36,9 @@ class NaturalLogarithm[N <: NumericType[M], M] {
   def naturalLog(of: NumericTerm[N, M]): Logarithm[N, M] =
     Logarithm(e, of)
 }
+
+object NaturalLogarithm {
+  def apply[N <: NumericType[M], M]
+    (of: NumericTerm[N, M]): Logarithm[N, M] =
+      new NaturalLogarithm().naturalLog(of)
+}
