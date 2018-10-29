@@ -1,5 +1,6 @@
 package com.jakway.term
 
+import com.jakway.term.elements.{HasSubterms, Term, Variable}
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import org.slf4j.{Logger, LoggerFactory}
 

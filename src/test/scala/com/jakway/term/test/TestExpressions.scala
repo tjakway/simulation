@@ -1,6 +1,7 @@
 package com.jakway.term.test
 
 import com.jakway.term._
+import com.jakway.term.elements._
 import com.jakway.term.numeric.types.NumericType
 
 abstract class Expression[N <: NumericType[M], M] {

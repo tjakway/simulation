@@ -1,7 +1,7 @@
 package com.jakway.term.interpreter
 
+import com.jakway.term.elements.Equation
 import com.jakway.term.interpreter.warn.Warning
-import com.jakway.term.{Equation, Term}
 import com.jakway.term.numeric.types.SimError
 
 

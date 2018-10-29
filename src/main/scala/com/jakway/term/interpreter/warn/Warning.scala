@@ -3,7 +3,7 @@ package com.jakway.term.interpreter.warn
 import java.util.Locale
 
 import com.jakway.term.numeric.types.SimError
-import com.jakway.term.{Equation, Term}
+import com.jakway.term.elements.{Equation, Term}
 
 
 /**

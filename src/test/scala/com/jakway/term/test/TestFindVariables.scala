@@ -1,7 +1,7 @@
 package com.jakway.term.test
 
 import scala.reflect.runtime.universe._
-import com.jakway.term.{TermOperations, Variable}
+import com.jakway.term.TermOperations
 import com.jakway.term.numeric.types.NumericType
 import org.scalatest.{FlatSpec, Matchers}
 

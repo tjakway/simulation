@@ -1,6 +1,6 @@
 package com.jakway.term.interpreter
 
-import com.jakway.term.Term
+import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.{NumericType, SimError}
 

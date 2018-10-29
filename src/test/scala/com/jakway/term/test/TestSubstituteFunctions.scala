@@ -1,6 +1,7 @@
 package com.jakway.term.test
 
 import com.jakway.term._
+import com.jakway.term.elements._
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.solver.SubstituteFunction
 import com.jakway.term.solver.SubstituteFunction.Applications

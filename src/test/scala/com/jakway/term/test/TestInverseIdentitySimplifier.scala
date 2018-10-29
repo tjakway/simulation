@@ -1,6 +1,7 @@
 package com.jakway.term.test
 
 import com.jakway.term._
+import com.jakway.term.elements.{Literal, Negative, NumericTerm, Term}
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.simplifier.InverseIdentitySimplifier
 import org.scalatest.{FlatSpec, Matchers}
