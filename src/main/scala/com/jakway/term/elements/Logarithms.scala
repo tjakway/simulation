@@ -25,7 +25,6 @@ case class Power[N <: NumericType[M], M](
 }
 
 class NaturalLogarithm[N <: NumericType[M], M] {
-  //TODO: need to handle this specially
   val e: NumericTerm[N, M] = Literal("e")
 
   /**
