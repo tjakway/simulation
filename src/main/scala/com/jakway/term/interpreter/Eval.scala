@@ -4,6 +4,7 @@ import com.jakway.term.elements._
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import Eval._
+import com.jakway.term.Util
 import com.jakway.term.interpreter.helpers.{EvalFunctionCall, EvalHelpers}
 
 /**
@@ -34,20 +35,63 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
     case Literal(value) => n.readLiteral(value).map(Raw.apply)
   }
 
+  def containsRaw(ts: Seq[Term]): Boolean =
+    ts.find(_.isInstanceOf[Raw[N, M]]).isDefined
 
-  def eval(table: SymbolTable)(t: Term): EvalType = t match {
-    case l: Literal[N, M] => readLiteral(l)
+  def allRaw(ts: Seq[Term]): Boolean =
+    ts.forall(_.isInstanceOf[Raw[N, M]])
 
-    case v@Variable(name, _) => table.get(name) match {
-      case Some(t) => eval(table)(t)
-      case None => Left(new SymbolNotFoundError(v, table, t))
+  def expectNumericTerm(msg: String, t: Term):
+    Either[SimError, NumericTerm[N, M]] =
+    if(t.isInstanceOf[NumericTerm[N, M]]) {
+      Right(t.asInstanceOf[NumericTerm[N, M]])
+    } else {
+      Left(ExpectedNumericTerm(s"$msg but got $t"))
     }
 
-    case Negative(arg) => eval(table)(Multiply(arg, Literal("-1")))
+  def eval(table: SymbolTable)(t: Term): EvalType = {
+    def recurse(t: Term): EvalType = eval(table)(t)
+    t match {
+      case l: Literal[N, M] => readLiteral(l)
 
-    case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
+      case v@Variable(name, _) => table.get(name) match {
+        case Some(t) => eval(table)(t)
+        case None => Left(new SymbolNotFoundError(v, table, t))
+      }
 
-    case x => Left(NotImplementedError(x))
+      case Negative(arg) => eval(table)(Multiply(arg, Literal("-1")))
+
+      case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
+
+        //TODO
+      case Logarithm(Raw(base), Raw(of)) => Left(NotImplementedError(t))
+      case Logarithm(base, of) => {
+        val errMsg = "Expected numeric term in evaluation of" +
+          " Logarithm " + t.toString
+        for {
+          eBase <- recurse(base)
+          nBase <- expectNumericTerm(errMsg, eBase)
+          eOf <- recurse(of)
+          nOf <- expectNumericTerm(errMsg, eOf)
+          eLog <- recurse(Logarithm(nBase, nOf))
+        } yield {
+          eLog
+        }
+      }
+
+      case z@Operation(args)
+        if !containsRaw(args) => {
+
+        Util.mapEithers[SimError, Term, Term](args, recurse)
+            .map(z.newInstance)
+      }
+
+      case z@Operation(args)
+        if allRaw(args) => Left(NotImplementedError(z))
+
+
+      case x => Left(NotImplementedError(x))
+    }
   }
 }
 
@@ -59,6 +103,9 @@ object Eval {
 
   case class NotImplementedError(t: Term)
     extends EvalError(s"eval not implemented for term $t")
+
+  case class ExpectedNumericTerm(override val msg: String)
+    extends EvalError(msg)
 
   def lookupTerm[N <: NumericType[M], M]
             (table: SymbolTable, variable: Variable[N, M]): Option[Term] =
