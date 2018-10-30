@@ -47,7 +47,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
     case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
 
-    case _ => ???
+    case x => Left(NotImplementedError(x))
   }
 }
 
@@ -56,6 +56,9 @@ object Eval {
 
   class EvalError(override val msg: String)
     extends SimError(msg)
+
+  case class NotImplementedError(t: Term)
+    extends EvalError(s"eval not implemented for term $t")
 
   def lookupTerm[N <: NumericType[M], M]
             (table: SymbolTable, variable: Variable[N, M]): Option[Term] =
