@@ -4,7 +4,8 @@ package com.jakway.term.numeric.types.implementations
 import com.jakway.term
 import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError}
 import com.jakway.term.numeric.types
-import com.jakway.term.numeric.types.{NumericType, NumericTypeImplementation, SimError}
+import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
+import com.jakway.term.numeric.types.{NumericType, NumericTypeImplementation, SimError, SpecialLiterals}
 
 import scala.util.{Either, Left, Right}
 import scala.{math => M}
@@ -61,4 +62,26 @@ private object DoublePrecisionImplementation {
   } else {
     Right(a / b)
   }
+
+  /**
+    * @param lit
+    * @return Some if {@lit} was identified as a special literal:
+    *             returns the result of parsing it as such
+    *                (the result is an Either type)
+    *         None if {@lit} was not identified as a special literal
+    */
+  def parseSpecialLiteral(lit: String): Option[Either[SimError, Double]] = {
+    if(SpecialLiterals.contains(lit)) {
+      Some(if(lit == SpecialLiterals.e) {
+        Right(Math.E)
+      } else if(lit == SpecialLiterals.pi) {
+        Right(Math.PI)
+      } else {
+        Left(SpecialLiteralNotImplementedError(lit))
+      })
+    } else {
+      None
+    }
+  }
 }
+
