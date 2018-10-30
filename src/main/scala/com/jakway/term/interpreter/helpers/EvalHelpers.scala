@@ -5,6 +5,13 @@ import com.jakway.term.interpreter.{Interpreter, Raw}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.{NumericType, SimError}
 
+/**
+  * supertype for term-specific eval implementations
+  * @param negativeTerm
+  * @param functionCall
+  * @tparam N
+  * @tparam M
+  */
 class EvalHelpers[N <: NumericType[M], M](
      val negativeTerm: EvalNegative[N, M],
      val functionCall: EvalFunctionCall[N, M]
