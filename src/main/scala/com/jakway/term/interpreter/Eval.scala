@@ -3,8 +3,8 @@ package com.jakway.term.interpreter
 import com.jakway.term.elements._
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.{NumericType, SimError}
-
 import Eval._
+import com.jakway.term.interpreter.helpers.{EvalFunctionCall, EvalHelpers}
 
 /**
   * type for values we've looked up in the current evaluation context
@@ -71,79 +71,4 @@ object Eval {
     def recurse(table: SymbolTable)(t: Term): EvalType =
       interpreter.eval(table)(t)
   }
-}
-
-class EvalHelpers[N <: NumericType[M], M](
-     val negativeTerm: EvalNegative[N, M],
-     val functionCall: EvalFunctionCall[N, M]
-)
-
-object EvalHelpers {
-  def setup[N <: NumericType[M], M](
-           readLiteral: Literal[N, M] => Either[SimError, Raw[N, M]],
-           recurse: Interpreter,
-           table: SymbolTable): Either[SimError, EvalHelpers[N, M]] = {
-    for {
-      negativeOne <- readLiteral(Literal[N, M]("-1"))
-    } yield {
-      new EvalHelpers[N, M](
-        new EvalNegative[N, M](recurse, negativeOne),
-        new EvalFunctionCall[N, M](recurse))
-    }
-  }
-}
-
-
-class EvalFunctionCall[N <: NumericType[M], M]
-  (val recurse: Interpreter)
-  extends EvalHelper[FunctionCall[N, M]](recurse) {
-
-  case class WrongNumberOfArgumentsError(override val msg: String)
-    extends EvalError(msg)
-
-  def apply(table: SymbolTable)
-           (f: FunctionCall[N, M]): EvalType
-    = f match {
-    case FunctionCall(function, args)
-      if function.arity != args.length =>
-      Left(WrongNumberOfArgumentsError(s"Function $function takes " +
-        s"${function.arity} arguments, got ${args.length}: $args"))
-
-    case FunctionCall(function, args)
-      if function.arity == args.length => {
-
-      //associate arguments with their names based on position
-      //e.g. for f(x, y) the first argument gets named "x"
-      val newSymbols = function.parameters
-                              .map(_.name)
-                              .zip(args)
-
-      //update the symbol table with function argument names
-      val newSymbolTable: SymbolTable = newSymbols.foldLeft(table) {
-        case (updatingTable, (thisArgName, thisArg)) =>
-          updatingTable.updated(thisArgName, thisArg)
-      }
-
-      //eval the function body
-      recurse.eval(newSymbolTable)(function.body)
-    }
-  }
-}
-
-/**
-  * replace Negative(x) with (x * -1) and eval
-  * @param negativeOne
-  * @tparam N
-  * @tparam M
-  */
-class EvalNegative[N <: NumericType[M], M](val recurse: Interpreter,
-                                           val negativeOne: Raw[N, M])
-  extends EvalHelper[Negative[N, M]](recurse) {
-
-  def replaceWith(neg: Negative[N, M]): Term =
-    Multiply(neg.arg, negativeOne)
-
-  def apply(t: SymbolTable)
-           (term: Negative[N, M]): EvalType =
-    recurse(t)(replaceWith(term))
 }
