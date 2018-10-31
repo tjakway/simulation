@@ -48,7 +48,7 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
     }
   }
 
-  it should "simplify ln(x) = y" in {
+  it should "simplify ln(x + y) = 5" in {
     val x = Variable[N, M]("x")
     val y = Variable[N, M]("y")
     val left = NaturalLogarithm(Add[N, M](x, y))
