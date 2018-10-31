@@ -111,7 +111,6 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
     val test = SingleStepSubstituteFunctionTest(solveFor = x,
       initial = eq, expectedResult = Equation(x, Subtract(right, y)))
 
-
     new TestSubstituteFunction(test).doTest()
   }
 
@@ -120,34 +119,18 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
     val y = Variable[N, M]("y")
     val left = NaturalLogarithm(Add[N, M](x, y))
     val right: NumericTerm[N, M] = Literal("5")
-    val eq = Equation(left, right)
+    val initial = Equation(left, right)
 
-
-    val res = for {
-      functions <- SubstituteFunction.mkSubstituteFunctions(x, left)
-      application <- SubstituteFunction.applyFunctions(functions, eq)
-    } yield {
-      application
-    }
-
-    val expectedEquation = Equation(x,
+    val firstStepEquation = Equation(Add[N, M](x, y),
+      Power(Literal("e"), initial.right.asInstanceOf[NumericTerm[N, M]]))
+    val expectedEquation: Equation = Equation(x,
       Subtract(Power(Literal("e"), right), y))
 
-    def checkApplications(a: Applications): Unit = {
-      a.applications.length shouldEqual 1
-      val application = a.applications.head
-      application.inversion.left should not equal (application.simplification.left)
-      application.inversion.right should equal (application.simplification.right)
+    val steps = Seq(
+      new SubstituteFunctionStep(initial, None, None, firstStepEquation, Seq()),
+      new SubstituteFunctionStep(firstStepEquation, None, None, expectedEquation, Seq()))
 
-
-      a.start shouldEqual eq
-      a.result shouldEqual expectedEquation
-    }
-
-    res match {
-      case Right(x) => checkApplications(x)
-      case Left(e) => throw e
-    }
-
+    val test = new SubstituteFunctionTest(x, steps, initial, true)
+    new TestSubstituteFunction(test).doTest()
   }
 }
