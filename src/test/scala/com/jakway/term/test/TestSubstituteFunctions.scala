@@ -108,31 +108,11 @@ abstract class TestSubstituteFunctions[N <: NumericType[M], M]
     val left = Add[N, M](x, y)
     val right: NumericTerm[N, M] = Literal("1")
     val eq = Equation(left, right)
+    val test = SingleStepSubstituteFunctionTest(solveFor = x,
+      initial = eq, expectedResult = Equation(x, Subtract(right, y)))
 
 
-    val res = for {
-      functions <- SubstituteFunction.mkSubstituteFunctions(x, left)
-      application <- SubstituteFunction.applyFunctions(functions, eq)
-    } yield {
-      application
-    }
-
-    val expectedEquation = Equation(x, Subtract(right, y))
-    def checkApplications(a: Applications): Unit = {
-      a.applications.length shouldEqual 1
-      val application = a.applications.head
-      application.inversion.left should not equal (application.simplification.left)
-      application.inversion.right should equal (application.simplification.right)
-
-
-      a.start shouldEqual eq
-      a.result shouldEqual expectedEquation
-    }
-
-    res match {
-      case Right(x) => checkApplications(x)
-      case Left(e) => throw e
-    }
+    new TestSubstituteFunction(test).doTest()
   }
 
   it should "simplify ln(x + y) = 5" in {
