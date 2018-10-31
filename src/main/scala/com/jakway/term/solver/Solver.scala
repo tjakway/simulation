@@ -86,7 +86,9 @@ object Solver {
     if(replaceIndex >= in.length || replaceIndex < 0) {
       Left(PatchSubtermsError(errPrefix +
         s"replaceIndex out of bounds (replaceIndex == $replaceIndex, " +
-        s"expected < ${in.length} && >0)"))
+        s"expected < ${in.length} && >0): this likely means" +
+        s" the term you want to replace ($toReplace) is not in " +
+        s"the provided list ($in)"))
     } else {
       Right(in.patch(replaceIndex, Seq(replaceWith), numToReplace))
     }
