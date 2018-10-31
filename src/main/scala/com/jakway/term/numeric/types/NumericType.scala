@@ -94,7 +94,7 @@ trait NumericType[M] {
   type BinaryMathFunction = M => M => Either[SimError, M]
 
   val pow: BinaryMathFunction
-  val root: BinaryMathFunction
+  val log: BinaryMathFunction
 
   val add: BinaryMathFunction
   val times: BinaryMathFunction
