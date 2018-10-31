@@ -31,4 +31,9 @@ object Util {
       case (e@Left(_), _) => e
     }
   }
+
+  def ifNone[A](o: Option[A])(f: () => Unit): Unit = o match {
+    case None => f()
+    case _ => ()
+  }
 }
