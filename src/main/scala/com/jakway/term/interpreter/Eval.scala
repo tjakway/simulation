@@ -63,8 +63,10 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
       case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
 
-        //TODO
-      case Logarithm(Raw(base), Raw(of)) => Left(NotImplementedError(t))
+      case Logarithm(l@Raw(base), r@Raw(of))
+        if l.isInstanceOf[Raw[N, M]] && r.isInstanceOf[Raw[N, M]] =>
+        (n.log(base.asInstanceOf[M])
+             (of.asInstanceOf[M])).map(Raw.apply)
       case Logarithm(base, of) => {
         val errMsg = "Expected numeric term in evaluation of" +
           " Logarithm " + t.toString

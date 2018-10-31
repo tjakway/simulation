@@ -2,7 +2,7 @@ package com.jakway.term.numeric.types.implementations
 
 
 import com.jakway.term
-import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError}
+import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError, LogarithmDomainError}
 import com.jakway.term.numeric.types
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
 import com.jakway.term.numeric.types.{NumericType, NumericTypeImplementation, SimError, SpecialLiterals}
@@ -21,7 +21,16 @@ object DoublePrecision extends NumericTypeImplementation[Double] {
   override val arctan: TrigFunction = total2(M.atan)
 
   override val pow: BinaryMathFunction = (x: Double) => (y: Double) => Right(M.pow(x, y))
-  override val root: BinaryMathFunction = total3(DoublePrecisionImplementation.root)
+  //override val root: BinaryMathFunction = total3(DoublePrecisionImplementation.root)
+
+  override val log: BinaryMathFunction = (base: Double) => (of: Double) => {
+    if(of <= 0) {
+      Left(LogarithmDomainError(base.toString, of.toString))
+    } else {
+      Right(DoublePrecisionImplementation.log(base)(of))
+    }
+  }
+
   override val add: BinaryMathFunction = total3(DoublePrecisionImplementation.add)
   override val times: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
   override val div: BinaryMathFunction = DoublePrecisionImplementation.div
@@ -51,6 +60,17 @@ private object DoublePrecisionImplementation {
     } else {
       //from https://stackoverflow.com/questions/6325793/nth-root-implementation
       Math.pow(Math.E, Math.log(under) / n)
+    }
+  }
+
+  def log(base: Double)(of: Double): Double = {
+    if(base == 10) {
+      Math.log10(of)
+    } else if(base == Math.E) {
+      Math.log(of)
+    } else {
+      //need to use change-of-base formula
+      Math.log(of) / Math.log(base)
     }
   }
 
