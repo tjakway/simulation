@@ -2,6 +2,7 @@ package com.jakway.term.test.framework
 
 import com.jakway.term.elements.Term
 import com.jakway.term.numeric.types.SimError
+import com.jakway.term.test.framework.TermMatchers.MatchesTermError
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 trait TermMatchers {
@@ -40,8 +41,6 @@ trait TermMatchers {
       }
     }
 
-    case class MatchesTermError(override val msg: String)
-      extends SimError(msg)
   }
 
   def shouldMatchTerm(expectedTerm: Term) = new MatchesTerm(expectedTerm)
@@ -49,4 +48,18 @@ trait TermMatchers {
   def matchTerm(expectedTerm: Term) = new MatchesTerm(expectedTerm)
 }
 
-object TermMatchers extends TermMatchers
+object TermMatchers extends TermMatchers {
+  case class MatchesTermError(override val msg: String)
+    extends SimError(msg)
+
+  def assertMatch(actual: Term, expected: Term): MatchResult = {
+    new MatchesTerm(expected).apply(actual)
+  }
+
+  def assertMatchOrThrow(actual: Term, expected: Term): Unit = {
+    val res = assertMatch(actual, expected)
+    if(!res.matches) {
+      throw MatchesTermError(res.failureMessage)
+    }
+  }
+}

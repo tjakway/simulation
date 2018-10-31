@@ -39,8 +39,8 @@ object SubstituteFunction {
     extends SubstituteFunctionError(
       s"Expected passed term $t to be an instance of Operation")
 
-  def mkSubstituteFunctions(toReplace: Term, top: HasSubterms,
-                            identity: Term): Either[SimError, Seq[SubstituteFunction]] = {
+  def mkSubstituteFunctions(toReplace: Term, top: HasSubterms):
+    Either[SimError, Seq[SubstituteFunction]] = {
 
     val empty: Either[Seq[SimError], Seq[SubstituteFunction]] = Right(Seq())
 
