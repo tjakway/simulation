@@ -160,4 +160,14 @@ object TermOperations {
     case o: Operation => o.inverted
     case _ => Right(t)
   }
+
+  def containsTerm(toFind: Term, in: Term): Boolean =
+    foldSubterms(in)(false) {
+      case (false, x) => x matches toFind
+      case (true, _) => true
+    }
+
+  def topParentOf(x: Term, in: HasSubterms): Option[Term] = {
+    parentsOf(x, in).lastOption
+  }
 }

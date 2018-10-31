@@ -20,14 +20,28 @@ object InvertFor {
   case class BadOperationError(o: Operation)
     extends SimError(s"Operation $o has subterms == Seq()")
 
+  case class VariableNotFoundError(t: Term, in: Seq[Term])
+    extends SimError(s"Could not find $t either " +
+      s"as an element or child of $in")
+
   def apply(invertingFor: Term, z: Operation):
     Either[SimError, Term => Either[SimError, Term]] = z match {
     case o@Operation(xs) if xs.length == 1 => Right {
       (y: Term) => o.inverse(Seq(y))
     }
-    case z@Operation(xs) if xs.length > 1 => Right {
-      (y: Term) => Solver.patchSubterms(xs, invertingFor, y)
-          .flatMap(z.inverse)
+    case z@Operation(xs) if xs.length > 1 => {
+      //patch whichever subterm contains the term we're inverting for
+        val subtermToPatch =
+          xs.find(TermOperations.containsTerm(invertingFor, _)) match {
+            case Some(found) => Right(found)
+            case None => Left(VariableNotFoundError(invertingFor, xs))
+          }
+
+        subtermToPatch
+          .map(toReplace =>
+              (y: Term) => Solver.patchSubterms(xs, toReplace, y)
+                                      .flatMap(z.inverse))
+
     }
     case o@Operation(Seq()) => Left(BadOperationError(o))
   }
