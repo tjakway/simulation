@@ -4,68 +4,72 @@ import com.jakway.term._
 import com.jakway.term.elements._
 import com.jakway.term.interpreter.warn.Warning
 import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.solver.SubstituteFunction.Applications
 
 import scala.util.{Failure, Success, Try}
 
 class Solver[N <: NumericType[M], M] {
   import Solver._
 
-  def solve(refactorFor: Variable[N, M])
-           (equation: Equation): Either[SimError, Equation] = {
-    if(!equation.contains(refactorFor)) {
-      Left(TermNotFoundError(refactorFor, equation))
+  private def getLeftHasSubterms(e: Equation)
+    : Either[SimError, HasSubterms] = e.left match {
+    case x: HasSubterms => Right(x)
+    case _ => Left(new SolverError(
+        s"Expected instance of HasSubterms for Equation.left but" +
+        s" got ${e.left}"))
+  }
 
-      //check if the equation is already in the desired form
-    } else if(equation.left == refactorFor) {
-      Right(equation)
+  private def checkEquationSolved(solveFor: Variable[N, M],
+                                  applications: Applications):
+    Either[SimError, Equation] = {
+    val eq = applications.result
+    if(eq.left matches solveFor) {
+      Right(eq)
     } else {
-      //TODO XXX
-
-      //TODO: use a case to check if equation.left is:
-      // -the term we're looking for
-      // -a different unnested term
-      // -an instance of HasSubterms
-      //and handle appropriately
-      val toSearch: HasSubterms = equation.left
-        .asInstanceOf[HasSubterms]
-
-      var replacements: Seq[(Term => Term)] = Seq()
-
-      TermOperations.mapAll(toSearch) {
-        //search for variables to move to the right side
-        case x: Variable[N, M] if !x.sameVariable(refactorFor) => {
-
-          TermOperations.findParentOf(x, toSearch) match {
-            case None => ??? //TODO: implement
-            case Some(parent) => {
-              //we're replacing the variable x with the identity
-              castToHasIdentity(parent)
-                .flatMap { (castParent: NumericOperation[N, M]) =>
-                  val replaceWith = castParent.identity
-                  patchSubterms(parent.subterms, x, replaceWith)
-                }
-              ???
-            }
-          }
-        }
-      }
-      ???
+      Left(new SolverError(s"Equation $eq not solved:" +
+        s" $solveFor still present on the left side"))
     }
   }
 
 
+  def solve(solveFor: Variable[N, M])
+           (equation: Equation): Either[SimError, Equation] = {
+    if(!equation.contains(solveFor)) {
+      Left(TermNotFoundError(solveFor, equation))
 
+      //check if the equation is already in the desired form
+    } else if(equation.left.matches(solveFor)) {
+      Right(equation)
+    } else {
+      for {
+        leftSide <- getLeftHasSubterms(equation)
+        functions <- SubstituteFunction.mkSubstituteFunctions(
+          solveFor, leftSide)
+        applications <-
+          SubstituteFunction.applyFunctions(functions, equation)
+        solvedEquation <- checkEquationSolved(solveFor, applications)
+      } yield {
+        solvedEquation
+      }
+    }
+  }
 }
 
 object Solver {
+  class SolverError(override val msg: String)
+    extends SimError(msg)
+
+  case class ImplementationError(override val msg: String)
+    extends SolverError(msg)
+
   case class TermNotFoundError(refactorFor: Term, equation: Equation)
-    extends SimError(s"Could not find term ${refactorFor} in equation $equation")
+    extends SolverError(s"Could not find term ${refactorFor} in equation $equation")
 
   case class NotImplementedError(override val msg: String)
-    extends SimError(msg)
+    extends SolverError(msg)
 
   case class PatchSubtermsError(override val msg: String)
-    extends SimError(msg)
+    extends SolverError(msg)
 
   /**
     * replace the term we found with the identity operation for its parent
