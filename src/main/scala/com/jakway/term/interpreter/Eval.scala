@@ -19,6 +19,11 @@ case class Raw[N <: NumericType[M], M](value: M) extends NumericTerm[N, M] {
   }
 }
 
+object Raw {
+  def raw[N <: NumericType[M], M](e: Either[SimError, M]):
+    EvalType = e.map(Raw(_))
+}
+
 /**
   *
   * @param n the interpreter takes an instance of the numeric type
