@@ -5,7 +5,7 @@ import com.jakway.term
 import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError, LogarithmDomainError}
 import com.jakway.term.numeric.types
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
-import com.jakway.term.numeric.types.{NumericType, NumericTypeImplementation, SimError, SpecialLiterals}
+import com.jakway.term.numeric.types._
 
 import scala.util.{Either, Left, Right}
 import scala.{math => M}
@@ -32,16 +32,19 @@ object DoublePrecision extends NumericTypeImplementation[Double] {
   }
 
   override val add: BinaryMathFunction = total3(DoublePrecisionImplementation.add)
-  override val times: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
-  override val div: BinaryMathFunction = DoublePrecisionImplementation.div
+  override val multiply: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
+  override val divide: BinaryMathFunction = DoublePrecisionImplementation.div
 
   override val readLiteral: String => Either[SimError, Double] = { x: String =>
     try {
-      Right(x.toDouble)
+      DoublePrecisionImplementation.parseSpecialLiteral(x).getOrElse(Right(x.toDouble))
     } catch {
       case _: Throwable => Left(CouldNotReadLiteralError(x))
     }
   }
+
+  override val builtinLiterals: BuiltinLiterals[Double] =
+      BuiltinLiterals.mkBuiltinLiterals[Double](readLiteral).right.get
 }
 
 private object DoublePrecisionImplementation {
@@ -92,9 +95,9 @@ private object DoublePrecisionImplementation {
     */
   def parseSpecialLiteral(lit: String): Option[Either[SimError, Double]] = {
     if(SpecialLiterals.contains(lit)) {
-      Some(if(lit == SpecialLiterals.e) {
+      Some(if(lit == SpecialLiterals.Values.e) {
         Right(Math.E)
-      } else if(lit == SpecialLiterals.pi) {
+      } else if(lit == SpecialLiterals.Values.pi) {
         Right(Math.PI)
       } else {
         Left(SpecialLiteralNotImplementedError(lit))

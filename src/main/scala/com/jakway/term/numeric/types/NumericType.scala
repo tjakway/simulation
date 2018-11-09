@@ -1,6 +1,7 @@
 package com.jakway.term.numeric.types
 
 import com.jakway.term.elements.Literal
+import com.jakway.term.numeric.types.SpecialLiterals.{SpecialLiteral, SpecialLiteralReadErrors}
 
 class SimError(val msg: String)
   extends RuntimeException(msg) {
@@ -22,9 +23,11 @@ class SimError(val msg: String)
   * by the underling numeric type
   */
 object SpecialLiterals {
-  class SpecialLiteral(val names: Set[String]) {
-    def this(name: String) = this(Set(name))
+  class SpecialLiteral(val canonicalName: String,
+                       val otherNames: Set[String]) {
+    def this(name: String) = this(name, Set(name))
 
+    val allNames: Set[String] = otherNames + canonicalName
     /**
       * returns true if the argument is
       * this SpecialLiteral or if it is any of the names
@@ -34,11 +37,11 @@ object SpecialLiterals {
       */
     override def equals(o: Any): Boolean = {
       def eqString(s: String): Boolean = {
-        names.contains(s)
+        allNames.contains(s)
       }
 
       def eqOther(other: SpecialLiteral): Boolean =
-        names == other.names
+        allNames == other.allNames
 
       ( o.isInstanceOf[String] &&
         eqString(o.asInstanceOf[String]) ) ||
@@ -47,35 +50,49 @@ object SpecialLiterals {
     }
   }
 
-  val e = new SpecialLiteral("e")
-  val pi =
+  object Values {
+    val e = new SpecialLiteral("e")
+    val pi =
     //see https://en.wikipedia.org/wiki/Pi_(letter)
     //for unicode representations of pi
-    new SpecialLiteral(Set("pi",
-      //"\uD835\uDF0B" is unicode 'MATHEMATICAL ITALIC SMALL PI'
-      //https://www.fileformat.info/info/unicode/char/1d70b/index.htm
-      "\uD835\uDF0B",
-       //'MATHMETICAL SANS-SERIF BOLD SMALL PI'
-       "\uD835\uDF7F"))
+      new SpecialLiteral("pi", Set(
+        //"\uD835\uDF0B" is unicode 'MATHEMATICAL ITALIC SMALL PI'
+        //https://www.fileformat.info/info/unicode/char/1d70b/index.htm
+        "\uD835\uDF0B",
+        //'MATHMETICAL SANS-SERIF BOLD SMALL PI'
+        "\uD835\uDF7F"))
 
 
-  /**
-    * @param lit
-    * @return true if this is a name of any special literal
-    */
+    val specialLiterals: Set[SpecialLiteral] = Set(
+      e,
+      pi
+    )
+
+    /**
+      * @param lit
+      * @return true if this is a name of any special literal
+      */
+    def contains(lit: String): Boolean =
+      specialLiterals.find(_.allNames.contains(lit))
+        .isDefined
+  }
+
   def contains(lit: String): Boolean =
-    specialLiterals.find(_.names.contains(lit))
-                   .isDefined
+    Values.contains(lit)
 
-  val specialLiterals: Set[SpecialLiteral] = Set(
-    e,
-    pi
- )
+
+  class SpecialLiteralError(override val msg: String)
+    extends SimError(msg)
+
 
   case class SpecialLiteralNotImplementedError(lit: String)
-    extends SimError(s"$lit was identified as a special literal" +
+    extends SpecialLiteralError(s"$lit was identified as a special literal" +
       s" but its value was not properly assigned" +
       s" (there was an error in a NumericType implementation)")
+
+  case class SpecialLiteralReadErrors(errors: Seq[SimError])
+    extends SpecialLiteralError("Encountered these errors " +
+      s"while reading special literals: $errors")
 }
 
 
@@ -97,10 +114,63 @@ trait NumericType[M] {
   val log: BinaryMathFunction
 
   val add: BinaryMathFunction
-  val times: BinaryMathFunction
-  val div: BinaryMathFunction
+  val multiply: BinaryMathFunction
+  val divide: BinaryMathFunction
 
   val readLiteral: String => Either[SimError, M]
+
+  val builtinLiterals: BuiltinLiterals[M]
+}
+
+class BuiltinLiterals[M](
+  val negativeOne: M,
+  val zero: M,
+  val specialLiterals: Map[SpecialLiteral, M])
+
+object BuiltinLiterals {
+  def mkBuiltinLiterals[M](
+      readLiteral: String => Either[SimError, M]):
+  Either[SimError, BuiltinLiterals[M]] = {
+    for {
+      negativeOne <- readLiteral("-1")
+      zero <- readLiteral("0")
+      specialLiterals <- readSpecialLiterals[M](readLiteral)
+    } yield {
+      new BuiltinLiterals(negativeOne, zero, specialLiterals)
+    }
+  }
+
+  private def readSpecialLiterals[M](
+       readLiteral: String => Either[SimError, M]):
+    Either[SimError, Map[SpecialLiteral, M]] = {
+
+    val empty: Either[Seq[SimError], Seq[(SpecialLiteral, M)]] =
+      Right(Seq())
+
+    val res = SpecialLiterals.Values.specialLiterals.foldLeft(empty) {
+      case (acc, thisValue) => {
+        readLiteral(thisValue.canonicalName) match {
+          case Right(r) => acc match {
+              //ignore success if we've already encountered an error
+            case Left(es) => Left(es)
+              //otherwise accumulate successes
+            case Right(rs) => Right(rs :+ (thisValue, r))
+          }
+          case Left(e) => acc match {
+            case Left(es) => Left(es :+ e)
+              //start accumulating errors the first time
+              //we encounter one
+            case Right(rs) => Left(Seq(e))
+          }
+        }
+      }
+    }
+
+    res match {
+      case Right(xs) => Right(xs.toMap)
+      case Left(es) => Left(SpecialLiteralReadErrors(es))
+    }
+  }
 }
 
 trait NumericTypeImplementation[M] extends NumericType[M] {
