@@ -1,7 +1,9 @@
 package com.jakway.term.numeric.types
 
 import com.jakway.term.elements.Literal
-import com.jakway.term.numeric.types.SpecialLiterals.{SpecialLiteral, SpecialLiteralReadErrors}
+import com.jakway.term.numeric.errors.CouldNotReadLiteralError
+import com.jakway.term.numeric.types.SpecialLiterals.{SpecialLiteral, SpecialLiteralNotImplementedError, SpecialLiteralReadErrors}
+import com.jakway.term.numeric.types.implementations.DoublePrecision
 
 class SimError(val msg: String)
   extends RuntimeException(msg) {
@@ -48,6 +50,13 @@ object SpecialLiterals {
         ( o.isInstanceOf[SpecialLiteral]
             && eqOther(o.asInstanceOf[SpecialLiteral]))
     }
+
+    /**
+      * whether the parameter is a name of this special literal
+      * @param n
+      * @return
+      */
+    def isName(n: String): Boolean = allNames.contains(n)
   }
 
   object Values {
@@ -97,6 +106,7 @@ object SpecialLiterals {
 
 
 trait NumericType[M] {
+  import NumericType._
   type UnaryFunction = M => Either[SimError, M]
   type TrigFunction = UnaryFunction
 
@@ -117,9 +127,20 @@ trait NumericType[M] {
   val multiply: BinaryMathFunction
   val divide: BinaryMathFunction
 
-  val readLiteral: String => Either[SimError, M]
+  val readLiteral: ReadLiteral[M]
 
   val builtinLiterals: BuiltinLiterals[M]
+}
+
+object NumericType {
+  type ReadLiteral[M] = String => Either[SimError, M]
+
+  object Implementations {
+    def getDoublePrecisionNumericTypeImplementation():
+      Either[SimError, NumericType[Double]] =
+      DoublePrecision.mkNumericType
+  }
+
 }
 
 class BuiltinLiterals[M](
@@ -173,7 +194,7 @@ object BuiltinLiterals {
   }
 }
 
-trait NumericTypeImplementation[M] extends NumericType[M] {
+trait NumericTypeImplementationHelper[M] extends NumericType[M] {
   /**
     * helper method for functions that can't fail
     * @param f

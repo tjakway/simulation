@@ -11,7 +11,10 @@ package double {
   object Double {
     type M = Double
     type N = NumericType[Double]
-    val inst = DoublePrecision
+
+    val inst =
+      NumericType.Implementations.getDoublePrecisionNumericTypeImplementation()
+      .right.get
   }
   import Double._
 
