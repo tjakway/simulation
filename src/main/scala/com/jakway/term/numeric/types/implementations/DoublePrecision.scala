@@ -13,7 +13,7 @@ import scala.{math => M}
 
 object DoublePrecision {
   /**
-    * Entry point
+    * ***Entry point***
     * returns an implementation of NumericType for Double
     * @return
     */
