@@ -1,18 +1,61 @@
 package com.jakway.term.numeric.types.implementations
 
 
-import com.jakway.term
 import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError, LogarithmDomainError}
-import com.jakway.term.numeric.types
+import com.jakway.term.numeric.types.NumericType.ReadLiteral
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
 import com.jakway.term.numeric.types._
 
+import scala.language.postfixOps
 import scala.util.{Either, Left, Right}
 import scala.{math => M}
-import scala.language.postfixOps
 
 
-object DoublePrecision extends NumericTypeImplementation[Double] {
+object DoublePrecision {
+  /**
+    * Entry point
+    * returns an implementation of NumericType for Double
+    * @return
+    */
+  def mkNumericType(): Either[SimError, NumericType[Double]] = {
+    //parse builtins
+    BuiltinLiterals.mkBuiltinLiterals[Double](readLiteralF)
+      .map(new DoublePrecision(_))
+  }
+
+  private def readLiteralF: ReadLiteral[Double] = { x: String =>
+    try {
+      parseSpecialLiteral(x).getOrElse(Right(x.toDouble))
+    } catch {
+      case _: Throwable => Left(CouldNotReadLiteralError(x))
+    }
+  }
+
+  /**
+    * @param lit
+    * @return Some if {@lit} was identified as a special literal:
+    *             returns the result of parsing it as such
+    *                (the result is an Either type)
+    *         None if {@lit} was not identified as a special literal
+    */
+  private def parseSpecialLiteral(lit: String): Option[Either[SimError, Double]] = {
+    if(SpecialLiterals.contains(lit)) {
+      Some(if(SpecialLiterals.Values.e.isName(lit)) {
+        Right(Math.E)
+      } else if(SpecialLiterals.Values.pi.isName(lit)) {
+        Right(Math.PI)
+      } else {
+        Left(SpecialLiteralNotImplementedError(lit))
+      })
+    } else {
+      None
+    }
+  }
+}
+
+
+private class DoublePrecision(override val builtinLiterals: BuiltinLiterals[Double])
+  extends NumericTypeImplementationHelper[Double] {
   override val sin: TrigFunction = total2(M.sin)
   override val cos: TrigFunction = total2(M.cos)
   override val tan: TrigFunction = total2(M.tan)
@@ -35,16 +78,7 @@ object DoublePrecision extends NumericTypeImplementation[Double] {
   override val multiply: BinaryMathFunction = total3(DoublePrecisionImplementation.times)
   override val divide: BinaryMathFunction = DoublePrecisionImplementation.div
 
-  override val readLiteral: String => Either[SimError, Double] = { x: String =>
-    try {
-      DoublePrecisionImplementation.parseSpecialLiteral(x).getOrElse(Right(x.toDouble))
-    } catch {
-      case _: Throwable => Left(CouldNotReadLiteralError(x))
-    }
-  }
-
-  override val builtinLiterals: BuiltinLiterals[Double] =
-      BuiltinLiterals.mkBuiltinLiterals[Double](readLiteral).right.get
+  override val readLiteral: ReadLiteral[Double] = DoublePrecision.readLiteralF
 }
 
 private object DoublePrecisionImplementation {
@@ -86,25 +120,5 @@ private object DoublePrecisionImplementation {
     Right(a / b)
   }
 
-  /**
-    * @param lit
-    * @return Some if {@lit} was identified as a special literal:
-    *             returns the result of parsing it as such
-    *                (the result is an Either type)
-    *         None if {@lit} was not identified as a special literal
-    */
-  def parseSpecialLiteral(lit: String): Option[Either[SimError, Double]] = {
-    if(SpecialLiterals.contains(lit)) {
-      Some(if(lit == SpecialLiterals.Values.e) {
-        Right(Math.E)
-      } else if(lit == SpecialLiterals.Values.pi) {
-        Right(Math.PI)
-      } else {
-        Left(SpecialLiteralNotImplementedError(lit))
-      })
-    } else {
-      None
-    }
-  }
 }
 
