@@ -93,12 +93,13 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
             .map(z.newInstance)
       }
 
+      case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
+        evalHelpers.binaryNumericOperation(table)(b)
+
       case z@Operation(args)
         if allRaw(args) => Left(NotImplementedError(z))
 
 
-      case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
-        evalHelpers.binaryNumericOperation(table)(b)
 
       case x => Left(NotImplementedError(x))
     }
