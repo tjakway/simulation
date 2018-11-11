@@ -97,6 +97,9 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         if allRaw(args) => Left(NotImplementedError(z))
 
 
+      case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
+        evalHelpers.binaryNumericOperation(table)(b)
+
       case x => Left(NotImplementedError(x))
     }
   }
