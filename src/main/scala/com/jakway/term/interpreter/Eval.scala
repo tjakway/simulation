@@ -40,11 +40,22 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
     case Literal(value) => n.readLiteral(value).map(Raw.apply)
   }
 
+  def isResult(t: Term): Boolean = t match {
+    case _: InterpreterResult => true
+    case _ => false
+  }
+
+  def isSimplified(t: Term): Boolean = t match {
+    case _: Raw[N, M] => true
+    case IdentityFunction => true
+    case _ => false
+  }
+
+  def allSimplified(ts: Seq[Term]) =
+    ts.forall(isSimplified)
+
   def containsRaw(ts: Seq[Term]): Boolean =
     ts.find(_.isInstanceOf[Raw[N, M]]).isDefined
-
-  def allRaw(ts: Seq[Term]): Boolean =
-    ts.forall(_.isInstanceOf[Raw[N, M]])
 
   def expectNumericTerm(msg: String, t: Term):
     Either[SimError, NumericTerm[N, M]] =
@@ -56,6 +67,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
   def eval(table: SymbolTable)(t: Term): EvalType = {
     def recurse(t: Term): EvalType = eval(table)(t)
+
     t match {
       case l: Literal[N, M] => readLiteral(l)
 
@@ -97,7 +109,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         evalHelpers.binaryNumericOperation(table)(b)
 
       case z@Operation(args)
-        if allRaw(args) => Left(NotImplementedError(z))
+        if allSimplified(args) => Left(NotImplementedError(z))
 
 
 
