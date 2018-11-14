@@ -11,7 +11,9 @@ import com.jakway.term.interpreter.helpers.{EvalFunctionCall, EvalHelpers}
   * type for values we've looked up in the current evaluation context
   * @param value
   */
-case class Raw[N <: NumericType[M], M](value: M) extends NumericTerm[N, M] {
+case class Raw[N <: NumericType[M], M](value: M)
+  extends NumericTerm[N, M]
+  with InterpreterResult {
   override def contains(t: Term): Boolean = equals(t)
 
   override def matches(other: Term): Boolean = {
