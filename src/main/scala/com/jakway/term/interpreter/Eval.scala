@@ -19,6 +19,12 @@ case class Raw[N <: NumericType[M], M](value: M)
   override def matches(other: Term): Boolean = {
     sameType(other) && value == other.asInstanceOf[Raw[N, M]].value
   }
+
+  /**
+    * print the underlying value
+    * @return
+    */
+  override def formatResult(): String = value.toString
 }
 
 object Raw {
