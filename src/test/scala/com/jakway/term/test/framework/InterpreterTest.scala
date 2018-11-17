@@ -2,10 +2,10 @@ package com.jakway.term.test.framework
 
 import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Eval.EvalType
-import com.jakway.term.interpreter.{Eval, Interpreter}
+import com.jakway.term.interpreter.{Eval, Interpreter, Raw}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.helpers.EvalHelpers
-import com.jakway.term.numeric.types.NumericType
+import com.jakway.term.numeric.types.{NumericType, SimError}
 import com.jakway.term.test.NumericTypeTest
 import com.jakway.term.test.framework.InterpreterTest.ReadLiteralError
 import org.scalactic.Equality
@@ -41,8 +41,20 @@ abstract class InterpreterTest[N <: NumericType[M], M]
   }
 
   val emptyTable: SymbolTable = Map()
-  def eval(table: SymbolTable)(t: Term): EvalType =
-    interpreter.eval(table)(t)
+  def eval(t: Term): Term =
+    interpreter.eval(emptyTable)(t) match {
+      case Right(x) => x
+      case Left(err) => throw EvalReturnedError(err)
+    }
+
+
+  //definitions for convenience
+  val zero = Raw(numericType.builtinLiterals.zero)
+
+  /**
+    * implicit Equality[Term] instance so shouldEqual can be used with Terms
+    */
+  implicit val termEquality: Equality[Term] = TermMatchers.equalityInstance
 }
 
 object InterpreterTest {
@@ -51,4 +63,7 @@ object InterpreterTest {
 
   case class InterpreterSetupError(val t: Throwable)
     extends TestError(t)
+
+  case class EvalReturnedError(e: SimError)
+    extends TestError(s"eval gave: $e")
 }
