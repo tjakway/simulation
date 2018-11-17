@@ -84,6 +84,9 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         case None => Left(new SymbolNotFoundError(v, table, t))
       }
 
+      case h: HasSubterms
+        if h.subterms.find(_ == null).isDefined => Left(NullSubtermError(h))
+
         //recurse over subterms until simplified
       case h: HasSubterms
         if !allSimplified(h.subterms) => {
@@ -157,6 +160,9 @@ object Eval {
 
   case class ExpectedNumericTerm(override val msg: String)
     extends EvalError(msg)
+
+  case class NullSubtermError(h: HasSubterms)
+    extends EvalError(s"$h has a null subterm")
 
   def lookupTerm[N <: NumericType[M], M]
             (table: SymbolTable, variable: Variable[N, M]): Option[Term] =
