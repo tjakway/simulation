@@ -3,6 +3,7 @@ package com.jakway.term.test.framework
 import com.jakway.term.elements.Term
 import com.jakway.term.numeric.types.SimError
 import com.jakway.term.test.framework.TermMatchers.MatchesTermError
+import org.scalactic.Equality
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 trait TermMatchers {
@@ -60,6 +61,17 @@ object TermMatchers extends TermMatchers {
     val res = assertMatch(actual, expected)
     if(!res.matches) {
       throw MatchesTermError(res.failureMessage)
+    }
+  }
+
+  //use the MatchResult to check for equality
+  val equalityInstance: Equality[Term] = new Equality[Term] {
+    override def areEqual(a: Term, b: Any): Boolean = {
+      def eq(x: Term, y: Term): Boolean = {
+        new MatchesTerm(x).apply(y).matches
+      }
+
+      b.isInstanceOf[Term] && eq(a, b.asInstanceOf[Term])
     }
   }
 }
