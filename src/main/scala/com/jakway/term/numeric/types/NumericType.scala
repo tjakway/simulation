@@ -1,8 +1,9 @@
 package com.jakway.term.numeric.types
 
-import com.jakway.term.elements.Literal
+import com.jakway.term.elements.{Literal, NumericTerm}
+import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.errors.CouldNotReadLiteralError
-import com.jakway.term.numeric.types.SpecialLiterals.{SpecialLiteral, SpecialLiteralNotImplementedError, SpecialLiteralReadErrors}
+import com.jakway.term.numeric.types.SpecialLiterals.{HasSpecialLiterals, SpecialLiteral, SpecialLiteralNotImplementedError, SpecialLiteralReadErrors}
 import com.jakway.term.numeric.types.implementations.DoublePrecision
 
 class SimError(val msg: String)
@@ -86,6 +87,21 @@ object SpecialLiterals {
         .isDefined
   }
 
+  /**
+    * a trait that makes using special literals easier
+    * @tparam N
+    * @tparam M
+    */
+  trait HasSpecialLiterals[M] {
+    val specialLiterals: Map[SpecialLiteral, M]
+    private def lookupSpecLiteral(s: SpecialLiteral): M = {
+      specialLiterals.get(s).get
+    }
+
+    val e: M = lookupSpecLiteral(Values.e)
+    val pi: M = lookupSpecLiteral(Values.pi)
+  }
+
   def contains(lit: String): Boolean =
     Values.contains(lit)
 
@@ -147,6 +163,7 @@ class BuiltinLiterals[M](
   val negativeOne: M,
   val zero: M,
   val specialLiterals: Map[SpecialLiteral, M])
+  extends HasSpecialLiterals[M]
 
 object BuiltinLiterals {
   def mkBuiltinLiterals[M](

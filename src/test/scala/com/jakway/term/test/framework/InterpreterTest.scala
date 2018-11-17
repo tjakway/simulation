@@ -49,7 +49,11 @@ abstract class InterpreterTest[N <: NumericType[M], M]
 
 
   //definitions for convenience
-  val zero = Raw(numericType.builtinLiterals.zero)
+  val zero = Raw[N, M](numericType.builtinLiterals.zero)
+  val one = Raw[N, M](readLiteral("1"))
+  val negativeOne = Raw[N, M](numericType.builtinLiterals.negativeOne)
+  val pi = Raw[N, M](numericType.builtinLiterals.pi)
+  val e = Raw[N, M](numericType.builtinLiterals.e)
 
   /**
     * implicit Equality[Term] instance so shouldEqual can be used with Terms
