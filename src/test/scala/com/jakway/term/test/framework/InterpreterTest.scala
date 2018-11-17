@@ -29,7 +29,7 @@ abstract class InterpreterTest[N <: NumericType[M], M]
     }
   }
 
-  lazy val interpreter: Interpreter = {
+  val interpreter: Interpreter = {
     val res = EvalHelpers.setupWithReadLiteralStr(numericType.readLiteral,
       interpreter, numericType)
       .map(helpers => new Eval(numericType)(helpers))
