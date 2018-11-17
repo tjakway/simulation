@@ -75,6 +75,13 @@ case class Divide[N <: NumericType[M], M](
   override val left = dividend
   override val right = numerator
 
+  /**
+    * strangely, Divide.subterms is null even though BinaryTerm should have
+    * set subterms to Seq(left, right)
+    * it must be because of the constructor arguments since Multiply works as expected
+    */
+  override val subterms: Seq[Term] = Seq(dividend, numerator)
+
   override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
     mkInverseConstructorE(Multiply.apply)
 
