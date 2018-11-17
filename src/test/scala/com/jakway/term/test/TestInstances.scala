@@ -34,6 +34,7 @@ package instances {
     class DoubleTestInverseIdentitySimplifier
       extends TestInverseIdentitySimplifier[N, M](inst)
 
+    class DoubleTestNullSubterms extends TestNullSubterms[N, M](inst)
   }
 
   object ExactTests {
