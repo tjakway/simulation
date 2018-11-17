@@ -17,8 +17,8 @@ class TrigTests[N <: NumericType[M], M]
     eval(Sin(zero)) shouldEqual zero
   }
 
-  it should "cos(0) = 0" in {
-    eval(Cos(zero)) shouldEqual zero
+  it should "cos(0) = 1" in {
+    eval(Cos(zero)) shouldEqual one
   }
 
   it should "tan(0) = 0" in {
