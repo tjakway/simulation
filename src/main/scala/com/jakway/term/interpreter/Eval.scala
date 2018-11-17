@@ -78,6 +78,13 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         case None => Left(new SymbolNotFoundError(v, table, t))
       }
 
+        //recurse over subterms until simplified
+      case h: HasSubterms
+        if !allSimplified(h.subterms) => {
+        Util.mapEithers[SimError, Term, Term](h.subterms, recurse)
+          .map(h.newInstance)
+      }
+
       case Negative(arg) => eval(table)(Multiply(arg, Literal("-1")))
 
       case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
@@ -100,20 +107,13 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         }
       }
 
-      case z@Operation(args)
-        if !containsRaw(args) => {
-
-        Util.mapEithers[SimError, Term, Term](args, recurse)
-            .map(z.newInstance)
-      }
-
       case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
         evalHelpers.binaryNumericOperation(table)(b)
 
-      case z@Operation(args)
-        if allSimplified(args) => Left(NotImplementedError(z))
-
-
+        //if all subterms are simplified and we haven't matched this operation
+        //then we haven't implemented it
+      case h: HasSubterms
+        if allSimplified(h.subterms) => Left(NotImplementedError(h))
 
       case x => Left(NotImplementedError(x))
     }
