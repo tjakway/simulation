@@ -22,7 +22,6 @@ object EvalHelpers {
   def setup[N <: NumericType[M], M](
            readLiteral: Literal[N, M] => Either[SimError, Raw[N, M]],
            recurse: Interpreter,
-           table: SymbolTable,
            numericType: N): Either[SimError, EvalHelpers[N, M]] = {
     for {
       negativeOne <- readLiteral(Literal[N, M]("-1"))
@@ -32,5 +31,25 @@ object EvalHelpers {
         new EvalFunctionCall[N, M](recurse),
         new EvalBinaryNumericOperation[N, M](recurse, numericType))
     }
+  }
+
+  /**
+    * overloaded on readLiteral (different name to prevent double definition)
+    * @param readLiteralStr
+    * @param recurse
+    * @param numericType
+    * @tparam N
+    * @tparam M
+    * @return
+    */
+  def setupWithReadLiteralStr[N <: NumericType[M], M](
+           readLiteralStr: String => Either[SimError, M],
+           recurse: Interpreter,
+           numericType: N): Either[SimError, EvalHelpers[N, M]] = {
+
+    def readLiteral(l: Literal[N, M]): Either[SimError, Raw[N, M]] =
+      readLiteralStr(l.value).map(Raw.apply(_))
+
+    setup(readLiteral _, recurse, numericType)
   }
 }
