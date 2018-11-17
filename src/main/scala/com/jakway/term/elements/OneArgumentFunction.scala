@@ -8,7 +8,7 @@ trait OneArgumentFunction[N <: NumericType[M], M]
   extends NumericFunction[N, M]
   with Arity1MkNewInstance[N, M] {
   //trig functions only take 1 argument
-  val argument: Term
+  val argument: NumericTerm[N, M]
   override val arguments: Seq[Term] = Seq(argument)
 
   override val subterms: Seq[Term] = Seq(argument)
