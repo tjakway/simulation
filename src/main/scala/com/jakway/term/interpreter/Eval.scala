@@ -128,6 +128,9 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
       case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
         evalHelpers.binaryNumericOperation(table)(b)
 
+      case f: TrigFunction[N @unchecked, M @unchecked] =>
+        evalHelpers.trigFunctions(table)(f)
+
         //if all subterms are simplified and we haven't matched this operation
         //then we haven't implemented it
       case h: HasSubterms
