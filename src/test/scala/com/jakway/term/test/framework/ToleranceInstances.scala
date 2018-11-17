@@ -19,8 +19,8 @@ object ToleranceInstances {
       TestError.wrapEx[A](ToleranceInstancesError.apply)(a)
 
     for {
-      doubleEq <- wrap(tolerance.toDouble).map(TolerantNumerics.tolerantDoubleEquality(_))
-      intEq <- wrap(tolerance.toInt).map(TolerantNumerics.tolerantIntEquality(_))
+      doubleEq <- wrap(tolerance.toDouble).map(doubleInstance)
+      intEq <- wrap(tolerance.toInt).map(intInstance)
       bigDecimalEq <- wrap(new BigDecimal(tolerance)).map(new BigDecimalEquality(_))
     } yield {
       new ToleranceInstances {
@@ -28,6 +28,40 @@ object ToleranceInstances {
         override val intEquality: Equality[Int] = intEq
         override val bigDecimalEquality: Equality[BigDecimal] = bigDecimalEq
       }
+    }
+  }
+
+  def getOrThrow(tolerance: String): ToleranceInstances = {
+    get(tolerance) match {
+      case Right(x) => x
+      case Left(t) => throw ToleranceInstancesError(t)
+    }
+  }
+
+  def obviousEqualityInstance[A]: Equality[A] = {
+    new Equality[A] {
+      override def areEqual(a: A, b: Any) = {
+        b.isInstanceOf[A] && (a == b.asInstanceOf[A])
+      }
+    }
+  }
+
+  private def doubleInstance(tolerance: Double): Equality[Double] = {
+    //if the tolerance is 0, return a straightforward Equality instance
+    //that just compares them
+    //can't pass it to TolerantNumerics or it will throw an exception
+    if(tolerance == 0) {
+      obviousEqualityInstance[Double]
+    } else {
+      TolerantNumerics.tolerantDoubleEquality(tolerance)
+    }
+  }
+
+  private def intInstance(tolerance: Int): Equality[Int] = {
+    if (tolerance == 0) {
+      obviousEqualityInstance[Int]
+    } else {
+      TolerantNumerics.tolerantIntEquality(tolerance)
     }
   }
 
