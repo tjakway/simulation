@@ -10,6 +10,7 @@ class InterpreterTest[N <: NumericType[M], M]
   (val numericType: N, implicit val equality: Equality[M])
   extends FlatSpec
     with Matchers
+    with TermMatchers
     with NumericTypeTest[N, M] {
 
   //for convenience
