@@ -7,7 +7,7 @@ import org.scalactic.Equality
 
 class InterpreterTest[N <: NumericType[M], M]
   (val numericType: N, implicit val equality: Equality[M])
-  extends NumericTypeTest[N, M](numericType) {
+  extends NumericTypeTest[N, M] {
 
   //for convenience
   def readLiteral(x: String): M = {
