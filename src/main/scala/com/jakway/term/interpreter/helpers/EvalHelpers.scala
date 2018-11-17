@@ -19,6 +19,17 @@ class EvalHelpers[N <: NumericType[M], M](
 )
 
 object EvalHelpers {
+  /**
+    * warning: if you define an Interpreter lazily and pass itself
+    * for recurse you will get a stack overflow as it keeps trying to recompute
+    * itself
+    * @param readLiteral
+    * @param recurse
+    * @param numericType
+    * @tparam N
+    * @tparam M
+    * @return
+    */
   def setup[N <: NumericType[M], M](
            readLiteral: Literal[N, M] => Either[SimError, Raw[N, M]],
            recurse: Interpreter,
