@@ -90,6 +90,18 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         Util.mapEithers[SimError, Term, Term](h.subterms, recurse)
           .map(h.newInstance)
       }
+        //we can pattern match on Raw for any operation expecting numeric terms
+        //for the rest of this match statement because the HasSubterms case
+        //at the top should have simplified them already
+
+        //NOTE: because isSimplified(IdentityFunction) == true,
+        //any operation that doesn't restrict its arguments to NumericTerms
+        //must account for that in its case statement
+        //(i.e. don't just write MyOperation(Raw(x)) because you'll
+        //get a MatchError)
+        //for NumericFunctions/NumericOperations you don't have to worry about
+        //this because it's a compilation error to pass a non-NumericTerm
+        //e.g. Add(IdentityFunction, Literal("2")) doesn't compile
 
       case Negative(arg) => eval(table)(Multiply(arg, Literal("-1")))
 
