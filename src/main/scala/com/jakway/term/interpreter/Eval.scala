@@ -70,7 +70,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
   def eval(table: SymbolTable)(t: Term): EvalType = {
     def recurse(t: Term): EvalType = eval(table)(t)
 
-    t match {
+    val res = t match {
       case l: Literal[N, M] => readLiteral(l)
 
       case v@Variable(name, _) => table.get(name) match {
@@ -116,6 +116,11 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         if allSimplified(h.subterms) => Left(NotImplementedError(h))
 
       case x => Left(NotImplementedError(x))
+    }
+
+    res match {
+      case Right(x) if !isSimplified(x) => recurse(x)
+      case _ => res
     }
   }
 }
