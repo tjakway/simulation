@@ -16,7 +16,7 @@ case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   override def litIdentity: Literal[N, M] = Literal("0")
 
   override val numArguments: Int = 1
-  override val argument: NumericTerm[N, M] = arg
+  override val argument: Term = arg
 
   /**
     * Negative is its own inverse
