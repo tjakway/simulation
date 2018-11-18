@@ -32,7 +32,7 @@ class EvalBinaryNumericOperation[N <: NumericType[M], M](
       if(r == zero) {
         Left(DivideByZeroError(l, r))
       } else {
-        raw(Right(numericType.divide(l)(r)))
+        raw(numericType.divide(l)(r))
       }
     }
   }
