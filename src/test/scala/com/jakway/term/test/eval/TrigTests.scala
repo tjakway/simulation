@@ -42,7 +42,11 @@ class TrigTests[N <: NumericType[M], M]
   }
 
   it should "cos(pi) = -1" in {
-    eval(Cos(Divide(pi, four))) shouldEqual negativeOne
+    eval(Cos(pi)) shouldEqual negativeOne
+  }
+
+  it should "cos(pi/4) = 1/sqrt(2)" in {
+    eval(Cos(Divide(pi, four))) shouldEqual eval(Divide(one, Power.sqrt(Literal("2"))))
   }
 
   it should "tan(pi/4) = 1" in {
