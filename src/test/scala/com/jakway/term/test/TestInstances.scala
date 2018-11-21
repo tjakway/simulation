@@ -5,7 +5,7 @@ import com.jakway.term.numeric.types.implementations.DoublePrecision
 
 package instances {
 
-  object Double {
+  object DoubleInst {
     type M = Double
     type N = NumericType[Double]
 
@@ -22,7 +22,7 @@ package instances {
   package double {
 
 
-    import Double._
+    import DoubleInst._
 
     class DoubleTestHasSubterms extends TestHasSubterms[N, M](inst)
 
@@ -37,16 +37,19 @@ package instances {
     class DoubleTestNullSubterms extends TestNullSubterms[N, M](inst)
   }
 
-  object ExactTests {
+  object Tolerances {
     lazy val exact: ToleranceInstances =
       ToleranceInstances.getOrThrow("0")
+
+    lazy val doubleMinimum: ToleranceInstances =
+      ToleranceInstances.getOrThrow(Double.MinValue.toString)
   }
 
   package interpreter {
-    import ExactTests._
+    import Tolerances._
     import com.jakway.term.test.eval.TrigTests
 
-    import Double._
-    class DoubleTrigTests extends TrigTests(inst, exact.doubleEquality)
+    import DoubleInst._
+    class DoubleTrigTests extends TrigTests(inst, doubleMinimum.doubleEquality)
   }
 }
