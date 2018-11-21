@@ -24,6 +24,13 @@ case class Power[N <: NumericType[M], M](
   override def newInstance: NewInstanceF = mkNewInstance[Power[N,M]](Power.apply)
 }
 
+object Power {
+  def root[N <: NumericType[M], M](degree: NumericTerm[N, M], x: NumericTerm[N, M]):
+    Power[N, M] = Power(x, Divide(Literal("1"), degree))
+
+  def sqrt[N <: NumericType[M], M](x: NumericTerm[N, M]): Power[N, M] = root(Literal("2"), x)
+}
+
 class NaturalLogarithm[N <: NumericType[M], M] {
   val e: NumericTerm[N, M] = Literal("e")
 
