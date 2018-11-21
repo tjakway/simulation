@@ -76,7 +76,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
   def eval(table: SymbolTable)(t: Term): EvalType = {
     def recurse(t: Term): EvalType = eval(table)(t)
 
-    val res = t match {
+    val res: EvalType = t match {
       case l: Literal[N, M] => readLiteral(l)
 
       case v@Variable(name, _) => table.get(name) match {
@@ -133,6 +133,8 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
       case f: TrigFunction[N @unchecked, M @unchecked] =>
         evalHelpers.trigFunctions(table)(f)
+
+      case x: Raw[N, M] => Right(x)
 
         //if all subterms are simplified and we haven't matched this operation
         //then we haven't implemented it
