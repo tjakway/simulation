@@ -11,8 +11,21 @@ trait ToleranceInstances {
 }
 
 object ToleranceInstances {
-  case class ToleranceInstancesError(val t: Throwable)
-    extends TestError(t)
+
+  class ToleranceInstancesError(override val msg: String)
+    extends TestError(msg) {
+    def this(t: Throwable) {
+      this(s"$t")
+    }
+  }
+
+  object ToleranceInstancesError {
+    def apply(t: Throwable): ToleranceInstancesError =
+      new ToleranceInstancesError(t)
+  }
+
+  case class NegativeToleranceError(override val msg: String)
+    extends ToleranceInstancesError(msg)
 
   def get(tolerance: String): Either[TestError, ToleranceInstances] = {
     def wrap[A](a: A): Either[TestError, A] =
@@ -20,7 +33,7 @@ object ToleranceInstances {
 
     for {
       doubleEq <- wrap(tolerance.toDouble).map(doubleInstance)
-      intEq <- wrap(tolerance.toInt).map(intInstance)
+      intEq <- intInstance(tolerance)
       bigDecimalEq <- wrap(new BigDecimal(tolerance)).map(new BigDecimalEquality(_))
     } yield {
       new ToleranceInstances {
@@ -50,18 +63,36 @@ object ToleranceInstances {
     //if the tolerance is 0, return a straightforward Equality instance
     //that just compares them
     //can't pass it to TolerantNumerics or it will throw an exception
-    if(tolerance == 0) {
+    if (tolerance == 0) {
       obviousEqualityInstance[Double]
     } else {
       TolerantNumerics.tolerantDoubleEquality(tolerance)
     }
   }
 
-  private def intInstance(tolerance: Int): Equality[Int] = {
-    if (tolerance == 0) {
-      obviousEqualityInstance[Int]
-    } else {
-      TolerantNumerics.tolerantIntEquality(tolerance)
+
+  private def intInstance(tolerance: String): Either[TestError, Equality[Int]] = {
+    def toleranceDoubleE =
+      TestError.wrapEx(ToleranceInstancesError.apply)(tolerance.toDouble)
+
+    toleranceDoubleE.flatMap { toleranceDouble =>
+      val zeroToleranceInstance: Either[TestError, Equality[Int]] =
+        Right(obviousEqualityInstance[Int])
+      if (tolerance == 0) {
+        zeroToleranceInstance
+      }
+      else if (toleranceDouble < 0) {
+        Left(NegativeToleranceError(
+          s"Cannot have a negative tolerance: $tolerance"))
+      } else {
+        val res: Either[TestError, Int] =
+          TestError.wrapEx[Int](ToleranceInstancesError.apply) {
+            java.lang.Math.floor(toleranceDouble).toInt
+          }
+
+        res.map(intTolerance =>
+          TolerantNumerics.tolerantIntEquality(intTolerance))
+      }
     }
   }
 
