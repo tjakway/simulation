@@ -27,6 +27,29 @@ object ToleranceInstances {
   case class NegativeToleranceError(override val msg: String)
     extends ToleranceInstancesError(msg)
 
+  def getToDecimalPlaces(numPlaces: Int):
+    Either[TestError, ToleranceInstances] = {
+
+    val zeros: Option[String] =
+      if(numPlaces <= 1) {
+        None
+      } else {
+        val stringBuilder = new StringBuilder()
+        (0 to (numPlaces - 1))
+          .foreach(_ => stringBuilder.append("0"))
+        Some(stringBuilder.toString())
+      }
+
+    val tolerance: String = "0" + zeros.map("." + _ + "1").getOrElse("")
+    if(numPlaces < 0) {
+      Left(NegativeToleranceError(
+        "Cannot have a negative number of decimal places"
+        + s"(passed $numPlaces)"))
+    } else {
+      get(tolerance)
+    }
+  }
+
   def get(tolerance: String): Either[TestError, ToleranceInstances] = {
     def wrap[A](a: A): Either[TestError, A] =
       TestError.wrapEx[A](ToleranceInstancesError.apply)(a)
@@ -51,7 +74,7 @@ object ToleranceInstances {
     }
   }
 
-  def obviousEqualityInstance[A]: Equality[A] = {
+  private def obviousEqualityInstance[A]: Equality[A] = {
     new Equality[A] {
       override def areEqual(a: A, b: Any) = {
         b.isInstanceOf[A] && (a == b.asInstanceOf[A])
@@ -78,7 +101,7 @@ object ToleranceInstances {
     toleranceDoubleE.flatMap { toleranceDouble =>
       val zeroToleranceInstance: Either[TestError, Equality[Int]] =
         Right(obviousEqualityInstance[Int])
-      if (tolerance == 0) {
+      if (toleranceDouble == 0) {
         zeroToleranceInstance
       }
       else if (toleranceDouble < 0) {
@@ -90,8 +113,12 @@ object ToleranceInstances {
             java.lang.Math.floor(toleranceDouble).toInt
           }
 
-        res.map(intTolerance =>
-          TolerantNumerics.tolerantIntEquality(intTolerance))
+        res.flatMap(intTolerance =>
+          if(intTolerance == 0) {
+            zeroToleranceInstance
+          } else {
+           Right(TolerantNumerics.tolerantIntEquality(intTolerance))
+          })
       }
     }
   }
@@ -100,7 +127,7 @@ object ToleranceInstances {
     * Compares instances of BigDecimal within the passed tolerance
     * @param tolerance
     */
-  class BigDecimalEquality(val tolerance: BigDecimal)
+  private class BigDecimalEquality(val tolerance: BigDecimal)
     extends Equality[BigDecimal] {
 
     override def areEqual(a: BigDecimal, b: Any): Boolean = {
