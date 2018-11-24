@@ -42,7 +42,7 @@ package instances {
       ToleranceInstances.getOrThrow("0")
 
     lazy val doubleMinimum: ToleranceInstances =
-      ToleranceInstances.getOrThrow(Double.MinValue.toString)
+      ToleranceInstances.getOrThrow(Double.MinValue.abs.toString)
   }
 
   package interpreter {
