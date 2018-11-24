@@ -1,7 +1,9 @@
 package com.jakway.term.test.framework
 
-import org.scalactic.{Equality, TolerantNumerics}
+import org.scalactic.Equality
 import java.math.BigDecimal
+
+import scala.util.Try
 
 trait ToleranceInstances {
 
@@ -55,7 +57,7 @@ object ToleranceInstances {
       TestError.wrapEx[A](ToleranceInstancesError.apply)(a)
 
     for {
-      doubleEq <- wrap(tolerance.toDouble).map(doubleInstance)
+      doubleEq <- wrap(tolerance.toDouble).map(new DoubleEquality(_))
       intEq <- intInstance(tolerance)
       bigDecimalEq <- wrap(new BigDecimal(tolerance)).map(new BigDecimalEquality(_))
     } yield {
@@ -74,37 +76,23 @@ object ToleranceInstances {
     }
   }
 
-  private def obviousEqualityInstance[A]: Equality[A] = {
-    new Equality[A] {
-      override def areEqual(a: A, b: Any) = {
-        b.isInstanceOf[A] && (a == b.asInstanceOf[A])
+  private def toleranceDoubleE(tolerance: String) =
+    TestError.wrapEx(ToleranceInstancesError.apply)(tolerance.toDouble)
+
+  private def doubleInstance(tolerance: String): Either[TestError, Equality[Double]] = {
+    toleranceDoubleE(tolerance).flatMap { toleranceDouble =>
+      if (toleranceDouble < 0) {
+        Left(NegativeToleranceError(
+          s"Cannot have a negative tolerance: $tolerance"))
+      } else {
+          Right(new DoubleEquality(tolerance.toDouble))
       }
     }
   }
-
-  private def doubleInstance(tolerance: Double): Equality[Double] = {
-    //if the tolerance is 0, return a straightforward Equality instance
-    //that just compares them
-    //can't pass it to TolerantNumerics or it will throw an exception
-    if (tolerance == 0) {
-      obviousEqualityInstance[Double]
-    } else {
-      TolerantNumerics.tolerantDoubleEquality(tolerance)
-    }
-  }
-
 
   private def intInstance(tolerance: String): Either[TestError, Equality[Int]] = {
-    def toleranceDoubleE =
-      TestError.wrapEx(ToleranceInstancesError.apply)(tolerance.toDouble)
-
-    toleranceDoubleE.flatMap { toleranceDouble =>
-      val zeroToleranceInstance: Either[TestError, Equality[Int]] =
-        Right(obviousEqualityInstance[Int])
-      if (toleranceDouble == 0) {
-        zeroToleranceInstance
-      }
-      else if (toleranceDouble < 0) {
+    toleranceDoubleE(tolerance).flatMap { toleranceDouble =>
+      if (toleranceDouble < 0) {
         Left(NegativeToleranceError(
           s"Cannot have a negative tolerance: $tolerance"))
       } else {
@@ -113,34 +101,38 @@ object ToleranceInstances {
             java.lang.Math.floor(toleranceDouble).toInt
           }
 
-        res.flatMap(intTolerance =>
-          if(intTolerance == 0) {
-            zeroToleranceInstance
-          } else {
-           Right(TolerantNumerics.tolerantIntEquality(intTolerance))
-          })
+        res.map(new IntEquality(_))
       }
     }
   }
 
   /**
-    * Compares instances of BigDecimal within the passed tolerance
+    * Compares numbers within the passed tolerance
     * @param tolerance
     */
-  private class BigDecimalEquality(val tolerance: BigDecimal)
-    extends Equality[BigDecimal] {
+  abstract class TolerantEquality[A]
+    (val tolerance: A)
+    extends Equality[A] {
 
-    override def areEqual(a: BigDecimal, b: Any): Boolean = {
+    protected def add(x: A, amt: A): A
+    protected def subtract(x: A, amt: A): A
+    //can't use new because of type erasure
+    protected def newInstance(x: String): A
+    //for some reason A <: Comparable[A] doesn't work...
+    //neither does A <: Ordering[A]
+    protected def cmp(x: A, y: A): Int
+
+    override def areEqual(a: A, b: Any): Boolean = {
       def assertCompareTo(i: Int): Unit = {
         assert(i == -1 || i == 0 || i == 1)
       }
 
-      def eq(x: BigDecimal, y: BigDecimal): Boolean = {
-        val upper = y.add(tolerance)
-        val lower = y.subtract(tolerance)
+      def eq(x: A, y: A): Boolean = {
+        val upper = add(y, tolerance)
+        val lower = subtract(y, tolerance)
 
-        val cmpUpper = a.compareTo(upper)
-        val cmpLower = a.compareTo(lower)
+        val cmpUpper = cmp(a, upper)
+        val cmpLower = cmp(a, lower)
         //sanity check compareTo results
         assertCompareTo(cmpUpper)
         assertCompareTo(cmpLower)
@@ -150,9 +142,47 @@ object ToleranceInstances {
           (cmpLower == -1 || cmpLower == 0)
       }
 
-      b.isInstanceOf[BigDecimal] &&
-        eq(a, b.asInstanceOf[BigDecimal])
+      (b.isInstanceOf[A] &&
+        eq(a, b.asInstanceOf[A])) ||
+        //if b is not an instance of the expected type
+        //try and convert it
+        Try(eq(a, newInstance(b.toString))).getOrElse(false)
     }
+  }
+
+  class BigDecimalEquality(override val tolerance: BigDecimal)
+    extends TolerantEquality[BigDecimal](tolerance) {
+    override protected def add(x: BigDecimal, amt: BigDecimal): BigDecimal =
+      x.add(amt)
+
+    override protected def subtract(x: BigDecimal, amt: BigDecimal): BigDecimal =
+      x.subtract(amt)
+
+    override protected def newInstance(x: String): BigDecimal = new BigDecimal(x)
+
+    override protected def cmp(x: BigDecimal, y: BigDecimal): Int = x.compareTo(y)
+  }
+
+  class DoubleEquality(override val tolerance: Double)
+    extends TolerantEquality[Double](tolerance) {
+    override protected def add(x: Double, amt: Double): Double = x + amt
+
+    override protected def subtract(x: Double, amt: Double): Double = x - amt
+
+    override protected def newInstance(x: String): Double = x.toDouble
+
+    override protected def cmp(x: Double, y: Double): Int = x.compareTo(y)
+  }
+
+  class IntEquality(override val tolerance: Int)
+    extends TolerantEquality[Int](tolerance) {
+    override protected def add(x: Int, amt: Int): Int = x + amt
+
+    override protected def subtract(x: Int, amt: Int): Int = x - amt
+
+    override protected def newInstance(x: String): Int = x.toInt
+
+    override protected def cmp(x: Int, y: Int): Int = x.compareTo(y)
   }
 }
 
