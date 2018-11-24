@@ -43,6 +43,9 @@ package instances {
 
     lazy val doubleMinimum: ToleranceInstances =
       ToleranceInstances.getOrThrow(Double.MinValue.abs.toString)
+
+    lazy val fiveDecimalPlaces: ToleranceInstances =
+      ToleranceInstances.getToDecimalPlaces(5).right.get
   }
 
   package interpreter {
@@ -50,6 +53,6 @@ package instances {
     import com.jakway.term.test.eval.TrigTests
 
     import DoubleInst._
-    class DoubleTrigTests extends TrigTests(inst, doubleMinimum.doubleEquality)
+    class DoubleTrigTests extends TrigTests(inst, fiveDecimalPlaces.doubleEquality)
   }
 }
