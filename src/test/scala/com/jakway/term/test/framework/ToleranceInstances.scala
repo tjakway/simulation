@@ -139,7 +139,7 @@ object ToleranceInstances {
 
         //x must be <= upper and >= lower
         (cmpUpper  == -1 || cmpUpper == 0) &&
-          (cmpLower == -1 || cmpLower == 0)
+          (cmpLower == 1 || cmpLower == 0)
       }
 
       (b.isInstanceOf[A] &&
