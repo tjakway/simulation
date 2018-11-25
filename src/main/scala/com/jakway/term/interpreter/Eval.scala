@@ -65,13 +65,6 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
   def containsRaw(ts: Seq[Term]): Boolean =
     ts.find(_.isInstanceOf[Raw[N, M]]).isDefined
 
-  def expectNumericTerm(msg: String, t: Term):
-    Either[SimError, NumericTerm[N, M]] =
-    if(t.isInstanceOf[NumericTerm[N, M]]) {
-      Right(t.asInstanceOf[NumericTerm[N, M]])
-    } else {
-      Left(ExpectedNumericTerm(s"$msg but got $t"))
-    }
 
   def eval(table: SymbolTable)(t: Term): EvalType = {
     def recurse(t: Term): EvalType = eval(table)(t)
@@ -110,23 +103,9 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
       case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
 
-      case Logarithm(l@Raw(base), r@Raw(of))
-        if l.isInstanceOf[Raw[N, M]] && r.isInstanceOf[Raw[N, M]] =>
-        (n.log(base.asInstanceOf[M])
-             (of.asInstanceOf[M])).map(Raw.apply)
-      case Logarithm(base, of) => {
-        val errMsg = "Expected numeric term in evaluation of" +
-          " Logarithm " + t.toString
-        for {
-          eBase <- recurse(base)
-          nBase <- expectNumericTerm(errMsg, eBase)
-          eOf <- recurse(of)
-          nOf <- expectNumericTerm(errMsg, eOf)
-          eLog <- recurse(Logarithm(nBase, nOf))
-        } yield {
-          eLog
-        }
-      }
+      case l: Logarithm[N, M] => evalHelpers.logarithm(table)(l)
+
+
 
       case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
         evalHelpers.binaryNumericOperation(table)(b)
@@ -177,4 +156,13 @@ object Eval {
     def recurse(table: SymbolTable)(t: Term): EvalType =
       interpreter.eval(table)(t)
   }
+
+
+  def expectNumericTerm[N <: NumericType[M], M](msg: String, t: Term):
+    Either[SimError, NumericTerm[N, M]] =
+    if(t.isInstanceOf[NumericTerm[N, M]]) {
+      Right(t.asInstanceOf[NumericTerm[N, M]])
+    } else {
+      Left(ExpectedNumericTerm(s"$msg but got $t"))
+    }
 }
