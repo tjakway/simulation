@@ -16,7 +16,8 @@ class EvalHelpers[N <: NumericType[M], M](
      val negativeTerm: EvalNegative[N, M],
      val functionCall: EvalFunctionCall[N, M],
      val binaryNumericOperation: EvalBinaryNumericOperation[N, M],
-     val trigFunctions: EvalTrigFunctions[N, M]
+     val trigFunctions: EvalTrigFunctions[N, M],
+     val logarithm: EvalLogarithm[N, M]
 )
 
 object EvalHelpers {
@@ -42,7 +43,8 @@ object EvalHelpers {
         new EvalNegative[N, M](recurse, negativeOne),
         new EvalFunctionCall[N, M](recurse),
         new EvalBinaryNumericOperation[N, M](recurse, numericType),
-        new EvalTrigFunctions[N, M](recurse, numericType))
+        new EvalTrigFunctions[N, M](recurse, numericType),
+        new EvalLogarithm[N, M](recurse, numericType))
     }
   }
 
