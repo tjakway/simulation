@@ -11,9 +11,6 @@ class EvalLogarithm[N <: NumericType[M], M](
   val numericType: N)
   extends EvalHelper[Logarithm[N, M]](recurse) {
 
-  val negativeOne: M = numericType.builtinLiterals.negativeOne
-  val zero: M = numericType.builtinLiterals.zero
-
   override def apply(table: SymbolTable)
                     (z: Logarithm[N, M]): EvalType =
 
