@@ -105,7 +105,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
       case l: Logarithm[N, M] => evalHelpers.logarithm(table)(l)
 
-
+      case p: Power[N, M] => evalHelpers.power(table)(p)
 
       case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
         evalHelpers.binaryNumericOperation(table)(b)
@@ -160,7 +160,7 @@ object Eval {
 
   def expectNumericTerm[N <: NumericType[M], M](msg: String, t: Term):
     Either[SimError, NumericTerm[N, M]] =
-    if(t.isInstanceOf[NumericTerm[N, M]]) {
+    if(t.isInstanceOf[NumericTerm[N @unchecked, M @unchecked]]) {
       Right(t.asInstanceOf[NumericTerm[N, M]])
     } else {
       Left(ExpectedNumericTerm(s"$msg but got $t"))

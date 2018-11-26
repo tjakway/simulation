@@ -15,7 +15,7 @@ case class Logarithm[N <: NumericType[M], M]
 }
 
 case class Power[N <: NumericType[M], M](
-                                          val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
+  val base: NumericTerm[N, M], val exponent: NumericTerm[N, M])
   extends TwoArgumentFunction[N, M](base, exponent) {
 
   override def inverseConstructorE: Seq[Term] => Either[SimError, Term] =
