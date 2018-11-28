@@ -38,6 +38,14 @@ class TestExpressions[N <: NumericType[M], M] {
         Multiply(Negative(d), Add(e, Literal("2")))))
   }
 
+  val xPower = new Expression[N, M] {
+    val x = Variable[N, M]("x")
+    val y = Variable[N, M]("y")
+
+    val variables: Seq[Variable[N, M]] = Seq(x, y)
+    val term = Power(x, y)
+  }
+
   val allExpressions: Seq[Term] = Seq(
     addTwoLiterals,
     addTwoVariables.term,

@@ -35,6 +35,8 @@ package instances {
       extends TestInverseIdentitySimplifier[N, M](inst)
 
     class DoubleTestNullSubterms extends TestNullSubterms[N, M](inst)
+
+    class DoubleTestSolver extends TestSolver[N, M](inst)
   }
 
   object Tolerances {
