@@ -59,7 +59,7 @@ abstract class TestHasSubterms[N <: NumericType[M], M]
   }
 
   "mapAll" should "apply id correctly" in {
-    expr.allExpressions.foreach(
+    expr.allTerms.foreach(
       x => TermOperations.mapAll(x)(id) shouldEqual x)
   }
 }
