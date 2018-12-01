@@ -3,23 +3,37 @@ package com.jakway.term.solver
 import com.jakway.term.elements._
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import com.jakway.term.solver.SubstituteFunction.Applications
+import org.slf4j.{Logger, LoggerFactory}
 
 class Solver[N <: NumericType[M], M] {
   import Solver._
 
-  private def getLeftHasSubterms(e: Equation)
-    : Either[SimError, HasSubterms] = e.left match {
-    case x: HasSubterms => Right(x)
-    case _ => Left(new SolverError(
-        s"Expected instance of HasSubterms for Equation.left but" +
-        s" got ${e.left}"))
+  val logger: Logger = LoggerFactory.getLogger(getClass())
+
+  /**
+    * move the variable we're solving for to the left side
+    * @param solveFor
+    * @param e
+    * @return
+    */
+  private def moveVariableToLeft(solveFor: Variable[N, M],
+                                 e: Solvable):
+    Either[SimError, Solvable] = {
+    if(!e.sideToSimplify.contains(solveFor) &&
+        e.otherSide.contains(solveFor)) {
+      Right(e.reverse())
+    } else if(e.sideToSimplify.contains(solveFor)) {
+      Right(e)
+    } else {
+      Left(TermNotFoundError(solveFor, e))
+    }
   }
 
-  private def checkEquationSolved(solveFor: Variable[N, M],
+  private def checkSolvableSolved(solveFor: Variable[N, M],
                                   applications: Applications):
-    Either[SimError, Equation] = {
+    Either[SimError, Solvable] = {
     val eq = applications.result
-    if(eq.left matches solveFor) {
+    if(eq.sideToSimplify matches solveFor) {
       Right(eq)
     } else {
       Left(new SolverError(s"Equation $eq not solved:" +
@@ -28,24 +42,45 @@ class Solver[N <: NumericType[M], M] {
   }
 
 
-  def solve(solveFor: Variable[N, M])
-           (equation: Equation): Either[SimError, Equation] = {
-    if(!equation.contains(solveFor)) {
-      Left(TermNotFoundError(solveFor, equation))
-
-      //check if the equation is already in the desired form
-    } else if(equation.left.matches(solveFor)) {
-      Right(equation)
-    } else {
+  private def solveIfHasSubterms(solveFor: Variable[N, M],
+                                 solvable: Solvable):
+    Either[SimError, Solvable] = solvable.sideToSimplify match {
+    case h: HasSubterms => {
       for {
-        leftSide <- getLeftHasSubterms(equation)
         functions <- SubstituteFunction.mkSubstituteFunctions(
-          solveFor, leftSide)
+          solveFor, h)
         applications <-
-          SubstituteFunction.applyFunctions(functions, equation)
-        solvedEquation <- checkEquationSolved(solveFor, applications)
+          SubstituteFunction.applyFunctions(functions, solvable)
+        solvedEquation <- checkSolvableSolved(solveFor, applications)
       } yield {
         solvedEquation
+      }
+    }
+    case v: Variable[N @unchecked, M @unchecked]
+      if solveFor == v => {
+        logger.debug(s"$solvable is already solved")
+        Right(solvable)
+    }
+    case _ => {
+      Left(new SolverError("Unknown sideToSimplify in Solvable " +
+        s"$solvable"))
+    }
+  }
+
+  def solve(solveFor: Variable[N, M])
+           (solvable: Solvable): Either[SimError, Solvable] = {
+    if(!solvable.contains(solveFor)) {
+      Left(TermNotFoundError(solveFor, solvable))
+
+      //check if the equation is already in the desired form
+    } else if(solvable.sideToSimplify.matches(solveFor)) {
+      Right(solvable)
+    } else {
+      for {
+        preparedSolvable <- moveVariableToLeft(solveFor, solvable)
+        res <- solveIfHasSubterms(solveFor, preparedSolvable)
+      } yield {
+        res
       }
     }
   }
@@ -58,8 +93,8 @@ object Solver {
   case class ImplementationError(override val msg: String)
     extends SolverError(msg)
 
-  case class TermNotFoundError(refactorFor: Term, equation: Equation)
-    extends SolverError(s"Could not find term ${refactorFor} in equation $equation")
+  case class TermNotFoundError(refactorFor: Term, solvable: Solvable)
+    extends SolverError(s"Could not find term ${refactorFor} in solvable $solvable")
 
   case class NotImplementedError(override val msg: String)
     extends SolverError(msg)

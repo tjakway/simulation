@@ -82,8 +82,8 @@ object SubstituteFunction {
   }
 
   class Applications(val applications: Seq[Applications.Application],
-                     val start: Equation,
-                     val result: Equation)
+                     val start: Solvable,
+                     val result: Solvable)
   object Applications {
     case class Simplification(left: Term, right: Term)
     case class Inversion(left: Term, right: Term)
@@ -91,31 +91,31 @@ object SubstituteFunction {
     case class Application(subF: SubstituteFunction,
                            inversion: Inversion,
                            simplification: Simplification,
-                           result: Equation,
+                           result: Solvable,
                            warnings: Seq[Warning] = Seq())
   }
   import Applications._
 
   class SubstituteFunctionError(override val msg: String)
     extends SimError(msg) {
-    def this(f: SubstituteFunction, e: Equation, msg: String) =
+    def this(f: SubstituteFunction, e: Solvable, msg: String) =
       this(s"Error while processing $f in $e: $msg")
   }
 
   case class MultipleTermsMatchSubstitutionFunction(f: SubstituteFunction,
-                                                    in: Equation,
+                                                    in: Solvable,
                                                     matchingTerms: Seq[Term])
     extends Warning(in, "Multiple terms matched substitution function" +
       s" $f in equation $in: $matchingTerms")
 
   class ReturnedError(f: SubstituteFunction,
-                      e: Equation,
+                      e: Solvable,
                       res: SimError)
     extends SubstituteFunctionError(f, e, s"substitute function returned " +
       s"error result $res")
 
   class UnknownError(f: SubstituteFunction,
-                     e: Equation,
+                     e: Solvable,
                      t: Throwable)
     extends SubstituteFunctionError(f, e, s"exception thrown while processing " +
       s"substitute function: $t")
@@ -126,10 +126,10 @@ object SubstituteFunction {
         .formatSeqMultiline("Substitute Function errors:")(errors))
 
 
-  def applyFunctions(fs: Seq[SubstituteFunction], origEquation: Equation):
+  def applyFunctions(fs: Seq[SubstituteFunction], origSolvable: Solvable):
   Either[SimError, Applications] = {
 
-    def applyThisFunction(subF: SubstituteFunction, to: Equation):
+    def applyThisFunction(subF: SubstituteFunction, to: Solvable):
     Either[SimError, Application] = Try {
 
       val result: Either[SimError, Application] =
@@ -143,7 +143,7 @@ object SubstituteFunction {
             case class ExpectedSimplificationError(override val msg: String)
               extends SimError(msg)
 
-            if(invL == to.left && invR == to.right) {
+            if(invL == to.sideToSimplify && invR == to.otherSide) {
               Left(ExpectedSimplificationError(
                 s"Expected applying SimplificationFunction $s" +
                   s" would result in a different equation; " + msg))
@@ -153,16 +153,15 @@ object SubstituteFunction {
           }
 
           for {
-            invLeft <- inv(to.left)
-            invRight <- inv(to.right)
+            invLeft <- inv(to.sideToSimplify)
+            invRight <- inv(to.otherSide)
             _ <- changed("inversion step changed nothing")(invLeft, invRight)
 
             sLeft <- simplifier.simplify(invLeft)
             sRight <- simplifier.simplify(invRight)
             _ <- changed("simplification step changed nothing")(sLeft, sRight)
           } yield {
-            val newEq = to.copy(left = sLeft)
-                          .copy(right = sRight)
+            val newEq = Solvable(sLeft,sRight)
 
             Application(subF, Inversion(invLeft, invRight), Simplification(sLeft, sRight),
               newEq, Seq())
@@ -183,8 +182,8 @@ object SubstituteFunction {
     //more errors)
     //Left: accumulate errors
     //Right: accumulate results and track the equation to apply the next function to
-    val empty: Either[Seq[SimError], (Seq[Applications.Application], Equation)] =
-      Right(Seq(), origEquation)
+    val empty: Either[Seq[SimError], (Seq[Applications.Application], Solvable)] =
+      Right(Seq(), origSolvable)
     fs.foldLeft(empty) {
       //accumulate function applications in the Either type
       //and stop if we get a Left
@@ -199,7 +198,7 @@ object SubstituteFunction {
     }.map {
       //wrap the result and return
       case (applications, finalEquation) =>
-        new Applications(applications, origEquation, finalEquation)
+        new Applications(applications, origSolvable, finalEquation)
       } match {
         //flatten the Seq[SimError] by wrapping it in a new type
         case Left(errs) => Left(SubstituteFunctionErrors(errs))

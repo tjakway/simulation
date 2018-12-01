@@ -4,6 +4,7 @@ import java.util.Locale
 
 import com.jakway.term.numeric.types.SimError
 import com.jakway.term.elements.{Equation, Term}
+import com.jakway.term.solver.Solvable
 
 
 /**
@@ -15,8 +16,8 @@ sealed trait WarningObject {
 case class TermWarning(t: Term) extends WarningObject {
   override def warningFor: String = t.toString
 }
-case class EquationWarning(eq: Equation) extends WarningObject {
-  override def warningFor: String = eq.toString
+case class SolvableWarning(solvable: Solvable) extends WarningObject {
+  override def warningFor: String = solvable.toString
 }
 
 class Warning(val obj: WarningObject, val warning: String)
@@ -33,8 +34,8 @@ class Warning(val obj: WarningObject, val warning: String)
   def this(t: Term, warning: String) =
     this(TermWarning(t), warning)
 
-  def this(eq: Equation, warning: String) =
-    this(EquationWarning(eq), warning)
+  def this(solvable: Solvable, warning: String) =
+    this(SolvableWarning(solvable), warning)
 
 }
 
