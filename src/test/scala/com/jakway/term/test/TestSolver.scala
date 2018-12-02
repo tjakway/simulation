@@ -4,6 +4,7 @@ import com.jakway.term.elements._
 import com.jakway.term.numeric.types.{NumericType, SimError}
 import com.jakway.term.solver.{Solvable, Solver}
 import com.jakway.term.test.framework.TermMatchers
+import com.jakway.term.test.framework.cases.SolverTestCase
 import org.scalatest.{FlatSpec, FunSuite, Matchers}
 
 class TestSolver[N <: NumericType[M], M]

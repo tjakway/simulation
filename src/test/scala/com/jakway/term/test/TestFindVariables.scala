@@ -3,6 +3,7 @@ package com.jakway.term.test
 import scala.reflect.runtime.universe._
 import com.jakway.term.TermOperations
 import com.jakway.term.numeric.types.NumericType
+import com.jakway.term.test.framework.Expression
 import org.scalatest.{FlatSpec, Matchers}
 
 abstract class TestFindVariables[N <: NumericType[M], M]

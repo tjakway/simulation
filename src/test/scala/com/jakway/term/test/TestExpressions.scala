@@ -4,43 +4,9 @@ import com.jakway.term._
 import com.jakway.term.elements._
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.solver.Solvable
+import com.jakway.term.test.framework.Expression
+import com.jakway.term.test.framework.cases.SolverTestCase
 
-/**
-  * variables and term are fields and not constructor parameters
-  * so that other fields can be used in their definition
-  * (allowing you to define variables inside the class
-  * that can be referenced in term)
-  * @tparam N
-  * @tparam M
-  */
-abstract class Expression[N <: NumericType[M], M] {
-  val variables: Seq[Variable[N, M]]
-  val term: Term
-}
-
-abstract class SolverTestCase[N <: NumericType[M], M] {
-
-  val input: Solvable
-  val expected: Solvable
-
-  lazy val variables: Seq[Variable[N, M]] =
-    expected.sides.flatMap(TermOperations.findVariables[N, M])
-
-  lazy val expressions: Seq[Expression[N, M]] =
-    expected.sides.map { side =>
-      new Expression[N, M] {
-        override val variables: Seq[Variable[N, M]] =
-          TermOperations.findVariables(side)
-        override val term: Term = side
-      }
-    }
-
-  val solveFor: Variable[N, M]
-
-  val namePrefix: String = "SolverTestCase"
-  def fullName: String = namePrefix + "." + name
-  val name: String
-}
 
 class SolverTestCases[N <: NumericType[M], M] {
 
