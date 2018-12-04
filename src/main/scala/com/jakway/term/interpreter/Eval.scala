@@ -99,7 +99,7 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
         //this because it's a compilation error to pass a non-NumericTerm
         //e.g. Add(IdentityFunction, Literal("2")) doesn't compile
 
-      case Negative(arg) => eval(table)(Multiply(arg, Literal("-1")))
+      case n: Negative[N, M] => evalHelpers.negativeTerm(table, this)(n)
 
       case f: FunctionCall[N, M] => evalHelpers.functionCall(table, this)(f)
 
