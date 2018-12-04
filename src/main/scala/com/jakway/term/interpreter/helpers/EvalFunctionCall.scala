@@ -7,13 +7,12 @@ import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.NumericType
 
 class EvalFunctionCall[N <: NumericType[M], M]
-  (val recurse: Interpreter)
-  extends EvalHelper[FunctionCall[N, M]](recurse) {
+  extends EvalHelper[FunctionCall[N, M]] {
 
   case class WrongNumberOfArgumentsError(override val msg: String)
     extends EvalError(msg)
 
-  def apply(table: SymbolTable)
+  def apply(table: SymbolTable, recurse: Interpreter)
            (f: FunctionCall[N, M]): EvalType
     = f match {
     case FunctionCall(function, args)

@@ -8,15 +8,14 @@ import com.jakway.term.numeric.errors.DivideByZeroError
 import com.jakway.term.numeric.types.NumericType
 
 class EvalBinaryNumericOperation[N <: NumericType[M], M](
-  val recurse: Interpreter,
   val numericType: N)
-  extends EvalHelper[BinaryNumericOperation[N, M]](recurse) {
+  extends EvalHelper[BinaryNumericOperation[N, M]] {
   import Raw._
 
   val negativeOne: M = numericType.builtinLiterals.negativeOne
   val zero: M = numericType.builtinLiterals.zero
 
-  override def apply(table: SymbolTable)
+  override def apply(table: SymbolTable, recurse: Interpreter)
                     (z: BinaryNumericOperation[N, M]): EvalType =
   z match {
     case Add(Raw(l), Raw(r)) => raw(numericType.add(l)(r))

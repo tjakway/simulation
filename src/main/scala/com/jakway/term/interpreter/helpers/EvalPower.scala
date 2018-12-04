@@ -7,12 +7,11 @@ import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.{NumericType, SimError}
 
 class EvalPower[N <: NumericType[M], M](
-  val recurse: Interpreter,
   val numericType: N)
-  extends EvalHelper[Power[N, M]](recurse) {
+  extends EvalHelper[Power[N, M]] {
   import Raw._
 
-  override def apply(table: SymbolTable)
+  override def apply(table: SymbolTable, recurse: Interpreter)
                     (power: Power[N, M]): EvalType =
     power match {
       case Power(Raw(base), Raw(exponent)) =>

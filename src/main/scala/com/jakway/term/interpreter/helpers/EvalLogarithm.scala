@@ -7,11 +7,10 @@ import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.NumericType
 
 class EvalLogarithm[N <: NumericType[M], M](
-  val recurse: Interpreter,
   val numericType: N)
-  extends EvalHelper[Logarithm[N, M]](recurse) {
+  extends EvalHelper[Logarithm[N, M]] {
 
-  override def apply(table: SymbolTable)
+  override def apply(table: SymbolTable, recurse: Interpreter)
                     (z: Logarithm[N, M]): EvalType =
 
     z match {

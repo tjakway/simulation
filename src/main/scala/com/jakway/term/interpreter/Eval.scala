@@ -101,17 +101,17 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
 
       case Negative(arg) => eval(table)(Multiply(arg, Literal("-1")))
 
-      case f: FunctionCall[N, M] => evalHelpers.functionCall(table)(f)
+      case f: FunctionCall[N, M] => evalHelpers.functionCall(table, this)(f)
 
-      case l: Logarithm[N, M] => evalHelpers.logarithm(table)(l)
+      case l: Logarithm[N, M] => evalHelpers.logarithm(table, this)(l)
 
-      case p: Power[N, M] => evalHelpers.power(table)(p)
+      case p: Power[N, M] => evalHelpers.power(table, this)(p)
 
       case b: BinaryNumericOperation[N @unchecked, M @unchecked] =>
-        evalHelpers.binaryNumericOperation(table)(b)
+        evalHelpers.binaryNumericOperation(table, this)(b)
 
       case f: TrigFunction[N @unchecked, M @unchecked] =>
-        evalHelpers.trigFunctions(table)(f)
+        evalHelpers.trigFunctions(table, this)(f)
 
       case x: Raw[N, M] => Right(x)
 
@@ -145,18 +145,17 @@ object Eval {
   case class NullSubtermError(h: HasSubterms)
     extends EvalError(s"$h has a null subterm")
 
+  case class InterpreterSetupError(error: SimError)
+    extends SimError(error)
+
   def lookupTerm[N <: NumericType[M], M]
             (table: SymbolTable, variable: Variable[N, M]): Option[Term] =
     table.get(variable.name)
 
-  abstract class EvalHelper[A <: Term](val interpreter: Interpreter)
+  abstract class EvalHelper[A <: Term]
   {
-    def apply(table: SymbolTable)(a: A): EvalType
-
-    def recurse(table: SymbolTable)(t: Term): EvalType =
-      interpreter.eval(table)(t)
+    def apply(table: SymbolTable, recurse: Interpreter)(a: A): EvalType
   }
-
 
   def expectNumericTerm[N <: NumericType[M], M](msg: String, t: Term):
     Either[SimError, NumericTerm[N, M]] =
@@ -165,4 +164,10 @@ object Eval {
     } else {
       Left(ExpectedNumericTerm(s"$msg but got $t"))
     }
+
+  def apply[N <: NumericType[M], M](numericType: N):
+    Either[SimError, Interpreter] =
+      EvalHelpers.setupWithReadLiteralStr(numericType.readLiteral,
+        numericType)
+        .map(helpers => new Eval(numericType)(helpers))
 }

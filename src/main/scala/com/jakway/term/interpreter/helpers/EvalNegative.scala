@@ -13,14 +13,13 @@ import com.jakway.term.numeric.types.NumericType
   * @tparam N
   * @tparam M
   */
-class EvalNegative[N <: NumericType[M], M](val recurse: Interpreter,
-                                           val negativeOne: Raw[N, M])
-  extends EvalHelper[Negative[N, M]](recurse) {
+class EvalNegative[N <: NumericType[M], M](val negativeOne: Raw[N, M])
+  extends EvalHelper[Negative[N, M]] {
 
   def replaceWith(neg: Negative[N, M]): Term =
     Multiply(neg.arg, negativeOne)
 
-  def apply(t: SymbolTable)
+  def apply(t: SymbolTable, recurse: Interpreter)
            (term: Negative[N, M]): EvalType =
-    recurse(t)(replaceWith(term))
+    recurse.eval(t)(replaceWith(term))
 }

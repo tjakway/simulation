@@ -7,12 +7,12 @@ import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.NumericType
 
 class EvalTrigFunctions[N <: NumericType[M], M](
-  val recurse: Interpreter,
   val numericType: N)
-  extends EvalHelper[TrigFunction[N, M]](recurse) {
+  extends EvalHelper[TrigFunction[N, M]] {
   import com.jakway.term.interpreter.Raw._
 
-  override def apply(table: SymbolTable)(f: TrigFunction[N, M]): EvalType =
+  override def apply(table: SymbolTable, recurse: Interpreter)
+                    (f: TrigFunction[N, M]): EvalType =
   f match {
 
       //type inference fails here for reasons unknown (Raw(x) should infer x as M)
