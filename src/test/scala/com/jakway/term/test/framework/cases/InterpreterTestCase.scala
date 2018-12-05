@@ -7,16 +7,18 @@ import com.jakway.term.test.framework.cases.InterpreterTestCase.{BigDecimalTestC
 
 object InterpreterTestCase {
   abstract class Expectation {
-    def input: SymbolTable
+    def symbolTable: SymbolTable = Map()
+    def input: Term
     def expectedOutput: Term
   }
 
   abstract class DomainTestCase[N <: NumericType[M], M]
+    extends Expectation
 
-  class DoubleTestCase[N <: NumericType[Double]]
+  abstract class DoubleTestCase[N <: NumericType[Double]]
     extends DomainTestCase[N, Double]
 
-  class BigDecimalTestCase[N <: NumericType[BigDecimal]]
+  abstract class BigDecimalTestCase[N <: NumericType[BigDecimal]]
     extends DomainTestCase[N, BigDecimal]
 }
 
@@ -24,9 +26,11 @@ abstract class InterpreterTestCase extends NamedTestCase {
   def genericTestCase: Option[Expectation] = None
 
   def doubleTestCase[N <: NumericType[Double]]: Option[DoubleTestCase[N]] = None
-  def doubleTestCaseName: String => String = _ + ".double"
+  def mkDoubleTestCaseName: String => String = _ + ".double"
+  def doubleTestCaseName: String = mkDoubleTestCaseName(fullName)
 
-  def bigDecimalTestCase[N <: NumericType[Double]]:
+  def bigDecimalTestCase[N <: NumericType[BigDecimal]]:
     Option[BigDecimalTestCase[N]] = None
-  def bigDecimalTestCaseName: String => String = _ + ".bigdecimal"
+  def mkBigDecimalTestCaseName: String => String = _ + ".bigdecimal"
+  def bigDecimalTestCaseName: String = mkBigDecimalTestCaseName(fullName)
 }
