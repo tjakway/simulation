@@ -13,6 +13,28 @@ class AutoTestInterpreter[DoubleTypeInst <: NumericType[Double],
   extends FunSuite
   with Matchers {
 
+  def runTestForType[N <: NumericType[M], M]
+                     (fallback: Option[Expectation])
+                     (numericType: N)
+                     (name: String, tc: Option[Expectation]) = {
+
+    test(name) {
+      val optTc: Option[Expectation] = tc match {
+        case x@Some(_) => x
+        case None => fallback
+      }
+
+      optTc match {
+        case Some(thisTc) => {
+          val interpreter = Eval.apply[N, M](numericType)
+          interpreter.map(
+            _.eval(thisTc.symbolTable)(thisTc.input)) shouldEqual Right(thisTc.expectedOutput)
+        }
+        case None => {}
+      }
+
+    }
+  }
 
   def runTest(tc: InterpreterTestCase) = {
     test(tc.doubleTestCaseName) {
