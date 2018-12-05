@@ -14,9 +14,9 @@ class AutoTestInterpreter[DoubleTypeInst <: NumericType[Double],
   with Matchers {
 
   def runTestForType[N <: NumericType[M], M]
-                     (fallback: Option[Expectation])
-                     (numericType: N)
-                     (name: String, tc: Option[Expectation]) = {
+                     (fallback: Option[Expectation],
+                      numericType: N,
+                      name: String, tc: Option[Expectation]): Unit = {
 
     test(name) {
       val optTc: Option[Expectation] = tc match {
@@ -36,24 +36,25 @@ class AutoTestInterpreter[DoubleTypeInst <: NumericType[Double],
     }
   }
 
+  def runDoubleTest(tc: InterpreterTestCase): Unit = {
+    runTestForType[
+      DoubleTypeInst, Double](tc.genericTestCase, doubleTypeInst,
+                              tc.doubleTestCaseName,
+                              tc.doubleTestCase)
+  }
+
+
+  def runBigDecimalTest(tc: InterpreterTestCase): Unit = {
+    runTestForType[
+      BigDecimalTypeInst, BigDecimal](
+                                  tc.genericTestCase, bigDecimalTypeInst,
+                                  tc.bigDecimalTestCaseName,
+                                  tc.bigDecimalTestCase)
+  }
+
   def runTest(tc: InterpreterTestCase) = {
-    test(tc.doubleTestCaseName) {
-      //use the generic test case if there isn't one specified for this type
-      val optTc: Option[Expectation] = tc.doubleTestCase match {
-        case x@Some(_) => x
-        case None => tc.genericTestCase
-      }
-
-      optTc match {
-        case Some(thisTc) => {
-          val interpreter = Eval.apply[DoubleTypeInst, Double](doubleTypeInst)
-          interpreter.map(
-            _.eval(thisTc.symbolTable)(thisTc.input)) shouldEqual Right(thisTc.expectedOutput)
-        }
-        case None => {}
-      }
-    }
-
+    runDoubleTest(tc)
+    runBigDecimalTest(tc)
   }
 
 }
