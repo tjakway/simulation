@@ -15,6 +15,14 @@ package instances {
   }
   import com.jakway.term.test.framework.ToleranceInstances
 
+  object BigDecimalInst {
+    type M = java.math.BigDecimal
+    type N = NumericType[BigDecimal]
+    val inst =
+      NumericType.Implementations.getBigDecimalNumericTypeImplementation()
+        .right.get
+  }
+
   /**
     * TODO: not sure if these tests should extend NumericTypeTest, or if
     * NumericTypeTest is even necessary...
@@ -54,7 +62,9 @@ package instances {
     import Tolerances._
     import com.jakway.term.test.eval.TrigTests
 
-    import DoubleInst._
-    class DoubleTrigTests extends TrigTests(inst, fiveDecimalPlaces.doubleEquality)
+    package double {
+      import DoubleInst._
+      class DoubleTrigTests extends TrigTests(inst, fiveDecimalPlaces.doubleEquality)
+    }
   }
 }

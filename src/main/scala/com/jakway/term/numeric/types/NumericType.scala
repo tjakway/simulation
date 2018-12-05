@@ -1,10 +1,12 @@
 package com.jakway.term.numeric.types
 
+import java.math.MathContext
+
 import com.jakway.term.elements.{Literal, NumericTerm}
 import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.errors.CouldNotReadLiteralError
 import com.jakway.term.numeric.types.SpecialLiterals.{HasSpecialLiterals, SpecialLiteral, SpecialLiteralNotImplementedError, SpecialLiteralReadErrors}
-import com.jakway.term.numeric.types.implementations.DoublePrecision
+import com.jakway.term.numeric.types.implementations.{BigDecimalPrecision, DoublePrecision}
 
 class SimError(val msg: String)
   extends RuntimeException(msg) {
@@ -155,6 +157,11 @@ object NumericType {
     def getDoublePrecisionNumericTypeImplementation():
       Either[SimError, NumericType[Double]] =
       DoublePrecision.mkNumericType
+
+    def getBigDecimalNumericTypeImplementation(
+          mc: MathContext = BigDecimalPrecision.defaultMathContext):
+      Either[SimError, NumericType[java.math.BigDecimal]] =
+      BigDecimalPrecision.mkNumericType(mc)
   }
 
 }
