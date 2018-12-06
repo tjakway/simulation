@@ -41,13 +41,12 @@ object Permute {
       val vStream: Stream[(A, B)] = values.map(v => (thisKey, v))
         .toStream
       vStream.flatMap { (q: (A, B)) =>
-        val h = remainingMaps.headOption match {
-          case Some(next) => helper(next, remainingMaps.drop(1))
-          case None => Stream()
-        }
-        //add q to every subsequent map
-        h.map { thisMap =>
-          thisMap.updated(q._1, q._2)
+        remainingMaps.headOption match {
+          case Some(next) => {
+            helper(next, remainingMaps.drop(1))
+              .map(m => m.updated(q._1, q._2))
+          }
+          case None => Stream(Map(q))
         }
       }
     }
