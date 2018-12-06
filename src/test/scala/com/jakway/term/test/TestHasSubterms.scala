@@ -26,7 +26,7 @@ trait TestHasSubterms[N <: NumericType[M], M]
     }
   }
 
-  val addZeroTest = new MapAllTest(
+  val addZeroTest: MapAllTest = new MapAllTest(
     description = "let literals be replaced",
     expected = Add(Literal("50"), Literal("20")),
     input = expr.addTwoLiterals,
@@ -36,12 +36,11 @@ trait TestHasSubterms[N <: NumericType[M], M]
       }
   )
 
-  val changeToMultiplyTest = {
+  val changeToMultiplyTest: MapAllTest = {
     def f(t: Term): Term = t match {
       case Add(x, y) => Multiply(x, y)
       case x => x
     }
-  }
 
     new MapAllTest(
       description = "change add to multiply",
@@ -53,7 +52,7 @@ trait TestHasSubterms[N <: NumericType[M], M]
           .asInstanceOf[NumericTerm[N, M]]
       ),
       input = expr.addTwoLiterals,
-      function = f _ compose(addZeroTest.function)
+      function = f _ compose (addZeroTest.function)
     )
   }
 
