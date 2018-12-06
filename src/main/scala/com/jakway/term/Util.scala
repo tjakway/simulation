@@ -36,4 +36,32 @@ object Util {
     case None => f()
     case _ => ()
   }
+
+  /**
+    * cross-product
+    * modified from https://stackoverflow.com/questions/14740199/cross-product-in-scala
+    */
+  /*def crossJoin[T](list: Stream[Stream[T]]): Stream[Stream[T]] =
+    list match {
+      case xs #:: Stream() => xs map (Stream(_))
+      case Stream(x) #:: xs => for {
+        i <- x: Stream[T]
+        j <- crossJoin(xs)
+      } yield Stream(i) ++ j
+    }
+  */
+
+  def crossJoin[T](list: Stream[Stream[T]]): Stream[Stream[T]] = {
+    def safeTail[A](qs: Stream[A]): Stream[A] = qs.drop(1)
+
+    list match {
+      case Stream() => Stream()
+      case xs #:: Stream() => xs map (Stream(_))
+      case _ => {
+        list.head.flatMap(r =>
+          Stream(Stream[T](r) ++ crossJoin[T](safeTail[Stream[T]](list))))
+          .asInstanceOf[Stream[Stream[T]]]
+      }
+    }
+  }
 }
