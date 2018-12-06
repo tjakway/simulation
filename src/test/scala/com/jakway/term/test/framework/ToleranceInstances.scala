@@ -142,6 +142,7 @@ object ToleranceInstances {
           (cmpLower == 1 || cmpLower == 0)
       }
 
+      //TODO: A is eliminated by type erasure
       (b.isInstanceOf[A] &&
         eq(a, b.asInstanceOf[A])) ||
         //if b is not an instance of the expected type
