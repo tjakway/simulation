@@ -1,10 +1,12 @@
 package com.jakway.term.run
 
+import java.util.{Formatter, Locale}
+
 import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.{Interpreter, InterpreterResult}
 import com.jakway.term.numeric.types.SimError
-import com.jakway.term.run.SimulationRun.Errors.ExpectedInterpreterResultError
+import com.jakway.term.run.SimulationRun.Errors.{ExpectedInterpreterResultError, SimulationRunError}
 import com.jakway.term.run.SimulationRun.ValueStreams
 import com.jakway.term.solver.Solvable
 
@@ -36,7 +38,17 @@ object SimulationRun {
 
             result.map { r =>
               r match {
-                case Left(errors) => ??? //TODO
+                case Left(errors) => {
+                  val fmt: Formatter = new java.util.Formatter(new StringBuffer(),
+                    Locale.getDefault())
+
+                  fmt.format("Simulation Run Errors\n")
+                  fmt.format("Total: " + errors.length + "\n")
+                  errors.foreach {
+                    case (input, err) => fmt.format(s"\tInput $input -> $err")
+                  }
+                  Left(new SimulationRunError(fmt.toString))
+                }
                 case Right(outputs) => Right(new AllRunOutput(outputs, outputVariable, toRun))
               }
             }(ec)
