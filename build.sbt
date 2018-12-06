@@ -27,3 +27,7 @@ libraryDependencies ++=
 
 //enable more warnings
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation", "-feature")
+
+//scalatest recommends unbuffered test output 
+//see http://www.scalatest.org/user_guide/using_scalatest_with_sbt
+logBuffered in Test := false
