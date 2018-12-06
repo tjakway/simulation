@@ -12,8 +12,10 @@ object SimulationRun {
   type ValueStreams = Map[String, Stream[Term]]
 }
 
-abstract class SimulationRun(inputs: ValueStreams,
-                             output: String,
-                             toRun: Solvable,
-                             computeValues: ComputeValues = new Permute())
+class SimulationRun(inputs: ValueStreams,
+                    output: String,
+                    toRun: Solvable,
+                    computeValues: ComputeValues = new Permute())
+
+
 
