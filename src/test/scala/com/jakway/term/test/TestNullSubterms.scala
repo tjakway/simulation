@@ -4,11 +4,8 @@ import com.jakway.term.elements._
 import com.jakway.term.numeric.types.NumericType
 import org.scalatest.{FlatSpec, Matchers}
 
-class TestNullSubterms[N <: NumericType[M], M]
-  (val numericType: N)
-  extends FlatSpec
-    with Matchers
-    with NumericTypeTest[N, M] {
+trait TestNullSubterms[N <: NumericType[M], M]
+  extends Matchers { this: FlatSpec =>
 
   val x = Literal[N, M]("2")
   val y = Literal[N, M]("3")

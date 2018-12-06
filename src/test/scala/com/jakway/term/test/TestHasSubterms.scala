@@ -9,12 +9,11 @@ object TestHasSubterms {
   def id: Term => Term = x => x
 }
 
-abstract class TestHasSubterms[N <: NumericType[M], M]
-  (override val numericType: N)
-  extends FlatSpec with Matchers with NumericTypeTest[N, M] {
+trait TestHasSubterms[N <: NumericType[M], M]
+  extends Matchers { this: FlatSpec =>
   import TestHasSubterms._
 
-  val expr = new TestExpressions[N, M]()
+  private val expr = new TestExpressions[N, M]()
 
   class MapAllTest(
     val description: String,

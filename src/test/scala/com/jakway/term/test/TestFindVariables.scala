@@ -6,11 +6,10 @@ import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.test.framework.Expression
 import org.scalatest.{FlatSpec, Matchers}
 
-abstract class TestFindVariables[N <: NumericType[M], M]
-  (override val numericType: N)
-  extends FlatSpec with Matchers with NumericTypeTest[N, M] {
+trait TestFindVariables[N <: NumericType[M], M]
+  extends Matchers { this: FlatSpec =>
 
-  val expr = new TestExpressions[N, M]()
+  private val expr = new TestExpressions[N, M]()
 
   def testExpression(e: Expression[N, M]): Unit = {
     TermOperations.findVariables[N, M](e.term) shouldEqual

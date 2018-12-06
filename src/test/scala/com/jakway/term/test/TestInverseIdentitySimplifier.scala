@@ -6,9 +6,8 @@ import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.simplifier.InverseIdentitySimplifier
 import org.scalatest.{FlatSpec, Matchers}
 
-abstract class TestInverseIdentitySimplifier[N <: NumericType[M], M]
-(override val numericType: N)
-  extends FlatSpec with Matchers with NumericTypeTest[N, M] {
+trait TestInverseIdentitySimplifier[N <: NumericType[M], M]
+  extends Matchers { this: FlatSpec =>
 
   "InverseIdentitySimplifier.OneSubterm" should "simplify -(-1)" in {
     val inner: NumericTerm[N, M] = Literal("1")

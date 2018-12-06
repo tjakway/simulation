@@ -11,12 +11,10 @@ import com.jakway.term.solver.SubstituteFunction.Applications.{Application, Inve
 import com.jakway.term.test.framework.TermMatchers
 import org.scalatest.{FlatSpec, Matchers}
 
-abstract class TestSubstituteFunctions[N <: NumericType[M], M]
-  (override val numericType: N)
-  extends FlatSpec
-    with Matchers
+trait TestSubstituteFunctions[N <: NumericType[M], M]
+  extends Matchers
     with TermMatchers
-    with NumericTypeTest[N, M] {
+    with NumericTypeTest[N, M] { this: FlatSpec =>
 
   class SubstituteFunctionStep(val initial: Equation,
                                val inversion: Option[Inversion],

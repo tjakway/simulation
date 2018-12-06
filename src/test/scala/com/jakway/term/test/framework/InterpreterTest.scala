@@ -8,13 +8,12 @@ import com.jakway.term.test.NumericTypeTest
 import org.scalactic.Equality
 import org.scalatest.{FlatSpec, Matchers}
 
-abstract class InterpreterTest[N <: NumericType[M], M]
-  (val numericType: N, implicit val equality: Equality[M])
-  extends FlatSpec
-    with Matchers
-    with NumericTypeTest[N, M] {
+trait InterpreterTest[N <: NumericType[M], M]
+    extends Matchers
+    with NumericTypeTest[N, M] { this: FlatSpec =>
 
   import InterpreterTest._
+  implicit val equality: Equality[M]
 
   //for convenience
   def readLiteral(x: String): M = {

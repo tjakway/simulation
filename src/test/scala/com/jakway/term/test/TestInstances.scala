@@ -1,7 +1,6 @@
 package com.jakway.term.test
 
 import com.jakway.term.numeric.types.NumericType
-import com.jakway.term.numeric.types.implementations.DoublePrecision
 
 package instances {
 
@@ -13,7 +12,9 @@ package instances {
       NumericType.Implementations.getDoublePrecisionNumericTypeImplementation()
         .right.get
   }
+  import com.jakway.term.test.eval.TrigTests
   import com.jakway.term.test.framework.ToleranceInstances
+  import org.scalatest.FlatSpec
 
   object BigDecimalInst {
     type M = java.math.BigDecimal
@@ -23,45 +24,18 @@ package instances {
         .right.get
   }
 
-  /**
-    * TODO: not sure if these tests should extend NumericTypeTest, or if
-    * NumericTypeTest is even necessary...
-    */
-  package double {
-    import DoubleInst._
+  class AllTestInstances[N <: NumericType[M], M](override val numericType: N)
+    extends FlatSpec
+      with TestHasSubterms[N, M]
+      with TestFindVariables[N, M]
+      with TestSubstituteFunctions[N, M]
+      with TestInverseIdentitySimplifier[N, M]
+      with TestNullSubterms[N, M]
 
-    class InstTestHasSubterms extends TestHasSubterms[N, M](inst)
-
-    class InstTestFindVariables extends TestFindVariables[N, M](inst)
-
-    class InstTestSubstituteFunctions
-      extends TestSubstituteFunctions[N, M](inst)
-
-    class InstTestInverseIdentitySimplifier
-      extends TestInverseIdentitySimplifier[N, M](inst)
-
-    class InstTestNullSubterms extends TestNullSubterms[N, M](inst)
-
-    class InstTestSolver extends TestSolver[N, M](inst)
-  }
-
-  package bigdecimal {
-    import BigDecimalInst._
-
-    class InstTestHasSubterms extends TestHasSubterms[N, M](inst)
-
-    class InstTestFindVariables extends TestFindVariables[N, M](inst)
-
-    class InstTestSubstituteFunctions
-      extends TestSubstituteFunctions[N, M](inst)
-
-    class InstTestInverseIdentitySimplifier
-      extends TestInverseIdentitySimplifier[N, M](inst)
-
-    class InstTestNullSubterms extends TestNullSubterms[N, M](inst)
-
-    class InstTestSolver extends TestSolver[N, M](inst)
-  }
+  abstract class AllInterpreterTestInstances[N <: NumericType[M], M]
+    (override val numericType: N, val toleranceInstances: ToleranceInstances)
+      extends FlatSpec
+        with TrigTests[N, M]
 
   object Tolerances {
     lazy val exact: ToleranceInstances =
@@ -74,13 +48,30 @@ package instances {
       ToleranceInstances.getToDecimalPlaces(5).right.get
   }
 
-  package interpreter {
-    import Tolerances._
-    import com.jakway.term.test.eval.TrigTests
+  /**
+    * TODO: not sure if these tests should extend NumericTypeTest, or if
+    * NumericTypeTest is even necessary...
+    */
+  package double {
+    import com.jakway.term.test.instances.DoubleInst._
+    import org.scalactic.Equality
 
-    package double {
-      import DoubleInst._
-      class DoubleTrigTests extends TrigTests(inst, fiveDecimalPlaces.doubleEquality)
+    class DoubleAllTestInstances extends AllTestInstances[N, M](inst)
+    class DoubleInterpreterTestInstances
+      extends AllInterpreterTestInstances[N, M](inst, Tolerances.fiveDecimalPlaces) {
+      override implicit val equality: Equality[M] = toleranceInstances.doubleEquality
+    }
+  }
+
+  package bigdecimal {
+    import com.jakway.term.test.instances.BigDecimalInst._
+    import org.scalactic.Equality
+
+    class BigDecimalAllTestInstances extends AllTestInstances[N, M](inst)
+
+    class BigDecimalInterpreterTestInstances
+      extends AllInterpreterTestInstances[N, M](inst, Tolerances.fiveDecimalPlaces) {
+      override implicit val equality: Equality[M] = toleranceInstances.bigDecimalEquality
     }
   }
 }

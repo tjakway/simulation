@@ -5,10 +5,10 @@ import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.test.framework.InterpreterTest
 import org.scalactic.Equality
+import org.scalatest.FlatSpec
 
-class TrigTests[N <: NumericType[M], M]
-  (override val numericType: N, implicit override val equality: Equality[M])
-  extends InterpreterTest[N,M](numericType, equality) {
+trait TrigTests[N <: NumericType[M], M]
+  extends InterpreterTest[N,M] { this: FlatSpec =>
 
   val two = Raw[N, M](readLiteral("2"))
   val four = Raw[N, M](readLiteral("4"))

@@ -3,8 +3,8 @@ package com.jakway.term.test
 import com.jakway.term.test.framework.CompareNumbers
 import org.scalatest.{FlatSpec, Matchers}
 
-class TestCompareNumbers
-  extends FlatSpec with Matchers {
+trait TestCompareNumbers
+  extends Matchers { this: FlatSpec =>
 
 
   val lt: Int = -1
