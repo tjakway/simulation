@@ -9,7 +9,7 @@ package instances {
     type M = Double
     type N = NumericType[Double]
 
-    val inst =
+    val inst: N =
       NumericType.Implementations.getDoublePrecisionNumericTypeImplementation()
         .right.get
   }
@@ -17,8 +17,8 @@ package instances {
 
   object BigDecimalInst {
     type M = java.math.BigDecimal
-    type N = NumericType[BigDecimal]
-    val inst =
+    type N = NumericType[M]
+    val inst: N =
       NumericType.Implementations.getBigDecimalNumericTypeImplementation()
         .right.get
   }
@@ -28,23 +28,39 @@ package instances {
     * NumericTypeTest is even necessary...
     */
   package double {
-
-
     import DoubleInst._
 
-    class DoubleTestHasSubterms extends TestHasSubterms[N, M](inst)
+    class InstTestHasSubterms extends TestHasSubterms[N, M](inst)
 
-    class DoubleTestFindVariables extends TestFindVariables[N, M](inst)
+    class InstTestFindVariables extends TestFindVariables[N, M](inst)
 
-    class DoubleTestSubstituteFunctions
+    class InstTestSubstituteFunctions
       extends TestSubstituteFunctions[N, M](inst)
 
-    class DoubleTestInverseIdentitySimplifier
+    class InstTestInverseIdentitySimplifier
       extends TestInverseIdentitySimplifier[N, M](inst)
 
-    class DoubleTestNullSubterms extends TestNullSubterms[N, M](inst)
+    class InstTestNullSubterms extends TestNullSubterms[N, M](inst)
 
-    class DoubleTestSolver extends TestSolver[N, M](inst)
+    class InstTestSolver extends TestSolver[N, M](inst)
+  }
+
+  package bigdecimal {
+    import BigDecimalInst._
+
+    class InstTestHasSubterms extends TestHasSubterms[N, M](inst)
+
+    class InstTestFindVariables extends TestFindVariables[N, M](inst)
+
+    class InstTestSubstituteFunctions
+      extends TestSubstituteFunctions[N, M](inst)
+
+    class InstTestInverseIdentitySimplifier
+      extends TestInverseIdentitySimplifier[N, M](inst)
+
+    class InstTestNullSubterms extends TestNullSubterms[N, M](inst)
+
+    class InstTestSolver extends TestSolver[N, M](inst)
   }
 
   object Tolerances {
