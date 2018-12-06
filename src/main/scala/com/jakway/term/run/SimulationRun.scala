@@ -1,21 +1,161 @@
 package com.jakway.term.run
 
-import com.jakway.term.Util
-import com.jakway.term.elements.{Term, Variable}
-import com.jakway.term.interpreter.Interpreter
+import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
-import com.jakway.term.numeric.types.NumericType
+import com.jakway.term.interpreter.{Interpreter, InterpreterResult}
+import com.jakway.term.numeric.types.SimError
+import com.jakway.term.run.SimulationRun.Errors.ExpectedInterpreterResultError
 import com.jakway.term.run.SimulationRun.ValueStreams
 import com.jakway.term.solver.Solvable
 
+import scala.concurrent.{ExecutionContext, Future}
+
 object SimulationRun {
   type ValueStreams = Map[String, Stream[Term]]
+
+  class SingleRunOutput(val input: SymbolTable,
+                        val runOutput: InterpreterResult)
+
+  class AllRunOutput(val runs: Traversable[SingleRunOutput],
+                     val outputVariable: String,
+                     val toRun: Solvable)
+
+  type RunResultType = Future[Either[SimError, AllRunOutput]]
+
+  type RawRunResultType = Future[Either[Seq[(SymbolTable, SimError)],
+                      Seq[SingleRunOutput]]]
+
+  type RunResultFormatter =
+    ExecutionContext => String => Solvable => RawRunResultType => RunResultType
+
+  def formatRunResults: RunResultFormatter = {
+    (ec: ExecutionContext) =>
+      (outputVariable: String) =>
+        (toRun: Solvable) =>
+          (result: RawRunResultType) => {
+
+            result.map { r =>
+              r match {
+                case Left(errors) => ??? //TODO
+                case Right(outputs) => Right(new AllRunOutput(outputs, outputVariable, toRun))
+              }
+            }(ec)
+          }
+  }
+
+  object ErrorBehavior {
+    type DesiredResult = SingleRunOutput
+    type NextType = Either[(SymbolTable, SimError), DesiredResult]
+    type AccumulatorType = Either[Seq[(SymbolTable, SimError)],
+                            Seq[DesiredResult]]
+  }
+  import ErrorBehavior._
+
+  trait ErrorBehavior {
+    def reduce(next: NextType, acc: AccumulatorType): AccumulatorType
+  }
+
+  /**
+    * Accumulate errors if any are found
+    */
+  object IfErrorNoResult extends ErrorBehavior {
+    override def reduce(
+        next: NextType,
+        acc: AccumulatorType): AccumulatorType = {
+
+      next match {
+        case Left(err) => {
+          acc match {
+            case Left(errs) => Left(errs :+ err)
+            case Right(_) => Left(Seq(err))
+          }
+        }
+        case Right(x) => acc match {
+            //ignore success if we've already found an error
+          case Left(errs) => Left(errs)
+            //otherwise accumulate
+          case Right(xs) => Right(xs :+ x)
+        }
+      }
+    }
+  }
+
+  object IgnoreErrors extends ErrorBehavior {
+    override def reduce(
+           next: NextType,
+           acc: AccumulatorType): AccumulatorType = {
+
+      next match {
+        case Left(err) => acc
+        case Right(x) => acc match {
+          case Right(xs) => Right(xs :+ x)
+          case Left(_) => Right(Seq())
+        }
+      }
+    }
+  }
+
+  object Errors {
+    class SimulationRunError(override val msg: String)
+      extends SimError(msg)
+
+    case class ExpectedInterpreterResultError(t: Term)
+      extends SimulationRunError(s"Expected Interpreter.eval to yield" +
+        s" an instance of InterpreterResult but got $t instead")
+  }
+
+  def filterForInterpreterResult(t: Term): Either[(SymbolTable, SimError), InterpreterResult] =
+    t match {
+      case x: InterpreterResult => Right(x)
+      case _ => Left((Map(), ExpectedInterpreterResultError(t)))
+    }
+
+  def run(runData: SimulationRun,
+          interpreter: Interpreter,
+          formatter: RunResultFormatter,
+          errorBehavior: ErrorBehavior = IfErrorNoResult)
+         (implicit executor: ExecutionContext): RunResultType = {
+
+    val toRun = runData.toRun.otherSide
+    val allFutures = runData.symbolTables.map { thisTable =>
+      Future {
+        interpreter.eval(thisTable)(toRun) match {
+          case Right(success) => Right((thisTable, success))
+            //combine the symbol table with the error so we can keep track
+            //of which values caused which errors
+          case Left(err) => Left((thisTable, err))
+        }
+      }
+    }
+
+    val empty: Future[AccumulatorType] = Future(Right(Seq()))
+    val foldResult = allFutures.foldLeft(empty) {
+      case (fAcc, f) => {
+        for {
+          acc <- fAcc
+          term <- f
+        } yield {
+          val res: Either[(SymbolTable, SimError), SingleRunOutput] =
+            term.flatMap {
+              case (input, output) =>
+                filterForInterpreterResult(output)
+                  .map(new SingleRunOutput(input, _))
+            }
+          errorBehavior.reduce(res, acc)
+        }
+      }
+    }
+
+    formatter(executor)(runData.outputVariable)(runData.toRun)(foldResult)
+  }
 }
 
-class SimulationRun(inputs: ValueStreams,
-                    output: String,
-                    toRun: Solvable,
-                    computeValues: ComputeValues = new Permute())
-
+class SimulationRun(val inputs: ValueStreams,
+                    val outputVariable: String,
+                    val toRun: Solvable,
+                    val computeValues: ComputeValues = new Permute()) {
+  lazy val symbolTables: Stream[SymbolTable] =
+    computeValues.toSymbolTables(inputs)
+}
 
 
