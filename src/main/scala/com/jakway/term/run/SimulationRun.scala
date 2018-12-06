@@ -47,7 +47,7 @@ object SimulationRun {
                   errors.foreach {
                     case (input, err) => fmt.format(s"\tInput $input -> $err")
                   }
-                  Left(new RunFailed(fmt.toString))
+                  Left(RunFailed(fmt.toString))
                 }
                 case Right(outputs) => Right(new AllRunOutput(outputs, outputVariable, toRun))
               }
