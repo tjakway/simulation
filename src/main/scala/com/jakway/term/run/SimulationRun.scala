@@ -6,7 +6,7 @@ import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.{Interpreter, InterpreterResult}
 import com.jakway.term.numeric.types.SimError
-import com.jakway.term.run.SimulationRun.Errors.{ExpectedInterpreterResultError, SimulationRunError}
+import com.jakway.term.run.SimulationRun.Errors.{ExpectedInterpreterResultError, RunFailed, SimulationRunError}
 import com.jakway.term.run.SimulationRun.ValueStreams
 import com.jakway.term.solver.Solvable
 
@@ -47,7 +47,7 @@ object SimulationRun {
                   errors.foreach {
                     case (input, err) => fmt.format(s"\tInput $input -> $err")
                   }
-                  Left(new SimulationRunError(fmt.toString))
+                  Left(new RunFailed(fmt.toString))
                 }
                 case Right(outputs) => Right(new AllRunOutput(outputs, outputVariable, toRun))
               }
@@ -114,6 +114,9 @@ object SimulationRun {
     case class ExpectedInterpreterResultError(t: Term)
       extends SimulationRunError(s"Expected Interpreter.eval to yield" +
         s" an instance of InterpreterResult but got $t instead")
+
+    case class RunFailed(override val msg: String)
+      extends SimError(msg)
   }
 
   def filterForInterpreterResult(t: Term): Either[(SymbolTable, SimError), InterpreterResult] =
