@@ -70,7 +70,7 @@ package instances {
     class BigDecimalAllTestInstances extends AllTestInstances[N, M](inst)
 
     class BigDecimalInterpreterTestInstances
-      extends AllInterpreterTestInstances[N, M](inst, Tolerances.fiveDecimalPlaces) {
+      extends AllInterpreterTestInstances[N, M](inst, ToleranceInstances.getToDecimalPlaces(30).right.get) {
       override implicit val equality: Equality[M] = toleranceInstances.bigDecimalEquality
     }
   }
