@@ -24,11 +24,16 @@ object SimulationRun {
 
   type RunResultType = Future[Either[SimError, AllRunOutput]]
 
-  type RawRunResultType = Future[Either[Seq[(SymbolTable, SimError)],
+  private type RawRunResultType =
+    Future[Either[Seq[(SymbolTable, SimError)],
                       Seq[SingleRunOutput]]]
 
   type RunResultFormatter =
-    ExecutionContext => String => Solvable => RawRunResultType => RunResultType
+    ExecutionContext =>
+      String =>
+      Solvable =>
+      RawRunResultType =>
+      RunResultType
 
   def formatRunResults: RunResultFormatter = {
     (ec: ExecutionContext) =>
@@ -172,5 +177,3 @@ class SimulationRun(val inputs: ValueStreams,
   lazy val symbolTables: Stream[SymbolTable] =
     computeValues.toSymbolTables(inputs)
 }
-
-
