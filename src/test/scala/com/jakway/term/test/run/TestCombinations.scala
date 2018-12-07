@@ -7,10 +7,21 @@ class TestCombinations
   extends FlatSpec
     with Matchers {
 
-  //example from http://web.mnstate.edu/peil/MDEV102/U1/S7/Cartesian4.htm
-  "Combinations.combinations" should
-    "calculate A X B for A = {H, T} and B = {1, 2, 3, 4, 5, 6}" in {
+  trait CombinationsTest {
+    val in: Map[String, Seq[Any]]
+    def actual: Stream[Map[String, Any]] =
+      Combinations.combinations(in)
 
+    val expected: Stream[Map[String, Any]]
+  }
+
+  def runTest(test: CombinationsTest): Unit = {
+    //compare ignoring order
+    test.actual.length shouldEqual test.expected.length
+    test.actual.toSet shouldEqual test.expected.toSet
+  }
+
+  class FirstTest extends CombinationsTest {
     val aKey = "A"
     val bKey = "B"
 
@@ -35,9 +46,34 @@ class TestCombinations
       Map(aKey -> T, bKey -> 4),
       Map(aKey -> T, bKey -> 5),
       Map(aKey -> T, bKey -> 6))
+  }
 
-    val actual = Combinations.combinations(in)
-    actual shouldEqual expected
+  class SecondTest extends CombinationsTest {
+    trait Foo
+    object Bar extends Foo
+    object Baz extends Foo
+
+    val cValues: Seq[Foo] = Seq(Bar, Baz)
+
+    val cKey = "C"
+
+    private val firstTest = new FirstTest()
+    val in = firstTest.in.updated(cKey, cValues)
+    val expected = {
+      firstTest.expected.map(_.updated(cKey, Bar)) ++
+      firstTest.expected.map(_.updated(cKey, Baz))
+    }
+  }
+
+  //example from http://web.mnstate.edu/peil/MDEV102/U1/S7/Cartesian4.htm
+  "Combinations" should
+    "calculate A X B for A = {H, T} and B = {1, 2, 3, 4, 5, 6}" in {
+    runTest(new FirstTest())
+  }
+
+  it should
+    "calculate FirstTest X C for C = {Bar, Baz}" in {
+    runTest(new SecondTest())
   }
 
 }
