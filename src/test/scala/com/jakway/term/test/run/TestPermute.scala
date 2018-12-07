@@ -1,9 +1,9 @@
-package com.jakway.term.test
+package com.jakway.term.test.run
 
 import com.jakway.term.run.Permute
 import org.scalatest.{FlatSpec, Matchers}
 
-class TestSimulationRun
+class TestPermute
   extends FlatSpec
     with Matchers {
 
