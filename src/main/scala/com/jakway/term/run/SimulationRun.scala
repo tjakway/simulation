@@ -173,7 +173,7 @@ object SimulationRun {
 class SimulationRun(val inputs: ValueStreams,
                     val outputVariable: String,
                     val toRun: Solvable,
-                    val computeValues: ComputeValues = new Permute()) {
+                    val computeValues: ComputeValues = new Combinations()) {
   lazy val symbolTables: Stream[SymbolTable] =
     computeValues.toSymbolTables(inputs)
 }

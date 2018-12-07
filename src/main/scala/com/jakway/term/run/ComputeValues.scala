@@ -8,16 +8,16 @@ trait ComputeValues {
   def toSymbolTables(values: ValueStreams): Stream[SymbolTable]
 }
 
-class Permute extends ComputeValues {
-  import Permute._
+class Combinations extends ComputeValues {
+  import Combinations._
 
   def toSymbolTables(values: ValueStreams): Stream[SymbolTable] = {
-    cartesianProduct[String, Term](values)
+    combinations[String, Term](values)
   }
 }
 
-object Permute {
-  def cartesianProduct[A, B](in: Map[A, Traversable[B]]): Stream[Map[A, B]] = {
+object Combinations {
+  def combinations[A, B](in: Map[A, Traversable[B]]): Stream[Map[A, B]] = {
     def helper(thisMap: (A, Traversable[B]),
                remainingMaps: Stream[(A, Traversable[B])]): Stream[Map[A, B]] = {
       val (thisKey, values) = thisMap
