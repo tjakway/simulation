@@ -43,7 +43,7 @@ trait GenTermTrait[N <: NumericType[M], M] {
 
   def genStr: Gen[String] = Gen.alphaNumStr
 
-  def genVariable: Gen[Variable[N, M]] =
+  val genVariable: Gen[Variable[N, M]] =
       for {
         name <- genStr
         desc <- genStr
