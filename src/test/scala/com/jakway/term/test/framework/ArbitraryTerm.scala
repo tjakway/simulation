@@ -7,6 +7,17 @@ import org.scalacheck.{Arbitrary, Gen}
 
 class ArbitraryTerm[N <: NumericType[M], M]
   (val numericType: N) {
+  import GenLeaf._
+
+  object GenLeaf {
+    def genLeaf: Gen[Term] = {
+      val otherTerms: Gen[Term] = Gen.oneOf(Seq(IdentityFunction))
+      Gen.oneOf(genNumericTermLeaf, otherTerms)
+    }
+
+    def genNumericTermLeaf: Gen[NumericTerm[N, M]] = Gen.oneOf(genRaw, genLiteral, genVariable)
+  }
+
   def genStr: Gen[String] = Gen.alphaNumStr
 
   def genVariable: Gen[Variable[N, M]] =
@@ -21,15 +32,14 @@ class ArbitraryTerm[N <: NumericType[M], M]
 
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
-  def genNumericTerm: Gen[NumericTerm[N, M]] = ???
-
+  def genNumericTerm: Gen[NumericTerm[N, M]] = {
+    Gen.oneOf(genNumericTermLeaf, genBranch)
+  }
 
   def genTerm: Gen[Term] = ???
 
   def genLiteral: Gen[Literal[N, M]] = genM.map(m => Literal(m.toString))
 
-  //add in Negative somewhere
-  def genLeaf: Gen[Term] = Gen.oneOf(genRaw, genLiteral, genVariable)
 
   def genBranch: Gen[NumericTerm[N, M]] = {
 
