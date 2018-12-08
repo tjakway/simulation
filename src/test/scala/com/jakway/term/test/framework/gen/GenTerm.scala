@@ -5,24 +5,30 @@ import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.types.NumericType
 import org.scalacheck.Gen
 
+/**
+  * Need to use Gen.lzy to avoid stack overflows
+  * see https://stackoverflow.com/a/19831105
+  * @tparam N
+  * @tparam M
+  */
 trait GenTermTrait[N <: NumericType[M], M] {
   import GenLeaf._
 
   val numericType: N
 
   object GenLeaf {
-    private val otherTerms: Seq[Gen[Term]] = Seq(Gen.oneOf(Seq(IdentityFunction)))
+    private lazy val otherTerms: Seq[Gen[Term]] = Seq(Gen.oneOf(Seq(IdentityFunction)))
 
-    val numericTermLeafPossibilities: Seq[Gen[NumericTerm[N, M]]] = Seq(genRaw, genLiteral, genVariable)
-    val genLeafPossibilities: Seq[Gen[Term]] = numericTermLeafPossibilities ++ otherTerms
+    lazy val numericTermLeafPossibilities: Seq[Gen[NumericTerm[N, M]]] = Seq(genRaw, genLiteral, genVariable)
+    lazy val genLeafPossibilities: Seq[Gen[Term]] = numericTermLeafPossibilities ++ otherTerms
 
     def genLeaf(possibilities: Seq[Gen[Term]] = genLeafPossibilities): Gen[Term] = {
-      Gen.oneOf[Gen[Term]](possibilities).flatMap(x => x)
+      Gen.lzy(Gen.oneOf[Gen[Term]](possibilities).flatMap(x => x))
     }
 
     def genNumericTermLeaf(
         possibilities: Seq[Gen[NumericTerm[N, M]]] = numericTermLeafPossibilities): Gen[NumericTerm[N, M]] =
-      Gen.oneOf[Gen[NumericTerm[N, M]]](possibilities).flatMap(x => x)
+      Gen.lzy(Gen.oneOf[Gen[NumericTerm[N, M]]](possibilities).flatMap(x => x))
 
     object WithoutVariable {
       def notVariableGen[T](x: Gen[T]): Boolean = x != genVariable
@@ -50,7 +56,7 @@ trait GenTermTrait[N <: NumericType[M], M] {
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
   def genNumericTerm: Gen[NumericTerm[N, M]] = {
-    Gen.oneOf(genNumericTermLeaf(), genNumericTermBranch)
+    Gen.lzy(Gen.oneOf(Gen.lzy(genNumericTermLeaf()), Gen.lzy(genNumericTermBranch)))
   }
 
   def genTerm: Gen[Term] = ??? //TODO
@@ -60,8 +66,8 @@ trait GenTermTrait[N <: NumericType[M], M] {
 
   def genNumericTermBranch: Gen[NumericTerm[N, M]] = {
 
-    def genBinaryTerm: Gen[NumericTerm[N, M]] = {
-      def genLogarithm: Gen[Logarithm[N, M]] = {
+    def genBinaryTerm: Gen[NumericTerm[N, M]] = Gen lzy {
+      def genLogarithm: Gen[Logarithm[N, M]] = Gen lzy {
         def gtZero(r: Raw[N, M]): Boolean =
           numericType.comparator.compare(r.value,
             numericType.builtinLiterals.zero) == 1
@@ -95,7 +101,7 @@ trait GenTermTrait[N <: NumericType[M], M] {
     }
 
 
-    def genTrigFunction: Gen[NumericTerm[N, M]] = {
+    def genTrigFunction: Gen[NumericTerm[N, M]] = Gen lzy {
 
       val trigFunctions: Seq[NumericTerm[N, M] => NumericTerm[N, M]] =
         Seq(Sin.apply, Cos.apply, Tan.apply,
@@ -107,9 +113,9 @@ trait GenTermTrait[N <: NumericType[M], M] {
       } yield f(n)
     }
 
-    def genNegative: Gen[Negative[N, M]] = genNumericTerm.map(Negative.apply)
+    def genNegative: Gen[Negative[N, M]] = Gen.lzy(genNumericTerm.map(Negative.apply))
 
-    Gen.oneOf(genNegative, genBinaryTerm, genTrigFunction)
+    Gen.lzy(Gen.oneOf(genNegative, genBinaryTerm, genTrigFunction))
   }
 }
 
