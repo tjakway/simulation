@@ -5,7 +5,7 @@ import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.types.NumericType
 import org.scalacheck.{Arbitrary, Gen}
 
-class ArbitraryTerm[N <: NumericType[M], M]
+class GenTerm[N <: NumericType[M], M]
   (val numericType: N) {
   import GenLeaf._
 
