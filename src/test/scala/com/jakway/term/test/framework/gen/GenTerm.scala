@@ -26,17 +26,31 @@ trait GenTermTrait[N <: NumericType[M], M] {
       Gen.lzy(Gen.oneOf[Gen[Term]](possibilities).flatMap(x => x))
     }
 
+    def genLeaf(variablesAllowed: Boolean): Gen[Term] =
+      if(variablesAllowed) {
+        genLeaf()
+      } else {
+        WithoutVariables.genLeaf()
+      }
+
     def genNumericTermLeaf(
         possibilities: Seq[Gen[NumericTerm[N, M]]] = numericTermLeafPossibilities): Gen[NumericTerm[N, M]] =
       Gen.lzy(Gen.oneOf[Gen[NumericTerm[N, M]]](possibilities).flatMap(x => x))
 
-    object WithoutVariable {
+    def genNumericTermLeaf(variablesAllowed: Boolean): Gen[NumericTerm[N, M]] =
+      if(variablesAllowed) {
+        genNumericTermLeaf()
+      } else {
+        WithoutVariables.genNumericTermLeaf()
+      }
+
+    object WithoutVariables {
       def isVariableGen[T](x: Gen[T]): Boolean = x == genVariable
 
-      def genLeaf: Gen[Term] = GenLeaf.genLeaf(
+      def genLeaf(): Gen[Term] = GenLeaf.genLeaf(
         genLeafPossibilities.filterNot(isVariableGen))
 
-      def genNumericTermLeaf: Gen[Term] = GenLeaf.genNumericTermLeaf(
+      def genNumericTermLeaf(): Gen[NumericTerm[N, M]] = GenLeaf.genNumericTermLeaf(
         numericTermLeafPossibilities.filterNot(isVariableGen))
     }
   }
@@ -55,18 +69,19 @@ trait GenTermTrait[N <: NumericType[M], M] {
 
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
-  def genNumericTerm: Gen[NumericTerm[N, M]] = {
-    Gen.lzy(Gen.oneOf(Gen.lzy(genNumericTermLeaf()), Gen.lzy(genNumericTermBranch)))
+  def genNumericTerm(variablesAllowed: Boolean = true): Gen[NumericTerm[N, M]] = {
+    Gen.lzy(Gen.oneOf(Gen.lzy(genNumericTermLeaf(variablesAllowed)),
+      Gen.lzy(genNumericTermBranch(variablesAllowed))))
   }
 
-  def genTerm: Gen[Term] = {
-    Gen.oneOf(Gen.const(IdentityFunction), genNumericTerm)
+  def genTerm(variablesAllowed: Boolean): Gen[Term] = {
+    Gen.oneOf(Gen.const(IdentityFunction), genNumericTerm(variablesAllowed))
   }
 
   def genLiteral: Gen[Literal[N, M]] = genM.map(m => Literal(m.toString))
 
 
-  def genNumericTermBranch: Gen[NumericTerm[N, M]] = {
+  def genNumericTermBranch(variablesAllowed: Boolean = true): Gen[NumericTerm[N, M]] = {
 
     def genBinaryTerm: Gen[NumericTerm[N, M]] = Gen lzy {
       def genLogarithm: Gen[Logarithm[N, M]] = Gen lzy {
@@ -75,7 +90,7 @@ trait GenTermTrait[N <: NumericType[M], M] {
             numericType.builtinLiterals.zero) == 1
 
         for {
-          base <- genNumericTerm
+          base <- genNumericTerm()
 
           //TODO: need a better way to guarantee
           //that the generated term is >0 so we can test logarithms
@@ -92,8 +107,8 @@ trait GenTermTrait[N <: NumericType[M], M] {
         Seq(Add.apply, Subtract.apply, Multiply.apply, Divide.apply,
           Power.apply)
       val binaryTerm = for {
-        left <- genNumericTerm
-        right <- genNumericTerm
+        left <- genNumericTerm(variablesAllowed)
+        right <- genNumericTerm(variablesAllowed)
         f <- Gen.oneOf(binaryFunctions)
       } yield {
         f(left, right)
@@ -111,11 +126,12 @@ trait GenTermTrait[N <: NumericType[M], M] {
 
       for {
         f <- Gen.oneOf(trigFunctions)
-        n <- genNumericTerm
+        n <- genNumericTerm(variablesAllowed)
       } yield f(n)
     }
 
-    def genNegative: Gen[Negative[N, M]] = Gen.lzy(genNumericTerm.map(Negative.apply))
+    def genNegative: Gen[Negative[N, M]] =
+      Gen.lzy(genNumericTerm(variablesAllowed).map(Negative.apply))
 
     Gen.lzy(Gen.oneOf(genNegative, genBinaryTerm, genTrigFunction))
   }

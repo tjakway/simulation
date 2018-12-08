@@ -11,8 +11,8 @@ class GenSolvable[N <: NumericType[M], M]
 
   def genSolvable: Gen[Solvable] = {
     for {
-      left <- genTerm.genNumericTerm
-      right <- genTerm.genNumericTerm
+      left <- genTerm.genNumericTerm()
+      right <- genTerm.genNumericTerm()
     } yield Solvable(left, right)
   }
 }

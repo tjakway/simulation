@@ -26,7 +26,4 @@ trait SimulationRunProperties[N <: NumericType[M], M]
   val numericType: N
 
   val genTerm: GenTerm[N, M] = new GenTerm[N, M](numericType)
-
-  implicit val arbNumericTerm: Arbitrary[NumericTerm[N, M]] =
-    Arbitrary(genTerm.genNumericTerm)
 }

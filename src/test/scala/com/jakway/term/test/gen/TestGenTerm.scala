@@ -18,7 +18,7 @@ trait TestGenTerm[N <: NumericType[M], M]
 
   "GenLeaf.WithoutVariable.isVariableGen" should
     "return true for genVariable" in  {
-    GenLeaf.WithoutVariable.isVariableGen(genVariable) shouldEqual true
+    GenLeaf.WithoutVariables.isVariableGen(genVariable) shouldEqual true
   }
 
   it should "return true for everything else" in {
@@ -28,10 +28,10 @@ trait TestGenTerm[N <: NumericType[M], M]
     val numericTermLeafPossibilities: Seq[Gen[NumericTerm[N, M]]] = Seq(genRaw, genLiteral)
     val genLeafPossibilities: Seq[Gen[Term]] = numericTermLeafPossibilities ++ otherTerms
 
-    val others: Seq[Gen[Any]] = Seq(genM, genRaw, genStr, genNumericTermBranch)
+    val others: Seq[Gen[Any]] = Seq(genM, genRaw, genStr, genNumericTermBranch())
 
     (otherTerms ++ numericTermLeafPossibilities ++ genLeafPossibilities ++ others) foreach {
-      thisGen => GenLeaf.WithoutVariable.isVariableGen(thisGen) shouldEqual false
+      thisGen => GenLeaf.WithoutVariables.isVariableGen(thisGen) shouldEqual false
     }
   }
 }

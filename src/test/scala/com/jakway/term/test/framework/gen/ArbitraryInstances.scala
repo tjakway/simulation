@@ -26,5 +26,6 @@ trait ArbitraryInstances[N <: NumericType[M], M]
   implicit val arbLiteral: Arbitrary[Literal[N, M]] =
     Arbitrary(genLiteral)
 
-  implicit val arbNumericTerm: Arbitrary[NumericTerm[N, M]] = Arbitrary(genNumericTerm)
+  implicit val arbNumericTerm: Arbitrary[NumericTerm[N, M]] =
+    Arbitrary(genNumericTerm())
 }
