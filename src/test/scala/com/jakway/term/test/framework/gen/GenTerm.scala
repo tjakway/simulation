@@ -179,7 +179,6 @@ trait GenTermTrait[N <: NumericType[M], M] {
   def genConstantNumericTerm(): Gen[NumericTerm[N, M]] = genNumericTerm(false)
   def genConstantNumericTerm(interpreter: Interpreter,
                              filter: InterpreterResult => Boolean): Gen[NumericTerm[N, M]] = {
-
     genConstantNumericTerm().filter { term =>
       interpreter.eval(Map())(term) match {
         case i: InterpreterResult => filter(i)
@@ -189,7 +188,6 @@ trait GenTermTrait[N <: NumericType[M], M] {
           s" InterpreterResult)")
       }
     }
-
   }
 }
 
