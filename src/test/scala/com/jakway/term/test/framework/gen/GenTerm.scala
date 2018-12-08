@@ -1,8 +1,9 @@
 package com.jakway.term.test.framework.gen
 
 import com.jakway.term.elements._
-import com.jakway.term.interpreter.Raw
+import com.jakway.term.interpreter.{Interpreter, InterpreterResult, Raw}
 import com.jakway.term.numeric.types.NumericType
+import com.jakway.term.test.framework.gen.GenTerm.ConstantNumericTermEvalException
 import org.scalacheck.Gen
 
 /**
@@ -81,13 +82,52 @@ trait GenTermTrait[N <: NumericType[M], M] {
   def genLiteral: Gen[Literal[N, M]] = genM.map(m => Literal(m.toString))
 
 
-  def genNumericTermBranch(variablesAllowed: Boolean = true): Gen[NumericTerm[N, M]] = {
+  /**
+    * @param variablesAllowed
+    * @param logarithmTreeInterpreter an optional interpreter to evaluate
+    *                                 constant expressions to allow for better
+    *                                 generated Logarithm expressions (since we need
+    *                                 to restrict the generated trees to be > 0)
+    *                                 Otherwise they will merely be Raw values
+    * @return
+    */
+  def genNumericTermBranch(
+     variablesAllowed: Boolean = true,
+     logarithmTreeInterpreter: Option[Interpreter] = None):
+    Gen[NumericTerm[N, M]] = {
 
     def genBinaryTerm: Gen[NumericTerm[N, M]] = Gen lzy {
       def genLogarithm: Gen[Logarithm[N, M]] = Gen lzy {
-        def gtZero(r: Raw[N, M]): Boolean =
+        def gtZero(r: Raw[N, M]): Boolean = {
           numericType.comparator.compare(r.value,
             numericType.builtinLiterals.zero) == 1
+        }
+
+        def genGtZero(interpreter: Interpreter): Gen[NumericTerm[N, M]] = {
+
+          def filter(res: InterpreterResult): Boolean = {
+            res.isInstanceOf[Raw[N@unchecked, M@unchecked]] &&
+              gtZero(res.asInstanceOf[Raw[N@unchecked, M@unchecked]])
+          }
+
+          genConstantNumericTerm(interpreter, filter)
+        }
+
+        /**
+          * if we have an interpreter to evaluate generated
+          * constant expressions then we can pass a full tree
+          * to the logarithm
+          * otherwise we merely restrict the generated Raw value
+          *
+          * see https://math.stackexchange.com/q/2073219
+          * re: the name of the Logarithm argument
+          */
+        def genLogarithmArgument(): Gen[NumericTerm[N, M]] =
+          logarithmTreeInterpreter match {
+            case Some(interpreter) => genGtZero(interpreter)
+            case None => genRaw.filter(gtZero)
+          }
+
 
         for {
           base <- genNumericTerm()
@@ -96,7 +136,7 @@ trait GenTermTrait[N <: NumericType[M], M] {
           //that the generated term is >0 so we can test logarithms
           //more thoroughly... probably by restricting variables in a generated
           //tree then filtering for eval(_) > 0
-          of <- genRaw.filter(gtZero)
+          of <- genLogarithmArgument()
         } yield Logarithm(base, of)
       }
 
@@ -135,7 +175,28 @@ trait GenTermTrait[N <: NumericType[M], M] {
 
     Gen.lzy(Gen.oneOf(genNegative, genBinaryTerm, genTrigFunction))
   }
+
+  def genConstantNumericTerm(): Gen[NumericTerm[N, M]] = genNumericTerm(false)
+  def genConstantNumericTerm(interpreter: Interpreter,
+                             filter: InterpreterResult => Boolean): Gen[NumericTerm[N, M]] = {
+
+    genConstantNumericTerm().filter { term =>
+      interpreter.eval(Map())(term) match {
+        case i: InterpreterResult => filter(i)
+        case res => throw ConstantNumericTermEvalException(
+          s"Interpreter $interpreter " +
+          s"eval($term) returned $res (expected instance of" +
+          s" InterpreterResult)")
+      }
+    }
+
+  }
 }
 
 class GenTerm[N <: NumericType[M], M](val numericType: N)
   extends GenTermTrait[N, M]
+
+object GenTerm {
+  case class ConstantNumericTermEvalException(override val msg: String)
+    extends GenError(msg)
+}
