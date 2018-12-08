@@ -1,6 +1,8 @@
 package com.jakway.term.numeric.types.implementations
 
 
+import java.util.Comparator
+
 import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError, LogarithmDomainError}
 import com.jakway.term.numeric.types.NumericType.ReadLiteral
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
@@ -79,6 +81,10 @@ private class DoublePrecision(override val builtinLiterals: BuiltinLiterals[Doub
   override val divide: BinaryMathFunction = DoublePrecisionImplementation.div
 
   override val readLiteral: ReadLiteral[Double] = DoublePrecision.readLiteralF
+
+  override val comparator: Comparator[Double] = new Comparator[Double] {
+    override def compare(x: Double, y: Double): Int = x.compareTo(y)
+  }
 }
 
 private object DoublePrecisionImplementation {

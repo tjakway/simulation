@@ -32,18 +32,57 @@ class ArbitraryTerm[N <: NumericType[M], M]
   def genLeaf: Gen[Term] = Gen.oneOf(genRaw, genLiteral, genVariable)
 
   def genBranch: Gen[Term] = {
-    val binaryFunctions:
-      Seq[(NumericTerm[N, M], NumericTerm[N, M]) => Term] =
-      Seq(Add.apply, Subtract.apply, Multiply.apply, Divide.apply)
 
-    def genBinaryTerm = for {
-      left <- genNumericTerm
-      right <- genNumericTerm
-      f <- Gen.oneOf(binaryFunctions)
-    } yield {
-      f(left, right)
+    def genBinaryTerm: Gen[Term] = {
+      def genLogarithm: Gen[Logarithm[N, M]] = {
+        def gtZero(r: Raw[N, M]): Boolean =
+          numericType.comparator.compare(r.value,
+            numericType.builtinLiterals.zero) == 1
+
+        for {
+          base <- genNumericTerm
+
+          //TODO: need a better way to guarantee
+          //that the generated term is >0 so we can test logarithms
+          //more thoroughly... probably by restricting variables in a generated
+          //tree then filtering for eval(_) > 0
+          of <- genRaw.filter(gtZero)
+        } yield Logarithm(base, of)
+      }
+
+      //can't include Logarithm in the list of binary functions
+      //because it has domain restrictions
+      val binaryFunctions:
+        Seq[(NumericTerm[N, M], NumericTerm[N, M]) => Term] =
+        Seq(Add.apply, Subtract.apply, Multiply.apply, Divide.apply,
+          Power.apply)
+      val binaryTerm = for {
+        left <- genNumericTerm
+        right <- genNumericTerm
+        f <- Gen.oneOf(binaryFunctions)
+      } yield {
+        f(left, right)
+      }
+
+      Gen.oneOf(binaryTerm, genLogarithm)
     }
+
+
+    def genTrigFunction: Gen[Term] = {
+
+      val trigFunctions: Seq[NumericTerm[N, M] => Term] =
+        Seq(Sin.apply, Cos.apply, Tan.apply,
+          Arcsin.apply, Arccos.apply, Arctan.apply)
+
+      for {
+        f <- Gen.oneOf(trigFunctions)
+        n <- genNumericTerm
+      } yield f(n)
+    }
+
+    def genNegative: Gen[Negative[N, M]] = genNumericTerm.map(Negative.apply)
+
+    Gen.oneOf(genNegative, genBinaryTerm, genTrigFunction)
   }
 
-  def genNegative: Gen[Negative[N, M]] = genNumericTerm.map(Negative.apply)
 }

@@ -1,6 +1,7 @@
 package com.jakway.term.numeric.types
 
 import java.math.MathContext
+import java.util.Comparator
 
 import com.jakway.term.elements.{Literal, NumericTerm}
 import com.jakway.term.interpreter.Raw
@@ -146,8 +147,9 @@ trait NumericType[M] {
   val divide: BinaryMathFunction
 
   val readLiteral: ReadLiteral[M]
-
   val builtinLiterals: BuiltinLiterals[M]
+
+  val comparator: Comparator[M]
 }
 
 object NumericType {

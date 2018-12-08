@@ -7,6 +7,7 @@ import ch.obermuhlner.math.big.BigDecimalMath
 import com.jakway.term.numeric.types.NumericType.ReadLiteral
 import com.jakway.term.numeric.types._
 import java.math.BigDecimal
+import java.util.Comparator
 
 import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, LogarithmDomainError}
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
@@ -106,6 +107,11 @@ private class BigDecimalPrecision(
 
   override val readLiteral: ReadLiteral[BigDecimal] =
     BigDecimalPrecision.readLiteralF(mc)
+
+  override val comparator: Comparator[BigDecimal] = new Comparator[BigDecimal] {
+    override def compare(x: BigDecimal, y: BigDecimal): Int =
+      x.compareTo(y)
+  }
 }
 
 object BigDecimalPrecisionImplementation {
