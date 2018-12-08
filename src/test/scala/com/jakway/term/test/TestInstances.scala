@@ -55,6 +55,7 @@ package instances {
     * NumericTypeTest is even necessary...
     */
   package double {
+    import com.jakway.term.test.gen.EvalProperties
     import com.jakway.term.test.instances.DoubleInst._
     import com.jakway.term.test.run.{SimulationRunProperties, TestSimulationRun}
     import org.scalacheck.Properties
@@ -66,16 +67,17 @@ package instances {
       override implicit val equality: Equality[M] = toleranceInstances.doubleEquality
     }
 
-    //TODO: refactor into a base class
-    class DoubleSimulationRunProperties
-      extends Properties("DoubleSimulationRun")
-      with SimulationRunProperties[N, M] {
-      val numericType: N = inst
+    class DoubleEvalProperties
+      extends Properties("DoubleEvalProperties")
+      with EvalProperties[N, M] {
+      override val numericType: N = inst
     }
   }
 
   package bigdecimal {
+    import com.jakway.term.test.gen.EvalProperties
     import com.jakway.term.test.instances.BigDecimalInst._
+    import org.scalacheck.Properties
     import org.scalactic.Equality
 
     class BigDecimalAllTestInstances extends AllTestInstances[N, M](inst)
@@ -83,6 +85,12 @@ package instances {
     class BigDecimalInterpreterTestInstances
       extends AllInterpreterTestInstances[N, M](inst, ToleranceInstances.getToDecimalPlaces(30).right.get) {
       override implicit val equality: Equality[M] = toleranceInstances.bigDecimalEquality
+    }
+
+    class BigDecimalEvalProperties
+      extends Properties("BigDecimalEvalProperties")
+        with EvalProperties[N, M] {
+      override val numericType: N = inst
     }
   }
 }

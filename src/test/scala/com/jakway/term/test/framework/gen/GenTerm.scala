@@ -12,10 +12,9 @@ import org.scalacheck.Gen
   * @tparam N
   * @tparam M
   */
-trait GenTermTrait[N <: NumericType[M], M] {
+trait GenTermTrait[N <: NumericType[M], M]
+  extends HasNumericType[N, M] {
   import GenLeaf._
-
-  val numericType: N
 
   object GenLeaf {
     private lazy val otherTerms: Seq[Gen[Term]] = Seq(Gen.oneOf(Seq(IdentityFunction)))
