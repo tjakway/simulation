@@ -59,7 +59,9 @@ trait GenTermTrait[N <: NumericType[M], M] {
     Gen.lzy(Gen.oneOf(Gen.lzy(genNumericTermLeaf()), Gen.lzy(genNumericTermBranch)))
   }
 
-  def genTerm: Gen[Term] = ??? //TODO
+  def genTerm: Gen[Term] = {
+    Gen.oneOf(Gen.const(IdentityFunction), genNumericTerm)
+  }
 
   def genLiteral: Gen[Literal[N, M]] = genM.map(m => Literal(m.toString))
 
