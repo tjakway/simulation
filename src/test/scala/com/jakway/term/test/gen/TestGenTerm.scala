@@ -16,9 +16,9 @@ trait TestGenTerm[N <: NumericType[M], M]
   extends GenTermTrait[N, M]
     with Matchers { this: FlatSpec =>
 
-  "GenLeaf.WithoutVariable.notVariableGen" should
-    "return false for genVariable" in  {
-    GenLeaf.WithoutVariable.notVariableGen(genVariable) shouldEqual false
+  "GenLeaf.WithoutVariable.isVariableGen" should
+    "return true for genVariable" in  {
+    GenLeaf.WithoutVariable.isVariableGen(genVariable) shouldEqual true
   }
 
   it should "return true for everything else" in {
@@ -31,7 +31,7 @@ trait TestGenTerm[N <: NumericType[M], M]
     val others: Seq[Gen[Any]] = Seq(genM, genRaw, genStr, genNumericTermBranch)
 
     (otherTerms ++ numericTermLeafPossibilities ++ genLeafPossibilities ++ others) foreach {
-      thisGen => GenLeaf.WithoutVariable.notVariableGen(thisGen) shouldEqual false
+      thisGen => GenLeaf.WithoutVariable.isVariableGen(thisGen) shouldEqual false
     }
   }
 }

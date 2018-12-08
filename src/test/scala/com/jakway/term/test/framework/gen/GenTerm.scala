@@ -31,13 +31,13 @@ trait GenTermTrait[N <: NumericType[M], M] {
       Gen.lzy(Gen.oneOf[Gen[NumericTerm[N, M]]](possibilities).flatMap(x => x))
 
     object WithoutVariable {
-      def notVariableGen[T](x: Gen[T]): Boolean = x != genVariable
+      def isVariableGen[T](x: Gen[T]): Boolean = x == genVariable
 
       def genLeaf: Gen[Term] = GenLeaf.genLeaf(
-        genLeafPossibilities.filter(notVariableGen))
+        genLeafPossibilities.filterNot(isVariableGen))
 
       def genNumericTermLeaf: Gen[Term] = GenLeaf.genNumericTermLeaf(
-        numericTermLeafPossibilities.filter(notVariableGen))
+        numericTermLeafPossibilities.filterNot(isVariableGen))
     }
   }
 
