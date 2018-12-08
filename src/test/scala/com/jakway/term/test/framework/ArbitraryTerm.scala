@@ -33,7 +33,7 @@ class ArbitraryTerm[N <: NumericType[M], M]
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
   def genNumericTerm: Gen[NumericTerm[N, M]] = {
-    Gen.oneOf(genNumericTermLeaf, genBranch)
+    Gen.oneOf(genNumericTermLeaf, genNumericTermBranch)
   }
 
   def genTerm: Gen[Term] = ???
@@ -41,7 +41,7 @@ class ArbitraryTerm[N <: NumericType[M], M]
   def genLiteral: Gen[Literal[N, M]] = genM.map(m => Literal(m.toString))
 
 
-  def genBranch: Gen[NumericTerm[N, M]] = {
+  def genNumericTermBranch: Gen[NumericTerm[N, M]] = {
 
     def genBinaryTerm: Gen[NumericTerm[N, M]] = {
       def genLogarithm: Gen[Logarithm[N, M]] = {
