@@ -5,17 +5,34 @@ import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.types.NumericType
 import org.scalacheck.Gen
 
-class GenTerm[N <: NumericType[M], M]
-  (val numericType: N) {
+trait GenTermTrait[N <: NumericType[M], M] {
   import GenLeaf._
 
+  val numericType: N
+
   object GenLeaf {
-    def genLeaf: Gen[Term] = {
-      val otherTerms: Gen[Term] = Gen.oneOf(Seq(IdentityFunction))
-      Gen.oneOf(genNumericTermLeaf, otherTerms)
+    private val otherTerms: Seq[Gen[Term]] = Seq(Gen.oneOf(Seq(IdentityFunction)))
+
+    val numericTermLeafPossibilities: Seq[Gen[NumericTerm[N, M]]] = Seq(genRaw, genLiteral, genVariable)
+    val genLeafPossibilities: Seq[Gen[Term]] = numericTermLeafPossibilities ++ otherTerms
+
+    def genLeaf(possibilities: Seq[Gen[Term]] = genLeafPossibilities): Gen[Term] = {
+      Gen.oneOf[Gen[Term]](possibilities).flatMap(x => x)
     }
 
-    def genNumericTermLeaf: Gen[NumericTerm[N, M]] = Gen.oneOf(genRaw, genLiteral, genVariable)
+    def genNumericTermLeaf(
+        possibilities: Seq[Gen[NumericTerm[N, M]]] = numericTermLeafPossibilities): Gen[NumericTerm[N, M]] =
+      Gen.oneOf[Gen[NumericTerm[N, M]]](possibilities).flatMap(x => x)
+
+    object WithoutVariable {
+      def notVariableGen[T](x: Gen[T]): Boolean = x != genVariable
+
+      def genLeaf: Gen[Term] = GenLeaf.genLeaf(
+        genLeafPossibilities.filter(notVariableGen))
+
+      def genNumericTermLeaf: Gen[Term] = GenLeaf.genNumericTermLeaf(
+        numericTermLeafPossibilities.filter(notVariableGen))
+    }
   }
 
   def genStr: Gen[String] = Gen.alphaNumStr
@@ -33,7 +50,7 @@ class GenTerm[N <: NumericType[M], M]
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
   def genNumericTerm: Gen[NumericTerm[N, M]] = {
-    Gen.oneOf(genNumericTermLeaf, genNumericTermBranch)
+    Gen.oneOf(genNumericTermLeaf(), genNumericTermBranch)
   }
 
   def genTerm: Gen[Term] = ??? //TODO
@@ -94,5 +111,7 @@ class GenTerm[N <: NumericType[M], M]
 
     Gen.oneOf(genNegative, genBinaryTerm, genTrigFunction)
   }
-
 }
+
+class GenTerm[N <: NumericType[M], M](val numericType: N)
+  extends GenTermTrait[N, M]

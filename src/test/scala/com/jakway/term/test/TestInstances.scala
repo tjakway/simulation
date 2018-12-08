@@ -14,6 +14,7 @@ package instances {
   }
   import com.jakway.term.test.eval.TrigTests
   import com.jakway.term.test.framework.ToleranceInstances
+  import com.jakway.term.test.gen.TestGenTerm
   import org.scalatest.FlatSpec
 
   object BigDecimalInst {
@@ -31,6 +32,7 @@ package instances {
       with TestSubstituteFunctions[N, M]
       with TestInverseIdentitySimplifier[N, M]
       with TestNullSubterms[N, M]
+      with TestGenTerm[N, M]
 
   abstract class AllInterpreterTestInstances[N <: NumericType[M], M]
     (override val numericType: N, val toleranceInstances: ToleranceInstances)
@@ -54,12 +56,21 @@ package instances {
     */
   package double {
     import com.jakway.term.test.instances.DoubleInst._
+    import com.jakway.term.test.run.{SimulationRunProperties, TestSimulationRun}
+    import org.scalacheck.Properties
     import org.scalactic.Equality
 
     class DoubleAllTestInstances extends AllTestInstances[N, M](inst)
     class DoubleInterpreterTestInstances
       extends AllInterpreterTestInstances[N, M](inst, Tolerances.fiveDecimalPlaces) {
       override implicit val equality: Equality[M] = toleranceInstances.doubleEquality
+    }
+
+    //TODO: refactor into a base class
+    class DoubleSimulationRunProperties
+      extends Properties("DoubleSimulationRun")
+      with SimulationRunProperties[N, M] {
+      val numericType: N = inst
     }
   }
 
