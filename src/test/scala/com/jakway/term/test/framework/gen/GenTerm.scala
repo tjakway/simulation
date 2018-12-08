@@ -1,9 +1,9 @@
-package com.jakway.term.test.framework
+package com.jakway.term.test.framework.gen
 
 import com.jakway.term.elements._
 import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.types.NumericType
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Gen
 
 class GenTerm[N <: NumericType[M], M]
   (val numericType: N) {
