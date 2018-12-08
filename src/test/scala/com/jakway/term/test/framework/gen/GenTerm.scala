@@ -2,8 +2,8 @@ package com.jakway.term.test.framework.gen
 
 import com.jakway.term.elements._
 import com.jakway.term.interpreter.{Interpreter, InterpreterResult, Raw}
-import com.jakway.term.numeric.types.NumericType
-import com.jakway.term.test.framework.gen.GenTerm.ConstantNumericTermEvalException
+import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.test.framework.gen.GenTerm.{ConstantNumericTermEvalException, GenMError}
 import org.scalacheck.Gen
 
 /**
@@ -64,8 +64,11 @@ trait GenTermTrait[N <: NumericType[M], M]
         optDesc <- Gen.option(desc)
       } yield { Variable.apply(name, optDesc) }
 
-  def genM: Gen[M] = Gen.numStr.map(
-    numericType.readLiteral(_).right.get)
+  def genM: Gen[M] = Gen.numStr.suchThat(_.length > 0)
+    .map(numericType.readLiteral(_) match {
+      case Right(x) => x
+      case Left(r) => throw GenMError(r)
+    })
 
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
@@ -196,4 +199,7 @@ class GenTerm[N <: NumericType[M], M](val numericType: N)
 object GenTerm {
   case class ConstantNumericTermEvalException(override val msg: String)
     extends GenError(msg)
+
+  case class GenMError(val causedBy: SimError)
+    extends GenError(s"Error in genM caused by $causedBy")
 }
