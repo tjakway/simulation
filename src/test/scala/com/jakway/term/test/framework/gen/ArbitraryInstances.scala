@@ -1,6 +1,6 @@
 package com.jakway.term.test.framework.gen
 
-import com.jakway.term.elements.Variable
+import com.jakway.term.elements.{Literal, NumericTerm, Variable}
 import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.types.NumericType
 import org.scalacheck.Arbitrary
@@ -23,4 +23,8 @@ trait ArbitraryInstances[N <: NumericType[M], M]
   implicit val arbRaw: Arbitrary[Raw[N, M]] =
     Arbitrary(genRaw)
 
+  implicit val arbLiteral: Arbitrary[Literal[N, M]] =
+    Arbitrary(genLiteral)
+
+  implicit val arbNumericTerm: Arbitrary[NumericTerm[N, M]] = Arbitrary(genNumericTerm)
 }
