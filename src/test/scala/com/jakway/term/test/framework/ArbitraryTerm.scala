@@ -31,9 +31,9 @@ class ArbitraryTerm[N <: NumericType[M], M]
   //add in Negative somewhere
   def genLeaf: Gen[Term] = Gen.oneOf(genRaw, genLiteral, genVariable)
 
-  def genBranch: Gen[Term] = {
+  def genBranch: Gen[NumericTerm[N, M]] = {
 
-    def genBinaryTerm: Gen[Term] = {
+    def genBinaryTerm: Gen[NumericTerm[N, M]] = {
       def genLogarithm: Gen[Logarithm[N, M]] = {
         def gtZero(r: Raw[N, M]): Boolean =
           numericType.comparator.compare(r.value,
@@ -53,7 +53,7 @@ class ArbitraryTerm[N <: NumericType[M], M]
       //can't include Logarithm in the list of binary functions
       //because it has domain restrictions
       val binaryFunctions:
-        Seq[(NumericTerm[N, M], NumericTerm[N, M]) => Term] =
+        Seq[(NumericTerm[N, M], NumericTerm[N, M]) => NumericTerm[N, M]] =
         Seq(Add.apply, Subtract.apply, Multiply.apply, Divide.apply,
           Power.apply)
       val binaryTerm = for {
@@ -68,9 +68,9 @@ class ArbitraryTerm[N <: NumericType[M], M]
     }
 
 
-    def genTrigFunction: Gen[Term] = {
+    def genTrigFunction: Gen[NumericTerm[N, M]] = {
 
-      val trigFunctions: Seq[NumericTerm[N, M] => Term] =
+      val trigFunctions: Seq[NumericTerm[N, M] => NumericTerm[N, M]] =
         Seq(Sin.apply, Cos.apply, Tan.apply,
           Arcsin.apply, Arccos.apply, Arctan.apply)
 
