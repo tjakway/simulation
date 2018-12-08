@@ -36,7 +36,7 @@ class ArbitraryTerm[N <: NumericType[M], M]
     Gen.oneOf(genNumericTermLeaf, genNumericTermBranch)
   }
 
-  def genTerm: Gen[Term] = ???
+  def genTerm: Gen[Term] = ??? //TODO
 
   def genLiteral: Gen[Literal[N, M]] = genM.map(m => Literal(m.toString))
 
