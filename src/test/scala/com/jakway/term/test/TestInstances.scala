@@ -33,6 +33,7 @@ package instances {
       with TestInverseIdentitySimplifier[N, M]
       with TestNullSubterms[N, M]
       with TestGenTerm[N, M]
+      with TestNumericTypeCmp[N, M]
 
   abstract class AllInterpreterTestInstances[N <: NumericType[M], M]
     (override val numericType: N, val toleranceInstances: ToleranceInstances)
