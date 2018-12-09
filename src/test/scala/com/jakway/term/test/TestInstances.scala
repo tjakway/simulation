@@ -73,6 +73,12 @@ package instances {
       with EvalProperties[N, M] {
       override val numericType: N = inst
     }
+
+    class DoubleNumericTypeCmpProperties
+      extends Properties("DoubleNumericTypeCmpProperties")
+      with NumericTypeCmpProperties[N, M] {
+      override val numericType: N = inst
+    }
   }
 
   package bigdecimal {
@@ -91,6 +97,13 @@ package instances {
     class BigDecimalEvalProperties
       extends Properties("BigDecimalEvalProperties")
         with EvalProperties[N, M] {
+      override val numericType: N = inst
+    }
+
+
+    class BigDecimalNumericTypeCmpProperties
+      extends Properties("BigDecimalNumericTypeCmpProperties")
+        with NumericTypeCmpProperties[N, M] {
       override val numericType: N = inst
     }
   }

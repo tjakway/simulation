@@ -166,6 +166,15 @@ object NumericType {
       BigDecimalPrecision.mkNumericType(mc)
   }
 
+  object AllTypes {
+    //smallest value guaranteed to be representable in all types
+    lazy val smallestMinOfAllTypes: String =
+      Double.MinValue.toString
+
+    //largest value guaranteed to be representable in all types
+    lazy val smallestMaxOfAllTypes: String =
+      Double.MaxValue.toString
+  }
 }
 
 class BuiltinLiterals[M](
