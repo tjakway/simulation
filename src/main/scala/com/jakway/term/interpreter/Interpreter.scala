@@ -8,6 +8,7 @@ import com.jakway.term.numeric.types.{NumericType, SimError}
 object Interpreter {
   type SymbolTable = Map[String, Term]
 
+  val emptySymbolTable: SymbolTable = Map()
 
   class InterpreterError(override val msg: String,
                          val table: SymbolTable,
