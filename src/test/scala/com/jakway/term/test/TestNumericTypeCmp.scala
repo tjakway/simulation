@@ -7,6 +7,7 @@ import com.jakway.term.test.framework.gen.HasNumericType
 import org.scalacheck.{Arbitrary, Gen, Properties}
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
 
@@ -27,19 +28,19 @@ trait SymmetricCmp[N <: NumericType[M], M]
   def symmetricCmp(doAssert: Int => Int => Unit)
                   (left: M, right: M, expected: Int): Unit = {
     @tailrec
-    def helper(l: M, r: M, expected: Int, recurse: Boolean = true): Unit = {
-      val nextExpected = expected match {
+    def helper(l: M, r: M, hExpected: Int, recurse: Boolean = true): Unit = {
+      val nextExpected = hExpected match {
         case 0 => 0
         case 1 => -1
         case -1 => 1
         case _ => throw TestNumericTypeCmpError(s"" +
-          s"expected: Int passed to symmetricCmp was $expected; " +
+          s"expected: Int passed to symmetricCmp was $hExpected; " +
           s"must be -1, 0, or 1 for less than, equal to, or greater" +
           s" than respectively")
       }
 
       val res = throwIfBadCmp(numericType.comparator.compare(l, r))
-      doAssert(res)(expected)
+      doAssert(res)(hExpected)
 
       if(recurse) {
         helper(r, l, nextExpected, false)
@@ -85,6 +86,13 @@ trait TestNumericTypeCmp[N <: NumericType[M], M]
   it should "compare 0 and 1" in {
     one.map(o => fSymmetricCmp(zero, o, lt)) should be ('right)
   }
+
+  it should "compare 0 and 9.008601144797282E307" in {
+    numericType.readLiteral("9.008601144797282E307").map {
+      gtZero =>
+        fSymmetricCmp(gtZero, zero, gt)
+    } should be ('right)
+  }
 }
 
 object TestNumericTypeCmp {
@@ -96,6 +104,8 @@ object TestNumericTypeCmp {
 trait NumericTypeCmpProperties[N <: NumericType[M], M]
   extends HasNumericType[N, M]
     with SymmetricCmp[N, M] { this: Properties =>
+
+  val logger: Logger = LoggerFactory.getLogger(getClass())
 
   import org.scalacheck.Prop.forAll
   import SymmetricCmp._
@@ -114,14 +124,20 @@ trait NumericTypeCmpProperties[N <: NumericType[M], M]
   implicit val arbitraryGtZero: Arbitrary[GtZeroM] =
     Arbitrary(
       Gen.chooseNum(0: Double, NumericType.AllTypes.smallestMaxOfAllTypes.toDouble)
-        .filter(_ != 0) //chooseNum is inclusive
+        .filter(_ > 0) //chooseNum is inclusive
         .map(x => GtZeroM(assertReadLiteral(x.toString))))
 
   property("cmp(gtZero)") = forAll { (gtZero: GtZeroM) =>
     var isEq: Boolean = false
 
-    def setIsEq = (x: Int) => (y: Int) => isEq = (x == y)
-    symmetricCmp(setIsEq)(zero, gtZero.m, gt)
+    def setIsEq = (x: Int) => (y: Int) => {
+      isEq = (x == y)
+      if(!isEq) {
+        logger.warn(s"setIsEq: x != y (x=$x, y=$y)")
+      }
+    }
+
+    symmetricCmp(setIsEq)(gtZero.m, zero, gt)
 
     isEq
   }
