@@ -6,8 +6,11 @@ import org.scalacheck.Gen
 
 class GenSolvable[N <: NumericType[M], M]
   (val numericType: N) {
+  val outerNumericType = numericType
 
-  private val genTerm: GenTerm[N, M] = new GenTerm[N, M](numericType)
+  private val genTerm: GenTerm[N, M] = new GenTerm[N, M] {
+    val numericType: N = outerNumericType
+  }
 
   def genSolvable: Gen[Solvable] = {
     for {

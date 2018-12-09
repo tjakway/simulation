@@ -25,5 +25,8 @@ trait SimulationRunProperties[N <: NumericType[M], M]
 
   val numericType: N
 
-  val genTerm: GenTerm[N, M] = new GenTerm[N, M](numericType)
+  val outerNumericType = numericType
+  private val genTerm: GenTerm[N, M] = new GenTerm[N, M] {
+    val numericType: N = outerNumericType
+  }
 }
