@@ -12,7 +12,7 @@ import org.scalacheck.Arbitrary
   * @tparam M
   */
 trait ArbitraryTermInstances[N <: NumericType[M], M]
-  extends GenTermTrait[N, M] {
+  extends GenTerm[N, M] {
 
   implicit val arbVariable: Arbitrary[Variable[N, M]] =
     Arbitrary(genVariable)

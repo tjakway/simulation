@@ -12,7 +12,7 @@ import org.scalacheck.Gen
   * @tparam N
   * @tparam M
   */
-trait GenTermTrait[N <: NumericType[M], M]
+trait GenTerm[N <: NumericType[M], M]
   extends HasNumericType[N, M] {
   import GenLeaf._
 
@@ -192,9 +192,6 @@ trait GenTermTrait[N <: NumericType[M], M]
     }
   }
 }
-
-class GenTerm[N <: NumericType[M], M](val numericType: N)
-  extends GenTermTrait[N, M]
 
 object GenTerm {
   case class ConstantNumericTermEvalException(override val msg: String)

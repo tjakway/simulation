@@ -2,7 +2,7 @@ package com.jakway.term.test.gen
 
 import com.jakway.term.elements.{IdentityFunction, NumericTerm, Term}
 import com.jakway.term.numeric.types.NumericType
-import com.jakway.term.test.framework.gen.GenTermTrait
+import com.jakway.term.test.framework.gen.GenTerm
 import org.scalacheck.Gen
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -13,7 +13,7 @@ import org.scalatest.{FlatSpec, Matchers}
   * @tparam M
   */
 trait TestGenTerm[N <: NumericType[M], M]
-  extends GenTermTrait[N, M]
+  extends GenTerm[N, M]
     with Matchers { this: FlatSpec =>
 
   "GenLeaf.WithoutVariable.isVariableGen" should
