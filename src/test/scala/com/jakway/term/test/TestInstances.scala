@@ -72,6 +72,8 @@ package instances {
       extends Properties("DoubleEvalProperties")
       with EvalProperties[N, M] {
       override val numericType: N = inst
+
+      override protected def preventOverflow: Boolean = false
     }
 
     class DoubleNumericTypeCmpProperties
@@ -98,6 +100,8 @@ package instances {
       extends Properties("BigDecimalEvalProperties")
         with EvalProperties[N, M] {
       override val numericType: N = inst
+
+      override protected def preventOverflow: Boolean = true
     }
 
 
