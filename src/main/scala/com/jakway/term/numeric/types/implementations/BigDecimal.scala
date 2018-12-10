@@ -77,8 +77,8 @@ private class BigDecimalPrecision(
   override val sin: TrigFunction = total2(BigDecimalMath.sin(_, mc))
   override val cos: TrigFunction = total2(BigDecimalMath.cos(_, mc))
   override val tan: TrigFunction = total2(BigDecimalMath.tan(_, mc))
-  override val arcsin: TrigFunction = total2(BigDecimalMath.asin(_, mc))
-  override val arccos: TrigFunction = total2(BigDecimalMath.acos(_, mc))
+  override val arcsin: TrigFunction = a => checkAsinDomain(a).map(BigDecimalMath.asin(_, mc))
+  override val arccos: TrigFunction = a => checkAcosDomain(a).map(BigDecimalMath.acos(_, mc))
   override val arctan: TrigFunction = total2(BigDecimalMath.atan(_, mc))
   override val pow: BinaryMathFunction =
     total3(x => y => BigDecimalMath.pow(x, y, mc))

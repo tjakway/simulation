@@ -61,8 +61,8 @@ private class DoublePrecision(override val builtinLiterals: BuiltinLiterals[Doub
   override val sin: TrigFunction = total2(M.sin)
   override val cos: TrigFunction = total2(M.cos)
   override val tan: TrigFunction = total2(M.tan)
-  override val arcsin: TrigFunction = total2(M.asin)
-  override val arccos: TrigFunction = total2(M.acos)
+  override val arcsin: TrigFunction = a => checkAsinDomain(a).map(M.asin)
+  override val arccos: TrigFunction = a => checkAcosDomain(a).map(M.acos)
   override val arctan: TrigFunction = total2(M.atan)
 
   override val pow: BinaryMathFunction = (x: Double) => (y: Double) => Right(M.pow(x, y))

@@ -5,7 +5,7 @@ import java.util.Comparator
 
 import com.jakway.term.elements.{Literal, NumericTerm}
 import com.jakway.term.interpreter.Raw
-import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, SimError}
+import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DomainError, SimError, TrigDomainError}
 import com.jakway.term.numeric.types.SpecialLiterals.{HasSpecialLiterals, SpecialLiteral, SpecialLiteralNotImplementedError, SpecialLiteralReadErrors}
 import com.jakway.term.numeric.types.implementations.{BigDecimalPrecision, DoublePrecision}
 
@@ -75,5 +75,49 @@ trait NumericTypeImplementationHelper[M] extends NumericType[M] {
   def total2(f: M => M): M => Either[SimError, M] = (x: M) => Right(f(x))
   def total3(f: M => M => M): M => M => Either[SimError, M] =
     (x: M) => (y: M) => Right(f(x)(y))
+
+  private def checkTrigDomain(trigFunctionName: String,
+                              lower: M,
+                              upper: M)(arg: M): Either[SimError, M] = {
+
+    val lowerError: Option[String] = {
+      //must be >= lower
+      if(comparator.compare(arg, lower) >= 0) {
+        Some(s"$arg < $lower")
+      } else {
+        None
+      }
+    }
+
+    val upperError: Option[String] = {
+      //must be <= upper
+      if(comparator.compare(arg, upper) <= 0) {
+        Some(s"$arg < $lower")
+      } else {
+        None
+      }
+    }
+
+    val errors = Seq(lowerError, upperError)
+
+    //prepend the prefix to all error messages
+    val prefix = s"Domain error in $trigFunctionName: "
+    errors.map(e => e.map(prefix + _))
+
+    val empty: Either[SimError, M] = Right(arg)
+    errors.foldLeft(empty) {
+      case (Left(e), _) => Left(e)
+      case (_, Some(e)) => Left(new TrigDomainError(e))
+      case (Right(x), None) => Right(x)
+    }
+  }
+
+  def checkAsinDomain: M => Either[SimError, M] =
+    checkTrigDomain("Asin", builtinLiterals.negativeOne, builtinLiterals.one)
+
+  def checkAcosDomain: M => Either[SimError, M] =
+    checkTrigDomain("Acos", builtinLiterals.negativeOne, builtinLiterals.one)
+
+
 }
 

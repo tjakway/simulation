@@ -6,6 +6,7 @@ import com.jakway.term.numeric.types.SpecialLiterals.{HasSpecialLiterals, Specia
 class BuiltinLiterals[M](
   val negativeOne: M,
   val zero: M,
+  val one: M,
   val specialLiterals: Map[SpecialLiteral, M])
   extends HasSpecialLiterals[M]
 
@@ -16,9 +17,10 @@ object BuiltinLiterals {
     for {
       negativeOne <- readLiteral("-1")
       zero <- readLiteral("0")
+      one <- readLiteral("1")
       specialLiterals <- readSpecialLiterals[M](readLiteral)
     } yield {
-      new BuiltinLiterals(negativeOne, zero, specialLiterals)
+      new BuiltinLiterals(negativeOne, zero, one, specialLiterals)
     }
   }
 
