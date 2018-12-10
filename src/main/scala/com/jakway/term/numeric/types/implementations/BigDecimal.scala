@@ -16,7 +16,9 @@ import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplemente
   * TODO: DRY re: DoublePrecision
   */
 object BigDecimalPrecision {
-  lazy val defaultMathContext: MathContext = scala.math.BigDecimal.defaultMathContext
+  lazy val defaultMathContext: MathContext =
+    new MathContext(scala.math.BigDecimal.defaultMathContext.getPrecision,
+      RoundingMode.HALF_UP)
 
   def mkNumericType(
        mc: MathContext = defaultMathContext):
