@@ -106,6 +106,11 @@ trait GenTerm[N <: NumericType[M], M]
             numericType.builtinLiterals.zero) == 1
         }
 
+        def neOne(r: Raw[N, M]): Boolean = {
+          numericType.comparator.compare(r.value,
+            numericType.builtinLiterals.one) != 0
+        }
+
         def genGtZero(interpreter: Interpreter): Gen[NumericTerm[N, M]] = {
 
           def filter(res: InterpreterResult): Boolean = {
@@ -114,6 +119,16 @@ trait GenTerm[N <: NumericType[M], M]
           }
 
           genConstantNumericTerm(interpreter, filter)
+        }
+
+        /**
+          * >0 && != 1
+          * @param interpreter
+          * @return
+          */
+        def genGtZeroNeOne(interpreter: Interpreter): Gen[NumericTerm[N, M]] = {
+          genGtZero(interpreter)
+            .filter(x => x.isInstanceOf[Raw[N, M]] && neOne(x.asInstanceOf[Raw[N, M]]))
         }
 
         /**
@@ -131,14 +146,15 @@ trait GenTerm[N <: NumericType[M], M]
             case None => genRaw.filter(gtZero)
           }
 
+        def genLogarithmBase(): Gen[NumericTerm[N, M]] =
+          logarithmTreeInterpreter match {
+            case Some(interpreter) => genGtZeroNeOne(interpreter)
+            case None => genRaw.filter(r => gtZero(r) && neOne(r))
+          }
+
 
         for {
-          base <- genNumericTerm()
-
-          //TODO: need a better way to guarantee
-          //that the generated term is >0 so we can test logarithms
-          //more thoroughly... probably by restricting variables in a generated
-          //tree then filtering for eval(_) > 0
+          base <- genLogarithmBase()
           of <- genLogarithmArgument()
         } yield Logarithm(base, of)
       }
