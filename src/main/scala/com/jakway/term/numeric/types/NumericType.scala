@@ -82,7 +82,7 @@ trait NumericTypeImplementationHelper[M] extends NumericType[M] {
 
     val lowerError: Option[String] = {
       //must be >= lower
-      if(comparator.compare(arg, lower) >= 0) {
+      if(comparator.compare(arg, lower) == -1) {
         Some(s"$arg < $lower")
       } else {
         None
@@ -91,7 +91,7 @@ trait NumericTypeImplementationHelper[M] extends NumericType[M] {
 
     val upperError: Option[String] = {
       //must be <= upper
-      if(comparator.compare(arg, upper) <= 0) {
+      if(comparator.compare(arg, upper) == 1) {
         Some(s"$arg < $lower")
       } else {
         None
