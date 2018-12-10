@@ -163,14 +163,34 @@ trait GenTerm[N <: NumericType[M], M]
 
     def genTrigFunction: Gen[NumericTerm[N, M]] = Gen lzy {
 
-      val trigFunctions: Seq[NumericTerm[N, M] => NumericTerm[N, M]] =
-        Seq(Sin.apply, Cos.apply, Tan.apply,
-          Arcsin.apply, Arccos.apply, Arctan.apply)
+      type TrigF = NumericTerm[N, M] => NumericTerm[N, M]
+      val unrestrictedTrigFunctions: Seq[(TrigF, Gen[NumericTerm[N, M]])] =
+        Seq(Sin.apply[N, M](_), Cos.apply[N, M](_), Arctan.apply[N, M](_))
+          .map(f => (f, genNumericTerm(variablesAllowed)))
+
+      def doubleToNumericTerm(x: Double) =
+        Raw.apply[N, M](numericType.readLiteral(x.toString).right.get)
+
+      val restrictedTrigFunctions: Seq[(TrigF, Gen[NumericTerm[N, M]])] =
+        Seq(
+          (Arcsin.apply[N, M](_), Gen.choose(0: Double, 1: Double)),
+          (Arccos.apply[N, M](_), Gen.choose(0: Double, 1: Double)),
+          //tan isn't defined for any x where cos(x) == 0
+          //also manually checked that java.lang.Math.cos works for MinValue and MaxValue
+          (Arctan.apply[N, M](_), Gen.choose(Double.MinValue, Double.MaxValue)
+                                     .filter(java.lang.Math.cos(_) != 0))
+        ).map {
+          case (f, g) => (f, g.map(doubleToNumericTerm))
+        }
+
+      val allTrigFunctions: Seq[(TrigF, Gen[NumericTerm[N, M]])] =
+        unrestrictedTrigFunctions ++ restrictedTrigFunctions
+
 
       for {
-        f <- Gen.oneOf(trigFunctions)
-        n <- genNumericTerm(variablesAllowed)
-      } yield f(n)
+        (function, gen) <- Gen.oneOf(allTrigFunctions)
+        arg <- gen
+      } yield function(arg)
     }
 
     def genNegative: Gen[Negative[N, M]] =
