@@ -3,7 +3,7 @@ package com.jakway.term.numeric.types.implementations
 
 import java.util.Comparator
 
-import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError, LogarithmDomainError}
+import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, DivideByZeroError, LogarithmDomainError, SimError}
 import com.jakway.term.numeric.types.NumericType.ReadLiteral
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
 import com.jakway.term.numeric.types._

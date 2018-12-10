@@ -3,7 +3,8 @@ package com.jakway.term.interpreter.optimization
 import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.{Interpreter, Optimization}
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 /**
   * An optimization that stores previously evaluated terms

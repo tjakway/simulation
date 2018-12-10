@@ -3,7 +3,8 @@ package com.jakway.term.interpreter.helpers
 import com.jakway.term.elements.Literal
 import com.jakway.term.interpreter.{Interpreter, Raw}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 /**
   * supertype for term-specific eval implementations

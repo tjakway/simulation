@@ -2,10 +2,11 @@ package com.jakway.term.interpreter
 
 import com.jakway.term.elements._
 import com.jakway.term.interpreter.Interpreter.SymbolTable
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.types.NumericType
 import Eval._
 import com.jakway.term.Util
 import com.jakway.term.interpreter.helpers.{EvalFunctionCall, EvalHelpers}
+import com.jakway.term.numeric.errors.SimError
 
 /**
   * type for values we've looked up in the current evaluation context

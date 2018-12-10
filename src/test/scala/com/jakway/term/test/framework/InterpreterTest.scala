@@ -3,7 +3,8 @@ package com.jakway.term.test.framework
 import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.{Eval, Interpreter, Raw}
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.test.NumericTypeTest
 import org.scalactic.Equality
 import org.scalatest.{FlatSpec, Matchers}

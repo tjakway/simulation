@@ -1,6 +1,6 @@
 package com.jakway.term.test.framework
 
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
 
 import scala.util.{Failure, Success, Try}
 

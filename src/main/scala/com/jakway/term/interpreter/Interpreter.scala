@@ -3,7 +3,8 @@ package com.jakway.term.interpreter
 import com.jakway.term._
 import com.jakway.term.elements.{Term, Variable}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 object Interpreter {
   type SymbolTable = Map[String, Term]

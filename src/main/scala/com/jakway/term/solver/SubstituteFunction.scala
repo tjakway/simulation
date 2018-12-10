@@ -3,7 +3,7 @@ package com.jakway.term.solver
 import com.jakway.term.interpreter.warn.Warning
 import com.jakway.term._
 import com.jakway.term.elements.{Equation, HasSubterms, Operation, Term}
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.simplifier.{InverseIdentitySimplifier, Simplifier}
 import com.jakway.term.solver.SubstituteFunction.Applications.{Inversion, Simplification}
 import interface.Formatter

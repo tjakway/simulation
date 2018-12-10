@@ -1,7 +1,7 @@
 package com.jakway.term.test.framework
 
 import com.jakway.term.elements.Term
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.test.framework.TermMatchers.MatchesTermError
 import org.scalactic.Equality
 import org.scalatest.matchers.{MatchResult, Matcher}

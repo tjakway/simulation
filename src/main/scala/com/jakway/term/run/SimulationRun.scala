@@ -5,7 +5,7 @@ import java.util.{Formatter, Locale}
 import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.{Interpreter, InterpreterResult}
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.run.SimulationRun.Errors.{ExpectedInterpreterResultError, RunFailed, SimulationRunError}
 import com.jakway.term.run.SimulationRun.ValueStreams
 import com.jakway.term.solver.Solvable

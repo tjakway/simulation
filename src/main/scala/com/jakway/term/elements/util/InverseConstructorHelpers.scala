@@ -1,7 +1,7 @@
 package com.jakway.term.elements.util
 
 import com.jakway.term.elements.{Operation, Term}
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
 
 import scala.reflect.ClassTag
 

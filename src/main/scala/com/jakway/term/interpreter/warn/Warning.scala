@@ -2,8 +2,8 @@ package com.jakway.term.interpreter.warn
 
 import java.util.Locale
 
-import com.jakway.term.numeric.types.SimError
 import com.jakway.term.elements.{Equation, Term}
+import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.solver.Solvable
 
 

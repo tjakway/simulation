@@ -2,7 +2,8 @@ package com.jakway.term.elements
 
 import com.jakway.term.elements.util.NewInstanceHelpers.Arity2MkNewInstance
 import com.jakway.term.elements.util.InverseConstructorHelpers
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 trait BinaryNumericOperation[N <: NumericType[M], M]
   extends NumericOperation[N, M]

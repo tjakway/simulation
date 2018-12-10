@@ -9,7 +9,7 @@ import com.jakway.term.numeric.types._
 import java.math.BigDecimal
 import java.util.Comparator
 
-import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, LogarithmDomainError}
+import com.jakway.term.numeric.errors.{CouldNotReadLiteralError, LogarithmDomainError, SimError}
 import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplementedError
 
 /**

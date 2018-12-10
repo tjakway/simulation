@@ -1,7 +1,8 @@
 package com.jakway.term.solver
 
 import com.jakway.term.elements._
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.solver.SubstituteFunction.Applications
 import org.slf4j.{Logger, LoggerFactory}
 

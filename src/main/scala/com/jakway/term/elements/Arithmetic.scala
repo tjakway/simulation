@@ -1,7 +1,8 @@
 package com.jakway.term.elements
 
 import com.jakway.term.elements.HasSubterms.NewInstanceF
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 case class Negative[N <: NumericType[M], M](arg: NumericTerm[N, M])
   extends OneArgumentFunction[N, M]

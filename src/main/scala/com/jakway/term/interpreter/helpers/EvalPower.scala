@@ -4,7 +4,8 @@ import com.jakway.term.elements.Power
 import com.jakway.term.interpreter.Eval.{EvalHelper, EvalType}
 import com.jakway.term.interpreter.{Interpreter, Raw}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 class EvalPower[N <: NumericType[M], M](
   val numericType: N)

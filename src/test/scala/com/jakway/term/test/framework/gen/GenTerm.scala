@@ -2,7 +2,8 @@ package com.jakway.term.test.framework.gen
 
 import com.jakway.term.elements._
 import com.jakway.term.interpreter.{Interpreter, InterpreterResult, Raw}
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.test.framework.gen.GenTerm.{ConstantNumericTermEvalException, GenMError}
 import org.scalacheck.Gen
 

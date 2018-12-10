@@ -1,7 +1,8 @@
 package com.jakway.term
 
 import com.jakway.term.elements.{HasSubterms, Operation, Term, Variable}
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec

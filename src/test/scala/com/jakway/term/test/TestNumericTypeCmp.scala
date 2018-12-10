@@ -1,6 +1,7 @@
 package com.jakway.term.test
 
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.test.TestNumericTypeCmp.TestNumericTypeCmpError
 import com.jakway.term.test.framework.TestError
 import com.jakway.term.test.framework.gen.HasNumericType

@@ -1,7 +1,8 @@
 package com.jakway.term.elements
 
 import com.jakway.term.TermOperations
-import com.jakway.term.numeric.types.{NumericType, SimError}
+import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.numeric.types.NumericType
 
 /**
   * a function that doesn't require interpreter support

@@ -2,7 +2,7 @@ package com.jakway.term.simplifier
 
 import com.jakway.term._
 import com.jakway.term.elements.{CommutativeOperation, Operation, Term}
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
 import org.slf4j.{Logger, LoggerFactory}
 
 

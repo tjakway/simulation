@@ -1,6 +1,7 @@
 package com.jakway.term.elements
 
-import com.jakway.term.numeric.types.SimError
+import com.jakway.term.numeric.errors.SimError
+
 import scala.reflect.ClassTag
 
 trait Operation extends Term with HasSubterms {
