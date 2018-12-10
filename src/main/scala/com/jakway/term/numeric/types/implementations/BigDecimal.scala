@@ -16,13 +16,14 @@ import com.jakway.term.numeric.types.SpecialLiterals.SpecialLiteralNotImplemente
   * TODO: DRY re: DoublePrecision
   */
 object BigDecimalPrecision {
-  lazy val defaultMathContext = scala.math.BigDecimal.defaultMathContext
+  lazy val defaultMathContext: MathContext = scala.math.BigDecimal.defaultMathContext
+
   def mkNumericType(
        mc: MathContext = defaultMathContext):
   Either[SimError, NumericType[BigDecimal]] = {
     //parse builtins
     BuiltinLiterals.mkBuiltinLiterals[BigDecimal](readLiteralF(mc))
-      .map(new BigDecimalPrecision(_))
+      .map(new BigDecimalPrecision(_, mc))
   }
 
   private def readLiteralF: MathContext => ReadLiteral[BigDecimal] = {
@@ -59,8 +60,7 @@ object BigDecimalPrecision {
 
 private class BigDecimalPrecision(
                override val builtinLiterals: BuiltinLiterals[BigDecimal],
-               val mc: MathContext =
-                   scala.math.BigDecimal.defaultMathContext)
+               val mc: MathContext)
   extends NumericTypeImplementationHelper[BigDecimal] {
 
   def this(builtinLiterals: BuiltinLiterals[BigDecimal],
