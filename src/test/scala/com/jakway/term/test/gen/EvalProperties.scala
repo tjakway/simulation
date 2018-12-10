@@ -22,31 +22,49 @@ trait EvalProperties[N <: NumericType[M], M]
 
   protected def preventOverflow: Boolean
 
-  object IsUnderOrOverflow {
-    private def underflowRegex: Regex = new Regex("(?i).*Underflow.*")
-    private def overflowRegex: Regex = new Regex("(?i).*Overflow.*")
+  /**
+    * returns false if the ArithmeticException matches
+    * any of the regexes, true otherwise
+    */
+  trait FilterArithmeticException {
+    val regexes: Seq[Regex]
 
     def apply(e: Exception): Boolean = {
       e match {
         case arithmeticException: ArithmeticException => {
           //see if the exception mentions underflow or overflow
           val msg = arithmeticException.getMessage()
-          underflowRegex.findFirstMatchIn(msg).isDefined ||
-            overflowRegex.findFirstMatchIn(msg).isDefined
+          val anyMatchFound = regexes.find(r => r.findFirstMatchIn(msg).isDefined).isDefined
+          !anyMatchFound
         }
-        case _ => false
+        case _ => true
       }
+
     }
   }
+
+  object UnderOrOverflow extends FilterArithmeticException {
+    private def underflowRegex: Regex = new Regex("(?i).*Underflow.*")
+    private def overflowRegex: Regex = new Regex("(?i).*Overflow.*")
+
+    override val regexes: Seq[Regex] = Seq(underflowRegex, overflowRegex)
+  }
+
+  object DivisionImpossible extends FilterArithmeticException {
+    override val regexes: Seq[Regex] = Seq(new Regex("""(?i).*Division impossible.*"""))
+  }
+
+  def allFilters: Exception => Boolean =
+    e => UnderOrOverflow(e) && DivisionImpossible(e)
 
 
   /**
     * wrapper around EvalTerm to create a Gen for terms that won't throw
-    * underflow or overflow errors
+    * the errors we're filtering for
     * @param e
     */
   case class RestrictedEvalTerm(e: EvalTerm)
-  def genRestrictedEvalTerm: Gen[RestrictedEvalTerm] =
+  def genRestrictedEvalTerm(filterExceptions: Exception => Boolean): Gen[RestrictedEvalTerm] =
     //filter for terms that throw an underflow/overflow exception
     //during eval
     genEvalTerm.filter { evalTerm =>
@@ -54,12 +72,12 @@ trait EvalProperties[N <: NumericType[M], M]
         interpreter.eval(evalTerm.symbolTable)(evalTerm.term)
         true
       } catch {
-        case e: Exception if IsUnderOrOverflow(e) => false
+        case e: Exception => filterExceptions(e)
         case _: Throwable => true
       }
     }.map(RestrictedEvalTerm.apply)
   implicit val arbRestrictedEvalTerm: Arbitrary[RestrictedEvalTerm] =
-    Arbitrary(genRestrictedEvalTerm)
+    Arbitrary(genRestrictedEvalTerm(allFilters))
 
   def checkEval(evalTerm: EvalTerm): Boolean =
     interpreter.eval(evalTerm.symbolTable)(evalTerm.term).isRight
