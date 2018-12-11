@@ -39,4 +39,7 @@ object Formatter {
     * default line width to use if right-justifying
     */
   val defaultWidth: Int = 80
+
+  def formatSeqMultilineNoHeader[A](xs: Seq[A]): String =
+    new Formatter().formatSeqMultiline("")(xs)
 }
