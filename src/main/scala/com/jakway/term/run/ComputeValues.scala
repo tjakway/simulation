@@ -29,7 +29,7 @@ trait ComputeValues {
 }
 
 object ComputeValues {
-  case class VariablesGivenTwice(val names: Set[String])
+  case class VariablesGivenTwice(names: Set[String])
     extends SimError(s"Variables $names are given in " +
       s"both the constants table and the ValueStreams (" +
       s"it may only be specified in one)")
