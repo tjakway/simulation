@@ -11,6 +11,12 @@ object Interpreter {
 
   val emptySymbolTable: SymbolTable = Map()
 
+  def mergeSymbolTables(x: SymbolTable, y: SymbolTable): SymbolTable = {
+    y.toSeq.foldLeft(x) {
+      case (acc, thisPair) => acc.updated(thisPair._1, thisPair._2)
+    }
+  }
+
   class InterpreterError(override val msg: String,
                          val table: SymbolTable,
                          val term: Term)

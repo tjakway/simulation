@@ -134,46 +134,47 @@ object SimulationRun {
           interpreter: Interpreter,
           formatter: RunResultFormatter,
           errorBehavior: ErrorBehavior = IfErrorNoResult)
-         (implicit executor: ExecutionContext): RunResultType = {
+         (implicit executor: ExecutionContext): Either[SimError, RunResultType] = {
 
-    val toRun = runData.toRun.otherSide
-    val allFutures = runData.symbolTables.map { thisTable =>
-      Future {
-        interpreter.eval(thisTable)(toRun) match {
-          case Right(success) => Right((thisTable, success))
-            //combine the symbol table with the error so we can keep track
-            //of which values caused which errors
-          case Left(err) => Left((thisTable, err))
-        }
-      }
-    }
+    runData.computeValues.getSymbolTables(runData.inputs).map {
+      symbolTables =>
 
-    val empty: Future[AccumulatorType] = Future(Right(Seq()))
-    val foldResult = allFutures.foldLeft(empty) {
-      case (fAcc, f) => {
-        for {
-          acc <- fAcc
-          term <- f
-        } yield {
-          val res: Either[(SymbolTable, SimError), SingleRunOutput] =
-            term.flatMap {
-              case (input, output) =>
-                filterForInterpreterResult(output)
-                  .map(new SingleRunOutput(input, _))
+        val toRun = runData.toRun.otherSide
+        val allFutures = symbolTables.map { thisTable =>
+          Future {
+            interpreter.eval(thisTable)(toRun) match {
+              case Right(success) => Right((thisTable, success))
+              //combine the symbol table with the error so we can keep track
+              //of which values caused which errors
+              case Left(err) => Left((thisTable, err))
             }
-          errorBehavior.reduce(res, acc)
+          }
         }
-      }
-    }
 
-    formatter(executor)(runData.outputVariable)(runData.toRun)(foldResult)
+        val empty: Future[AccumulatorType] = Future(Right(Seq()))
+        val foldResult = allFutures.foldLeft(empty) {
+          case (fAcc, f) => {
+            for {
+              acc <- fAcc
+              term <- f
+            } yield {
+              val res: Either[(SymbolTable, SimError), SingleRunOutput] =
+                term.flatMap {
+                  case (input, output) =>
+                    filterForInterpreterResult(output)
+                      .map(new SingleRunOutput(input, _))
+                }
+              errorBehavior.reduce(res, acc)
+            }
+          }
+        }
+
+        formatter(executor)(runData.outputVariable)(runData.toRun)(foldResult)
+    }
   }
 }
 
 class SimulationRun(val inputs: ValueStreams,
                     val outputVariable: String,
                     val toRun: Solvable,
-                    val computeValues: ComputeValues = new Combinations()) {
-  lazy val symbolTables: Stream[SymbolTable] =
-    computeValues.toSymbolTables(inputs)
-}
+                    val computeValues: ComputeValues = new Combinations())

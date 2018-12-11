@@ -1,17 +1,46 @@
 package com.jakway.term.run
 
 import com.jakway.term.elements.Term
+import com.jakway.term.interpreter.Interpreter
 import com.jakway.term.interpreter.Interpreter.SymbolTable
+import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.run.SimulationRun.ValueStreams
 
 trait ComputeValues {
-  def toSymbolTables(values: ValueStreams): Stream[SymbolTable]
+  val constants: SymbolTable = Interpreter.emptySymbolTable
+  protected def toSymbolTables(values: ValueStreams): Stream[SymbolTable]
+
+  def getSymbolTables(values: ValueStreams): Either[SimError, Stream[SymbolTable]] = {
+
+    //make sure the variables listed in constants aren't also listed in streams
+    val intersection = values.keySet.intersect(constants.keySet)
+    val keysOverlap: Boolean = values.keySet.intersect(constants.keySet) != Set()
+    if(keysOverlap) {
+      Left(ComputeValues.VariablesGivenTwice(intersection))
+    } else {
+      //merge the tables and return
+      val streamTables = toSymbolTables(values)
+      val mergedTables = streamTables.map(thisTable =>
+        Interpreter.mergeSymbolTables(thisTable, constants))
+      Right(mergedTables)
+    }
+  }
+
 }
 
-class Combinations extends ComputeValues {
+object ComputeValues {
+  case class VariablesGivenTwice(val names: Set[String])
+    extends SimError(s"Variables $names are given in " +
+      s"both the constants table and the ValueStreams (" +
+      s"it may only be specified in one)")
+}
+
+class Combinations(
+  override val constants: SymbolTable = Interpreter.emptySymbolTable)
+  extends ComputeValues {
   import Combinations._
 
-  def toSymbolTables(values: ValueStreams): Stream[SymbolTable] = {
+  override protected def toSymbolTables(values: ValueStreams): Stream[SymbolTable] = {
     combinations[String, Term](values)
   }
 }
