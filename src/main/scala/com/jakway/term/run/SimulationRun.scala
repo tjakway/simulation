@@ -20,7 +20,8 @@ object SimulationRun {
 
   class AllRunOutput(val runs: Traversable[SingleRunOutput],
                      val outputVariable: String,
-                     val toRun: Solvable)
+                     val toRun: Solvable,
+                     val constants: SymbolTable)
 
   type RunResultType = Future[Either[SimError, AllRunOutput]]
 
@@ -32,6 +33,7 @@ object SimulationRun {
     ExecutionContext =>
       String =>
       Solvable =>
+      SymbolTable =>
       RawRunResultType =>
       RunResultType
 
@@ -39,6 +41,7 @@ object SimulationRun {
     (ec: ExecutionContext) =>
       (outputVariable: String) =>
         (toRun: Solvable) =>
+          (constants: SymbolTable) =>
           (result: RawRunResultType) => {
 
             result.map { r =>
@@ -54,7 +57,8 @@ object SimulationRun {
                   }
                   Left(RunFailed(fmt.toString))
                 }
-                case Right(outputs) => Right(new AllRunOutput(outputs, outputVariable, toRun))
+                case Right(outputs) => Right(
+                  new AllRunOutput(outputs, outputVariable, toRun, constants))
               }
             }(ec)
           }
@@ -169,7 +173,7 @@ object SimulationRun {
           }
         }
 
-        formatter(executor)(runData.outputVariable)(runData.toRun)(foldResult)
+        formatter(executor)(runData.outputVariable)(runData.toRun)(runData.computeValues.constants)(foldResult)
     }
   }
 }
