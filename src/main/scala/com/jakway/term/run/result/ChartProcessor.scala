@@ -1,13 +1,14 @@
 package com.jakway.term.run.result
 
-import com.jakway.term.elements.Term
-import com.jakway.term.interpreter.InterpreterResult
+import com.jakway.term.elements.{Literal, Term}
+import com.jakway.term.interpreter.{InterpreterResult, Raw}
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.run.SimulationRun.{AllRunOutput, RunResultType}
 import com.jakway.term.run.result.ChartProcessor.{OutputType, VariablePair}
+import org.jfree.data.xy.{XYDataset, XYSeries}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   *
@@ -18,6 +19,7 @@ import scala.util.Try
   */
 case class ChartConfig(excludeVariables: Set[String],
                        charts: Set[VariablePairChart],
+                       convertToNumber: InterpreterResult => Either[SimError, Number],
                        mustExcludeVariables: Boolean,
                        failOnIncompleteData: Boolean)
 
@@ -129,7 +131,9 @@ class ChartProcessor(val chartConfig: ChartConfig)
     }
   }
 
-  class VariableData(val failOnIncompleteData: Boolean) {
+  class VariableData(
+    val convertToNumber: InterpreterResult => Either[SimError, Number],
+    val failOnIncompleteData: Boolean) {
     type Data = InterpreterResult
 
     val logger: Logger = LoggerFactory.getLogger(getClass())
@@ -211,6 +215,33 @@ class ChartProcessor(val chartConfig: ChartConfig)
 
       returnOrFail(unignorableErrors)
     }
+
+    def processVariableData(data: Seq[VariablePairValues[Data, Data]],
+                            series: XYSeries): Unit = {
+      val empty: Either[SimError, Unit] = Right({})
+
+      data.foldLeft(empty) {
+        case (Left(err), _) => Left(err)
+        case (Right(_), thisPair) => {
+          Try {
+            for {
+              x <- convertToNumber(thisPair.inputData)
+              y <- convertToNumber(thisPair.outputData)
+            } yield {
+              series.add(x, y)
+            }
+          } match {
+            case Success(x) => Right(x)
+            case Failure(t) => {
+              val e = new VariableDataError(s"Caught exception: $t")
+              e.initCause(t)
+              Left(e)
+            }
+          }
+        }
+      }
+
+    }
   }
 }
 
@@ -229,16 +260,19 @@ object ChartProcessor {
     extends ChartProcessorError(msg)
 
   case class VariableNotFoundError(override val msg: String)
-    extends ChartProcessorError(msg)
+    extends VariableDataError(msg)
 
   case class InputVariableNotInterpreterResultError(varName: String,
                                                     varValue: Term)
-    extends ChartProcessorError(s"Could not graph $varName because" +
+    extends VariableDataError(s"Could not graph $varName because" +
       s" it has a value of ${varValue} which is not an instance of" +
       s" InterpreterResult")
 
+  class VariableDataError(override val msg: String)
+    extends ChartProcessorError(msg)
+
   case class VariableDataErrors(errs: Set[SimError])
-    extends ChartProcessorError(
+    extends VariableDataError(
       s"Errors while processing variable data: " +
       com.jakway.term.interface.Formatter.formatSeqMultilineNoHeader(errs.toSeq))
 }
