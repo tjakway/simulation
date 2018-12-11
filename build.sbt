@@ -21,6 +21,8 @@ libraryDependencies ++=
       //used for BigDecimal NumericType implementation
       "ch.obermuhlner" % "big-math" % "2.0.1",
 
+      "org.jfree" % "jfreechart" % "1.5.0",
+
       //enable reflection
       //otherwise can't import scala.reflect.runtime
       //see https://stackoverflow.com/questions/25189608/cant-import-scala-reflect-runtime-universe
