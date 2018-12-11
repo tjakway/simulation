@@ -25,8 +25,8 @@ case class VariablePairChart(title: String,
 
   def this(title: String,
            pair: VariablePair,
-           altXAxisLabel: Option[String] = None,
-           altYAxisLabel: Option[String] = None) {
+           altXAxisLabel: Option[String],
+           altYAxisLabel: Option[String]) {
     this(title, pair.inputVariable, pair.outputVariable,
       altXAxisLabel, altYAxisLabel)
   }
@@ -46,6 +46,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
 
   override def apply(results: RunResultType): OutputType = {
 
+    ???
   }
 
   def excludeVariables(pairs: Set[VariablePair]): Either[SimError, Set[VariablePair]] = {
