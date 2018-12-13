@@ -1,11 +1,13 @@
 package com.jakway.term.run.result.chart
 
+import com.jakway.term.Util
 import com.jakway.term.elements.{Literal, Term}
 import com.jakway.term.interpreter.{InterpreterResult, Raw}
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.run.SimulationRun.{AllRunOutput, RunResultType}
 import com.jakway.term.run.result.ResultProcessor
 import com.jakway.term.run.result.chart.ChartProcessor.{OutputType, VariablePair}
+import com.jakway.term.run.result.chart.VariableDataProcessor.Data
 import org.jfree.data.xy.{XYDataset, XYSeries}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -51,6 +53,10 @@ class ChartProcessor(val chartConfig: ChartConfig)
   import ChartProcessor._
 
   val logger: Logger = LoggerFactory.getLogger(getClass())
+
+  val variableDataProcessor: VariableDataProcessor =
+    new VariableDataProcessor(chartConfig.convertToNumber,
+      chartConfig.failOnIncompleteData)
 
   override def apply(results: RunResultType): OutputType = {
 
@@ -131,6 +137,56 @@ class ChartProcessor(val chartConfig: ChartConfig)
       case None => Set()
     }
   }
+
+
+  private def x(runOutput: AllRunOutput): Unit = {
+    val pairs = getVariablePairs(runOutput)
+
+    type PairDataType = Either[Seq[SimError],
+      Map[VariablePair, Seq[VariablePairValues[Data, Data]]]]
+    val empty: PairDataType = Right(Map())
+
+    val pairData: PairDataType =
+      pairs.map(thisPair =>
+            variableDataProcessor.
+              getVariableData(runOutput)(thisPair)
+      .map(data => (thisPair, data)))
+      .foldLeft(empty) {
+        case (l, Left(err)) => Util.appendLeftOrReplace(l, err)
+        case (Left(es), Right(x)) => Left(es)
+        case (Right(acc), Right(next)) =>
+          Right(acc.updated(next._1, next._2))
+      }
+
+
+    def associateCharts(pairs: Map[VariablePair, Seq[VariablePairValues[Data, Data]]]):
+      Either[Seq[SimError], Map[VariablePairChart, Seq[VariablePairValues[Data, Data]]]] = {
+
+      val newPairs: Seq[Either[SimError,
+        (VariablePairChart, Seq[VariablePairValues[Data, Data]])]] =
+        pairs.map {
+        case (key, values) =>
+          findChartForVariable(key).map(newKey => (newKey, values))
+      }.toSeq
+
+      Util.accEithers(newPairs).map(_.toMap)
+    }
+
+    for {
+      pairs <- pairData
+      chartsWithData <- associateCharts(pairs)
+
+      //next: create XYSeries for each chart & fill with data
+    }
+  }
+
+  private def findChartForVariable(variable: VariablePair):
+    Either[SimError, VariablePairChart] = {
+    chartConfig.charts.find(_.xVarName == variable.inputVariable)
+      .map(Right(_))
+      .getOrElse(Left(VariableNotInCharts(variable.inputVariable,
+        chartConfig.charts)))
+  }
 }
 
 object ChartProcessor {
@@ -163,4 +219,18 @@ object ChartProcessor {
     extends VariableDataError(
       s"Errors while processing variable data: " +
       com.jakway.term.interface.Formatter.formatSeqMultilineNoHeader(errs.toSeq))
+
+  case class VariableNotInCharts(varName: String, charts: Set[VariablePairChart])
+    extends VariableDataError(s"Could not find $varName in the provided" +
+      s" charts: " + charts.toString + " (did you forget to exclude it?)")
+
+  /**
+    * too many charts, not enough variables
+    * @param variables
+    * @param charts
+    */
+  case class VariablesNotFoundForCharts(variables: Seq[VariablePair],
+                                        charts: Set[VariablePairChart])
+    extends VariableDataError(s"Variables were not found for these charts: " +
+      s"${charts.toString} (variables: ${variables.map(_.inputVariable)})")
 }

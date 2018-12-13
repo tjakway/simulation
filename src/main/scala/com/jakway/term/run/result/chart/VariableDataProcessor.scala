@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 class VariableDataProcessor(
   val convertToNumber: InterpreterResult => Either[SimError, Number],
   val failOnIncompleteData: Boolean) {
-  type Data = InterpreterResult
+  import VariableDataProcessor._
 
   val logger: Logger = LoggerFactory.getLogger(getClass())
 
@@ -124,3 +124,7 @@ class VariableDataProcessor(
   }
 }
 
+
+object VariableDataProcessor {
+  type Data = InterpreterResult
+}
