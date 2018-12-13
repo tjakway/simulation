@@ -10,7 +10,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.util.{Failure, Success, Try}
 
 
-class VariableData(
+class VariableDataProcessor(
   val convertToNumber: InterpreterResult => Either[SimError, Number],
   val failOnIncompleteData: Boolean) {
   type Data = InterpreterResult
