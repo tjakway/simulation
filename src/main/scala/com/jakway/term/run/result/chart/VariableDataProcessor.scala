@@ -77,7 +77,7 @@ class VariableDataProcessor(
       if(errors.isEmpty) {
         Right(res)
       } else {
-        Left(VariableDataErrors(errors))
+        Left(new VariableDataErrors(errors))
       }
 
     //note that these are ***potentially*** ignorable errors

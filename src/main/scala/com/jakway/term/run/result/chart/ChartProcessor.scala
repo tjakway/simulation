@@ -15,6 +15,7 @@ import org.jfree.chart.plot.PlotOrientation
 import org.jfree.data.xy.{XYDataset, XYSeries, XYSeriesCollection}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -62,9 +63,9 @@ class ChartProcessor(val chartConfig: ChartConfig)
     new VariableDataProcessor(chartConfig.convertToNumber,
       chartConfig.failOnIncompleteData)
 
-  override def apply(results: RunResultType): OutputType = {
-
-    ???
+  override def apply(results: RunResultType)
+                    (implicit ec: ExecutionContext): Future[OutputType] = {
+    results.map(_.flatMap(apply))
   }
 
   def excludeVariables(pairs: Set[VariablePair]): Either[SimError, Set[VariablePair]] = {
@@ -143,7 +144,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
   }
 
 
-  private def x(runOutput: AllRunOutput): Unit = {
+  def apply(runOutput: AllRunOutput): Either[SimError, Map[VariablePairChart, JFreeChart]] = {
     val pairs = getVariablePairs(runOutput)
 
     type PairDataType = Either[Seq[SimError],
@@ -175,14 +176,16 @@ class ChartProcessor(val chartConfig: ChartConfig)
 
       Util.accEithers(newPairs).map(_.toMap)
     }
+    def wrapErrors[R](xs: Either[Seq[SimError], R]): Either[SimError, R] = {
+      Util.mapLeft(xs)(new VariableDataErrors(_))
+    }
 
     for {
-      pairs <- pairData
-      chartsWithData <- associateCharts(pairs)
-      charts <- insertData(chartsWithData)
-
-      //next: create XYSeries for each chart & fill with data
-    } yield { ??? }
+      pairs <- wrapErrors(pairData)
+      chartsWithData <- wrapErrors(associateCharts(pairs))
+      chartsWithSeries <- insertData(chartsWithData)
+      finishedCharts <- mkCharts(chartsWithSeries)
+    } yield { finishedCharts }
   }
 
   private def findChartForVariable(variable: VariablePair):
@@ -243,7 +246,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
 }
 
 object ChartProcessor {
-  type OutputType = Either[SimError, Unit]
+  type OutputType = Either[SimError, Map[VariablePairChart, JFreeChart]]
 
   class VariablePair(val inputVariable: String,
                      val outputVariable: String)
@@ -268,10 +271,19 @@ object ChartProcessor {
   class VariableDataError(override val msg: String)
     extends ChartProcessorError(msg)
 
-  case class VariableDataErrors(errs: Set[SimError])
+  case class VariableDataErrors(val errMsg: String)
     extends VariableDataError(
       s"Errors while processing variable data: " +
-      com.jakway.term.interface.Formatter.formatSeqMultilineNoHeader(errs.toSeq))
+      errMsg) {
+
+    def this(errs: Seq[SimError]) {
+      this(com.jakway.term.interface.Formatter.formatSeqMultilineNoHeader(errs))
+    }
+    def this(errs: Set[SimError]) {
+      this(errs.toSeq)
+    }
+
+  }
 
   case class VariableNotInCharts(varName: String, charts: Set[VariablePairChart])
     extends VariableDataError(s"Could not find $varName in the provided" +
