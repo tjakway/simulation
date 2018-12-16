@@ -111,11 +111,7 @@ class VariableDataProcessor(
         }
         r match {
           case Success(x) => x
-          case Failure(t) => {
-            val e = new VariableDataError(s"Caught exception: $t")
-            e.initCause(t)
-            Left(e)
-          }
+          case Failure(t) => Left(DataFillError(t))
         }
       }
 

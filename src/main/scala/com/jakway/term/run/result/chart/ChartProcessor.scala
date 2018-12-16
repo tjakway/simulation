@@ -1,5 +1,7 @@
 package com.jakway.term.run.result.chart
 
+import java.util.Comparator
+
 import com.jakway.term.Util
 import com.jakway.term.elements.{Literal, Term}
 import com.jakway.term.interpreter.{InterpreterResult, Raw}
@@ -20,7 +22,8 @@ import scala.util.{Failure, Success, Try}
   *                             in excludeVariables but could not be found
   * @param charts
   */
-case class ChartConfig(excludeVariables: Set[String],
+case class ChartConfig(comparator: Comparator[Any],
+                       excludeVariables: Set[String],
                        charts: Set[VariablePairChart],
                        convertToNumber: InterpreterResult => Either[SimError, Number],
                        mustExcludeVariables: Boolean,
@@ -40,6 +43,8 @@ case class VariablePairChart(title: String,
     this(title, pair.inputVariable, pair.outputVariable,
       altXAxisLabel, altYAxisLabel)
   }
+
+  lazy val xySeries: XYSeries = new XYSeries(title, false, true)
 }
 
 object ChartConfig {
@@ -177,7 +182,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
       chartsWithData <- associateCharts(pairs)
 
       //next: create XYSeries for each chart & fill with data
-    }
+    } yield { ??? }
   }
 
   private def findChartForVariable(variable: VariablePair):
@@ -187,6 +192,20 @@ class ChartProcessor(val chartConfig: ChartConfig)
       .getOrElse(Left(VariableNotInCharts(variable.inputVariable,
         chartConfig.charts)))
   }
+
+  private def insertData(chartsWithData: Map[VariablePairChart, Seq[VariablePairValues[Data, Data]]]):
+    Either[SimError, Set[VariablePairChart]] = {
+
+    val it = chartsWithData.map {
+      case (thisChart, thisData) => {
+        variableDataProcessor.processVariableData(thisData, thisChart.xySeries)
+          .map(_ => thisChart)
+      }
+    }
+
+    Util.mapLeft(Util.accEithers(it.toSet))(DataFillError.apply _)
+  }
+
 }
 
 object ChartProcessor {
@@ -233,4 +252,22 @@ object ChartProcessor {
                                         charts: Set[VariablePairChart])
     extends VariableDataError(s"Variables were not found for these charts: " +
       s"${charts.toString} (variables: ${variables.map(_.inputVariable)})")
+
+  class DataFillError(override val msg: String)
+    extends VariableDataError(msg) {
+    def this(t: Throwable) {
+      this(s"Caught $t")
+    }
+  }
+  object DataFillError {
+    def apply(t: Throwable): DataFillError = {
+      val err = new DataFillError(t)
+      err.initCause(t)
+      err
+    }
+
+    def apply(es: Set[SimError]): DataFillError = {
+      new DataFillError(s"Caused by multiple errors: $es")
+    }
+  }
 }
