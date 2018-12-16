@@ -37,29 +37,38 @@ object Util {
     case _ => ()
   }
 
-
-  def accEithers[L, R](xs: Seq[Either[L, R]]): Either[Seq[L], Seq[R]] = {
-    xs.foldLeft(Right(Seq()): Either[Seq[L], Seq[R]]) {
-      case (Left(es), Left(e)) => Left(es :+ e)
-      case (Right(_), Left(e)) => Left(Seq(e))
-      case (Right(as), Right(a)) => Right(as :+ a)
-      case (Left(es), Right(_)) => Left(es)
-    }
-  }
-
   def traversableAccEithers[CL <: TraversableOnce[L],
                             CR <: TraversableOnce[R], L, R]
       (clAppend: CL => L => CL, crAppend: CR => R => CR)
-      (newCL: L => CL, newCR: R => CR)
-      (empty: Either[CL, CR])
+      (newCL: L => CL, empty: Either[CL, CR])
       (xs: TraversableOnce[Either[L, R]]): Either[CL, CR] = {
 
     xs.foldLeft(empty) {
         case (Left(es), Left(e)) => Left(clAppend(es)(e))
         case (Right(_), Left(e)) => Left(newCL(e))
         case (Right(as), Right(a)) => Right(crAppend(as)(a))
-        case (Left(es), Right(_)) => Left(newCL(es))
+        case (Left(es), Right(_)) => Left(es)
       }
+  }
+
+  def accEithers[L, R](xs: Seq[Either[L, R]]): Either[Seq[L], Seq[R]] = {
+    type CL = Seq[L]
+    type CR = Seq[R]
+    def clAppend: CL => L => CL = cl => e => cl :+ e
+    def crAppend: CR => R => CR = cr => e => cr :+ e
+    def newCL: L => CL = l => Seq(l)
+    def empty: Either[CL, CR] = Right(Seq())
+    traversableAccEithers[CL, CR, L, R](clAppend, crAppend)(newCL, empty)(xs)
+  }
+
+  def accEithers[L, R](xs: Set[Either[L, R]]): Either[Set[L], Set[R]] = {
+    type CL = Set[L]
+    type CR = Set[R]
+    def clAppend: CL => L => CL = cl => e => cl + e
+    def crAppend: CR => R => CR = cr => e => cr + e
+    def newCL: L => CL = l => Set(l)
+    def empty: Either[CL, CR] = Right(Set())
+    traversableAccEithers[CL, CR, L, R](clAppend, crAppend)(newCL, empty)(xs)
   }
 
   def appendLeftOrReplace[L, R](xs: Either[Seq[L], R], x: L): Either[Seq[L], R] = {
