@@ -62,21 +62,6 @@ object Util {
       }
   }
 
-  def genericAccEithers[LeftCollectionType, RightCollectionType, L, R]
-    (leftTypeAppendOperation: LeftCollectionType => L => LeftCollectionType,
-     rightTypeAppendOperation: RightCollectionType => R => RightCollectionType,
-     empty: Either[LeftCollectionType, RightCollectionType],
-     nextOperation: RightCollectionType => RightCollectionType) = {
-    def accEithers[L, R](xs: Seq[Either[L, R]]): Either[Seq[L], Seq[R]] = {
-      xs.foldLeft(Right(Seq()): Either[Seq[L], Seq[R]]) {
-        case (Left(es), Left(e)) => Left(es :+ e)
-        case (Right(_), Left(e)) => Left(Seq(e))
-        case (Right(as), Right(a)) => Right(as :+ a)
-        case (Left(es), Right(_)) => Left(es)
-      }
-    }
-  }
-
   def appendLeftOrReplace[L, R](xs: Either[Seq[L], R], x: L): Either[Seq[L], R] = {
     xs match {
       case Left(es) => Left(es :+ x)
