@@ -10,7 +10,9 @@ import com.jakway.term.run.SimulationRun.{AllRunOutput, RunResultType}
 import com.jakway.term.run.result.ResultProcessor
 import com.jakway.term.run.result.chart.ChartProcessor.{OutputType, VariablePair}
 import com.jakway.term.run.result.chart.VariableDataProcessor.Data
-import org.jfree.data.xy.{XYDataset, XYSeries}
+import org.jfree.chart.{ChartFactory, JFreeChart}
+import org.jfree.chart.plot.PlotOrientation
+import org.jfree.data.xy.{XYDataset, XYSeries, XYSeriesCollection}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.{Failure, Success, Try}
@@ -27,22 +29,19 @@ case class ChartConfig(comparator: Comparator[Any],
                        charts: Set[VariablePairChart],
                        convertToNumber: InterpreterResult => Either[SimError, Number],
                        mustExcludeVariables: Boolean,
-                       failOnIncompleteData: Boolean)
+                       failOnIncompleteData: Boolean,
+                       allowEmptyCharts: Boolean = false)
 
 case class VariablePairChart(title: String,
                              xVarName: String, yVarName: String,
                              altXAxisLabel: Option[String] = None,
-                             altYAxisLabel: Option[String] = None) {
+                             altYAxisLabel: Option[String] = None,
+                             plotOrientation: PlotOrientation = PlotOrientation.VERTICAL,
+                             legend: Boolean = true,
+                             tooltips: Boolean = false,
+                             urls: Boolean = false) {
   val xAxisLabel = altXAxisLabel.getOrElse(xVarName)
   val yAxisLabel = altYAxisLabel.getOrElse(yVarName)
-
-  def this(title: String,
-           pair: VariablePair,
-           altXAxisLabel: Option[String],
-           altYAxisLabel: Option[String]) {
-    this(title, pair.inputVariable, pair.outputVariable,
-      altXAxisLabel, altYAxisLabel)
-  }
 
   lazy val xySeries: XYSeries = new XYSeries(title, false, true)
 }
@@ -180,6 +179,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
     for {
       pairs <- pairData
       chartsWithData <- associateCharts(pairs)
+      charts <- insertData(chartsWithData)
 
       //next: create XYSeries for each chart & fill with data
     } yield { ??? }
@@ -206,6 +206,40 @@ class ChartProcessor(val chartConfig: ChartConfig)
     Util.mapLeft(Util.accEithers(it.toSet))(DataFillError.apply _)
   }
 
+  private def mkCharts(charts: Set[VariablePairChart]):
+    Either[SimError, Map[VariablePairChart, JFreeChart]] = {
+
+    def checkXYSeries(c: VariablePairChart): Either[SimError, VariablePairChart] = {
+      if(chartConfig.allowEmptyCharts) {
+        Right(c)
+      } else {
+        if(c.xySeries.getItemCount() == 0) {
+          Left(EmptyChartError(c))
+        } else {
+          Right(c)
+        }
+      }
+    }
+
+    val builtCharts =
+      charts.map { uncheckedChart =>
+        checkXYSeries(uncheckedChart)
+            .map(thisChart =>
+              (thisChart, ChartFactory.createXYLineChart(
+                thisChart.title,
+                thisChart.xAxisLabel,
+                thisChart.yAxisLabel,
+                new XYSeriesCollection(thisChart.xySeries),
+                thisChart.plotOrientation,
+                thisChart.legend,
+                thisChart.tooltips,
+                thisChart.urls
+              )))
+    }
+
+    Util.mapLeft(Util.accEithers(builtCharts))(new VariableDataErrors(_))
+      .map(_.toMap)
+  }
 }
 
 object ChartProcessor {
@@ -270,4 +304,7 @@ object ChartProcessor {
       new DataFillError(s"Caused by multiple errors: $es")
     }
   }
+
+  case class EmptyChartError(chart: VariablePairChart)
+    extends VariableDataError(s"Empty chart: $chart")
 }
