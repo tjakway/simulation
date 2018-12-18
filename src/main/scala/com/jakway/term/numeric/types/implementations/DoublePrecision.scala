@@ -85,6 +85,9 @@ private class DoublePrecision(override val builtinLiterals: BuiltinLiterals[Doub
   override val comparator: Comparator[Double] = new Comparator[Double] {
     override def compare(x: Double, y: Double): Int = x.compareTo(y)
   }
+
+  override val min: Option[Double] = Some(Double.MinValue)
+  override val max: Option[Double] = Some(Double.MaxValue)
 }
 
 private object DoublePrecisionImplementation {

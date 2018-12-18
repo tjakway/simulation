@@ -71,6 +71,11 @@ trait GenTerm[N <: NumericType[M], M]
       case Left(r) => throw GenMError(r)
     })
 
+  def genMInRange(min: M, max: M): Gen[M] =
+    genM.suchThat(x =>
+      numericType.comparator.compare(x, min) >= 0 &&
+      numericType.comparator.compare(x, max) <= 0)
+
   def genRaw: Gen[Raw[N, M]] = genM.map(Raw(_))
 
   def genNumericTerm(variablesAllowed: Boolean = true): Gen[NumericTerm[N, M]] = {

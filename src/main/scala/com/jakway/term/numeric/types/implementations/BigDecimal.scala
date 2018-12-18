@@ -114,6 +114,9 @@ private class BigDecimalPrecision(
     override def compare(x: BigDecimal, y: BigDecimal): Int =
       x.compareTo(y)
   }
+
+  override val min: Option[BigDecimal] = None
+  override val max: Option[BigDecimal] = None
 }
 
 object BigDecimalPrecisionImplementation {

@@ -7,6 +7,9 @@ trait Solvable {
   val otherSide: Term
   val sides: Seq[Term] = Seq(sideToSimplify, otherSide)
 
+  def inputSide: Term = otherSide
+  def outputSide: Term = otherSide
+
   def reverse(): Solvable
 
   def contains(t: Term): Boolean

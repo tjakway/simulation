@@ -35,6 +35,9 @@ trait NumericType[M] {
   val builtinLiterals: BuiltinLiterals[M]
 
   val comparator: Comparator[M]
+
+  val min: Option[M]
+  val max: Option[M]
 }
 
 object NumericType {

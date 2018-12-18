@@ -1,5 +1,6 @@
 package com.jakway.term.test.framework.gen
 
+import com.jakway.term.TermOperations
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.solver.Solvable
 import org.scalacheck.Gen
@@ -17,6 +18,17 @@ class GenSolvable[N <: NumericType[M], M]
       left <- genTerm.genNumericTerm()
       right <- genTerm.genNumericTerm()
     } yield Solvable(left, right)
+  }
+
+  def genSolved(): Gen[Solvable] = {
+    genTerm.genVariable.flatMap { outputVar =>
+      genTerm.genTerm(true).flatMap { body =>
+        (outputVar, Solvable(outputVar, body))
+      }
+    }
+      .filter(e => !TermOperations.findVariables(e._2.otherSide)
+        .contains(e._1))
+      .map(e => e._2)
   }
 }
 
