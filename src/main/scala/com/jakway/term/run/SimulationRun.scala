@@ -136,7 +136,7 @@ object SimulationRun {
 
   def run(runData: SimulationRun,
           interpreter: Interpreter,
-          formatter: RunResultFormatter,
+          formatter: RunResultFormatter = formatRunResults,
           errorBehavior: ErrorBehavior = IfErrorNoResult)
          (implicit executor: ExecutionContext): Either[SimError, RunResultType] = {
 

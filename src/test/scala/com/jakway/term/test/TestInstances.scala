@@ -56,9 +56,8 @@ package instances {
     * NumericTypeTest is even necessary...
     */
   package double {
-    import com.jakway.term.test.gen.EvalProperties
+    import com.jakway.term.test.gen.{EvalProperties, SimulationRunProperties}
     import com.jakway.term.test.instances.DoubleInst._
-    import com.jakway.term.test.run.{SimulationRunProperties, TestSimulationRun}
     import org.scalacheck.Properties
     import org.scalactic.Equality
 
@@ -81,10 +80,16 @@ package instances {
       with NumericTypeCmpProperties[N, M] {
       override val numericType: N = inst
     }
+
+    class DoubleSimulationRunProperties
+      extends Properties("DoubleSimulationRunProperties")
+      with SimulationRunProperties[N, M] {
+      override val numericType: N = inst
+    }
   }
 
   package bigdecimal {
-    import com.jakway.term.test.gen.EvalProperties
+    import com.jakway.term.test.gen.{EvalProperties, SimulationRunProperties}
     import com.jakway.term.test.instances.BigDecimalInst._
     import org.scalacheck.Properties
     import org.scalactic.Equality
@@ -108,6 +113,13 @@ package instances {
     class BigDecimalNumericTypeCmpProperties
       extends Properties("BigDecimalNumericTypeCmpProperties")
         with NumericTypeCmpProperties[N, M] {
+      override val numericType: N = inst
+    }
+
+
+    class BigDecimalSimulationRunProperties
+      extends Properties("BigDecimalSimulationRunProperties")
+        with SimulationRunProperties[N, M] {
       override val numericType: N = inst
     }
   }
