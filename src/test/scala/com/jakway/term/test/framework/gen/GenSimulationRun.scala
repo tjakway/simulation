@@ -14,13 +14,18 @@ import org.scalacheck.Gen
 
 trait GenSimulationRun[N <: NumericType[M], M]
   extends HasNumericType[N, M] {
-  private val outerNumericType: N = numericType
+  private def outerNumericType: N = numericType
 
-  private val genSolvable: GenSolvable[N, M] =
+  private def genSolvable: GenSolvable[N, M] = {
+    assert(numericType != null)
     new GenSolvable[N, M](numericType)
+  }
 
-  private val genTerm: GenTerm[N, M] = new GenTerm[N, M] {
-    override val numericType: N = outerNumericType
+  private def genTerm: GenTerm[N, M] = {
+    assert(numericType != null)
+    new GenTerm[N, M] {
+      override val numericType: N = outerNumericType
+    }
   }
 
   //************************************************
@@ -54,6 +59,7 @@ trait GenSimulationRun[N <: NumericType[M], M]
                        maxNumConstants: Option[Int] = None,
                        maxNumDynamicVariables: Option[Int] = None):
     Either[SimError, Gen[SimulationRun]] = {
+    assert(numericType != null)
 
     //parameter checks
     for {
@@ -64,7 +70,8 @@ trait GenSimulationRun[N <: NumericType[M], M]
       maxVarRange <- maxVariableRange
       maxVarSpread <- maxVariableSpread
     } yield {
-      Gen lzy genSolvable.genSolved()
+      Gen lzy
+      genSolvable.genSolved()
         .filter(x => withinVariableLimits(maxNumConstants, maxNumDynamicVariables)(x._2))
         .flatMap { x =>
           val (outputVar, eq) = x
