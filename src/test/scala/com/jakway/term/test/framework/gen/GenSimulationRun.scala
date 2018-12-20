@@ -5,24 +5,28 @@ import com.jakway.term.elements.{Equation, Term, Variable}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.errors.SimError
-import com.jakway.term.numeric.types.NumericType
-import com.jakway.term.run.SimulationRun
+import com.jakway.term.numeric.types.{NumericType, NumericTypeUtils}
+import com.jakway.term.run.SimulationRun.ValueStreams
+import com.jakway.term.run.{Combinations, ComputeValues, SimulationRun}
 import com.jakway.term.solver.Solvable
-import com.jakway.term.test.framework.gen.GenSimulationRun.{BothFullError, NumConstantsError, NumDynamicVariablesError, PartitionedVariables}
+import com.jakway.term.test.framework.gen.GenSimulationRun._
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
 trait GenSimulationRun[N <: NumericType[M], M]
   extends HasNumericType[N, M] {
-  val outerNumericType: N = numericType
+  private val outerNumericType: N = numericType
 
-  val genSolvable: GenSolvable[N, M] =
+  private val genSolvable: GenSolvable[N, M] =
     new GenSolvable[N, M](numericType)
 
-  val genTerm: GenTerm[N, M] = new GenTerm[N, M] {
+  private val genTerm: GenTerm[N, M] = new GenTerm[N, M] {
     override val numericType: N = outerNumericType
   }
 
+  //************************************************
+  //config values
+  //************************************************
   lazy val minVariableRange: Either[SimError, M] = {
     numericType
       .min
@@ -36,6 +40,12 @@ trait GenSimulationRun[N <: NumericType[M], M]
       .map(Right(_): Either[SimError, M])
       .getOrElse(numericType.readLiteral(NumericType.AllTypes.smallestMaxOfAllTypes))
   }
+
+  lazy val maxVariableSpread: Either[SimError, M] = {
+    numericType
+      .readLiteral("50")
+  }
+  //************************************************
 
   /**
     * @param maxNumConstants
@@ -53,15 +63,17 @@ trait GenSimulationRun[N <: NumericType[M], M]
 
       minVarRange <- minVariableRange
       maxVarRange <- maxVariableRange
+      maxVarSpread <- maxVariableSpread
     } yield {
       genSolvable.genSolved()
-        .filter(withinVariableLimits(maxNumConstants, maxNumDynamicVariables))
-        .flatMap { eq =>
+        .filter(x => withinVariableLimits(maxNumConstants, maxNumDynamicVariables)(x._2))
+        .flatMap { x =>
+          val (outputVar, eq) = x
           partitionVariables(maxConstants, maxDynamic)(eq)
-            .map(vars => (eq, vars))
+            .map(vars => (outputVar, eq, vars))
         }
-        .map {
-          case (solvable, partitionedVariables: PartitionedVariables[N, M]) => {
+        .flatMap {
+          case (outputVariable, solvable, partitionedVariables: PartitionedVariables[N, M]) => {
             val empty: Gen[Set[(Variable[N, M], M)]] = GenUtils.wrap(Set())
             val genConstantsSet: Gen[Set[(Variable[N, M], M)]] = partitionedVariables.constants
               .foldLeft(empty) {
@@ -81,15 +93,55 @@ trait GenSimulationRun[N <: NumericType[M], M]
                   .toMap
               }
 
+            val genDynamicRanges: Gen[ValueStreams] =
+              //generate a range for each dynamic variable
+              partitionedVariables.dynamics.map { thisDynamic =>
+                val gLowerBound: Gen[M] = genTerm.genMInRange(minVarRange, maxVarRange)
+                gLowerBound.map { (lowerBound: M) =>
+                  val res: Either[SimError, M] = numericType.add(lowerBound)(maxVarSpread)
+                  val upperBound = res match {
+                    case Right(x) => x
+                    case Left(e) => {
+                      throw CalculateDynamicVariableRangeError(thisDynamic.name,
+                        e)
+                    }
+                  }
+
+                  //then turn that range into a stream
+                  (thisDynamic.name, new NumericTypeUtils[N, M](numericType)
+                    .incrementingStream(lowerBound, Some(upperBound),
+                      numericType.builtinLiterals.one).map(Raw.apply[N, M](_)))
+                }
+                //and accumulate all of them in a Map
+            }.foldLeft(GenUtils.wrap(Map()): Gen[ValueStreams]) {
+                case (acc, next: Gen[(String, Stream[Raw[N, M]])]) => {
+                  for {
+                    thisMap <- acc
+                    thisItem <- next
+                  } yield {
+                    thisMap.updated(thisItem._1, thisItem._2)
+                  }
+                }
+              }
 
 
 
+            val res: Gen[SimulationRun] = for {
+              constants <- genConstants
+              dynamicRanges <- genDynamicRanges
+            } yield {
+              new SimulationRun(dynamicRanges,
+                outputVariable.name, solvable, computeValues(constants))
+            }
+            res
           }
         }
       }
-
-    ???
   }
+
+  private def computeValues(constants: SymbolTable): ComputeValues =
+    new Combinations(constants)
+
 
   private def checkMaxNumConstants(maxNumConstants: Option[Int]):
     Either[SimError, Option[Int]] = {
@@ -206,6 +258,10 @@ object GenSimulationRun {
       s"variables are full (should never happen): maxConstants = $maxConstants, " +
       s"maxDynamics = $maxDynamics, constants = $constants, dynamics = $dynamics")
 
+
+  case class CalculateDynamicVariableRangeError(name: String, e: SimError)
+    extends GenError(s"Error while calculating range of dynamic variable" +
+      s" $name: $e")
 
   case class PartitionedVariables[N <: NumericType[M], M](
                                   constants: Set[Variable[N, M]],
