@@ -1,7 +1,7 @@
 package com.jakway.term.test.framework.gen
 
 import com.jakway.term.TermOperations
-import com.jakway.term.elements.{Equation, Term, Variable}
+import com.jakway.term.elements.{Term, Variable}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.interpreter.Raw
 import com.jakway.term.numeric.errors.SimError
@@ -11,7 +11,6 @@ import com.jakway.term.run.{Combinations, ComputeValues, SimulationRun}
 import com.jakway.term.solver.Solvable
 import com.jakway.term.test.framework.gen.GenSimulationRun._
 import org.scalacheck.Gen
-import org.scalacheck.rng.Seed
 
 trait GenSimulationRun[N <: NumericType[M], M]
   extends HasNumericType[N, M] {
