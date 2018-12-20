@@ -65,7 +65,7 @@ trait GenSimulationRun[N <: NumericType[M], M]
       maxVarRange <- maxVariableRange
       maxVarSpread <- maxVariableSpread
     } yield {
-      genSolvable.genSolved()
+      Gen lzy genSolvable.genSolved()
         .filter(x => withinVariableLimits(maxNumConstants, maxNumDynamicVariables)(x._2))
         .flatMap { x =>
           val (outputVar, eq) = x
