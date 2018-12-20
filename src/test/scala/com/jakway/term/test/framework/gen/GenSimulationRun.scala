@@ -10,8 +10,7 @@ import com.jakway.term.run.SimulationRun.ValueStreams
 import com.jakway.term.run.{Combinations, ComputeValues, SimulationRun}
 import com.jakway.term.solver.Solvable
 import com.jakway.term.test.framework.gen.GenSimulationRun._
-import org.scalacheck
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Gen
 
 trait GenSimulationRun[N <: NumericType[M], M]
   extends HasNumericType[N, M] {
