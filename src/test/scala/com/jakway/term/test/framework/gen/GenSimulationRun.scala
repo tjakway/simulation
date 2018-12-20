@@ -16,12 +16,12 @@ trait GenSimulationRun[N <: NumericType[M], M]
   extends HasNumericType[N, M] {
   private def outerNumericType: N = numericType
 
-  private def genSolvable: GenSolvable[N, M] = {
+  private lazy val genSolvable: GenSolvable[N, M] = {
     assert(numericType != null)
     new GenSolvable[N, M](numericType)
   }
 
-  private def genTerm: GenTerm[N, M] = {
+  private lazy val genTerm: GenTerm[N, M] = {
     assert(numericType != null)
     new GenTerm[N, M] {
       override val numericType: N = outerNumericType
