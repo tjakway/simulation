@@ -20,15 +20,23 @@ trait SimulationRunProperties[N <: NumericType[M], M]
   this: Properties =>
   import SimulationRunProperties._
 
-  def getGenSimulationRun(): Gen[SimulationRun] = {
-    val res = genSimulationRun(false) match {
+  //******************************************************
+  //config values
+  //******************************************************
+  val maxNumConstantVariables: Option[Int] = None
+  val maxNumDynamicVariables: Option[Int] = Some(4)
+  //******************************************************
+
+  private def getGenSimulationRun(): Gen[SimulationRun] = {
+    val res = genSimulationRun(false,
+      maxNumConstantVariables, maxNumDynamicVariables) match {
       case Right(x) => x
       case Left(e) => throw GenSimulationRunError(e)
     }
     res.filter(_ != null)
   }
 
-  implicit val arbSimulationRun: Arbitrary[SimulationRun] =
+  private implicit val arbSimulationRun: Arbitrary[SimulationRun] =
     Arbitrary(getGenSimulationRun())
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
