@@ -1,7 +1,9 @@
 package com.jakway.term.run.result.chart
 
+import java.io.File
 import java.util.Comparator
 
+import com.jakway.term.Util
 import com.jakway.term.interpreter.InterpreterResult
 import com.jakway.term.numeric.errors.SimError
 import org.jfree.chart.plot.PlotOrientation
@@ -43,3 +45,47 @@ object ChartConfig {
   case class WriteToFile(where: String) extends Output
 }
 
+sealed trait WriteChartsConfig {
+  def getDest(inputVariable: String): Option[File]
+
+  def checkConfig(): Either[SimError, WriteChartsConfig] = Right(this)
+
+  val fileChecks: Seq[(String, File => Boolean)] = {
+    Seq(
+      ("Cannot write", _.canWrite()),
+      ("Already exists", !_.exists())
+    )
+  }
+}
+
+object WriteChartsConfig {
+  case class ConfigError(override val msg: String)
+    extends SimError(msg)
+}
+
+case class ToDirectory(dir: File) extends WriteChartsConfig {
+  override def checkConfig(): Either[SimError, WriteChartsConfig] = {
+    val checks: Seq[(String, File => Boolean)] = Seq(
+      (s"$dir does not exist", (d: File) => d.exists()),
+      (s"$dir is not a directory", (d: File) => d.isDirectory()),
+      (s"Cannot write to $dir", (d: File) => d.canWrite())
+    )
+    Util.mapLeft(Util.foldChecks(checks, dir)(dir)) {
+      msgs => WriteChartsConfig.ConfigError(s"Errors for $dir: " +
+        com.jakway.term.interface.Formatter.formatSeqMultilineNoHeader(msgs))
+    }.map(ToDirectory(_))
+  }
+
+
+  override def getDest(inputVariable: String): Option[File] = {
+    Some(new File(dir, inputVariable))
+  }
+}
+
+/**
+  * @param files maps input variable -> filename
+  */
+case class ToFiles(files: Map[String, File]) extends WriteChartsConfig {
+  override def getDest(inputVariable: String): Option[File] =
+    files.get(inputVariable)
+}

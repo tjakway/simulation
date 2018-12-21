@@ -77,4 +77,26 @@ object Util {
       case Right(_) => Left(Seq(x))
     }
   }
+
+  def foldChecks[X, R]
+      (checks: Seq[(String, X => Boolean)], ifRight: R)
+      (toCheck: X): Either[Seq[String], R] = {
+
+    val errMsgs =
+      checks.foldLeft(Seq(): Seq[String]) {
+        case (failedMsgs, (errMsg, thisCheck)) => {
+          if(toCheck(thisCheck)) {
+            failedMsgs
+          } else {
+            failedMsgs :+ errMsg
+          }
+        }
+    }
+
+    if(errMsgs.isEmpty) {
+      Right(ifRight)
+    } else {
+      Left(errMsgs)
+    }
+  }
 }
