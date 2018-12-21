@@ -85,7 +85,7 @@ object Util {
     val errMsgs =
       checks.foldLeft(Seq(): Seq[String]) {
         case (failedMsgs, (errMsg, thisCheck)) => {
-          if(toCheck(thisCheck)) {
+          if(thisCheck(toCheck)) {
             failedMsgs
           } else {
             failedMsgs :+ errMsg
