@@ -6,9 +6,7 @@ import com.jakway.term.test.TestNumericTypeCmp.TestNumericTypeCmpError
 import com.jakway.term.test.framework.TestError
 import com.jakway.term.test.framework.gen.{BasePropertiesTrait, HasNumericType}
 import org.scalacheck.{Arbitrary, Gen, Properties}
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.slf4j.{Logger, LoggerFactory}
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.annotation.tailrec
 
@@ -67,7 +65,6 @@ trait TestNumericTypeCmp[N <: NumericType[M], M]
   extends HasNumericType[N, M]
     with SymmetricCmp[N, M] {
   this: FlatSpec with Matchers =>
-  import TestNumericTypeCmp._
   import SymmetricCmp._
 
   private def zero = numericType.builtinLiterals.zero
@@ -107,8 +104,8 @@ trait NumericTypeCmpProperties[N <: NumericType[M], M]
     with BasePropertiesTrait
     with SymmetricCmp[N, M] { this: Properties =>
 
-  import org.scalacheck.Prop.forAll
   import SymmetricCmp._
+  import org.scalacheck.Prop.forAll
 
   def assertReadLiteral(lit: String): M =
     numericType.readLiteral(lit) match {
