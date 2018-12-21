@@ -8,6 +8,7 @@ import com.jakway.term.interpreter.{Interpreter, InterpreterResult}
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.run.SimulationRun.Errors.{ExpectedInterpreterResultError, RunFailed, SimulationRunError}
 import com.jakway.term.run.SimulationRun.ValueStreams
+import com.jakway.term.run.result.GenericResultProcessor
 import com.jakway.term.solver.Solvable
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,6 +23,8 @@ object SimulationRun {
                      val outputVariable: String,
                      val toRun: Solvable,
                      val constants: SymbolTable)
+
+  trait ResultProcessor[A] extends GenericResultProcessor[RunResultType, A]
 
   type RunResultType = Future[Either[SimError, AllRunOutput]]
 

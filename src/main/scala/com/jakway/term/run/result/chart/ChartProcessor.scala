@@ -3,8 +3,9 @@ package com.jakway.term.run.result.chart
 import com.jakway.term.Util
 import com.jakway.term.elements.Term
 import com.jakway.term.numeric.errors.SimError
+import com.jakway.term.run.SimulationRun
 import com.jakway.term.run.SimulationRun.{AllRunOutput, RunResultType}
-import com.jakway.term.run.result.ResultProcessor
+import com.jakway.term.run.result.GenericResultProcessor
 import com.jakway.term.run.result.chart.ChartProcessor.OutputType
 import com.jakway.term.run.result.chart.VariableDataProcessor.Data
 import org.jfree.chart.{ChartFactory, JFreeChart}
@@ -14,7 +15,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.{ExecutionContext, Future}
 
 class ChartProcessor(val chartConfig: ChartConfig)
-  extends ResultProcessor[OutputType] {
+  extends SimulationRun.ResultProcessor[OutputType] {
   import ChartProcessor._
 
   val logger: Logger = LoggerFactory.getLogger(getClass())
@@ -207,6 +208,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
 
 object ChartProcessor {
   type OutputType = Either[SimError, Map[VariablePairChart, JFreeChart]]
+  trait ResultProcessor[A] extends GenericResultProcessor[OutputType, A]
 
   class VariablePair(val inputVariable: String,
                      val outputVariable: String)
