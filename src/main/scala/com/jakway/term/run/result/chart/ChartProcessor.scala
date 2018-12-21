@@ -1,57 +1,17 @@
 package com.jakway.term.run.result.chart
 
-import java.util.Comparator
-
 import com.jakway.term.Util
-import com.jakway.term.elements.{Literal, Term}
-import com.jakway.term.interpreter.{InterpreterResult, Raw}
+import com.jakway.term.elements.Term
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.run.SimulationRun.{AllRunOutput, RunResultType}
 import com.jakway.term.run.result.ResultProcessor
-import com.jakway.term.run.result.chart.ChartProcessor.{OutputType, VariablePair}
+import com.jakway.term.run.result.chart.ChartProcessor.OutputType
 import com.jakway.term.run.result.chart.VariableDataProcessor.Data
 import org.jfree.chart.{ChartFactory, JFreeChart}
-import org.jfree.chart.plot.PlotOrientation
-import org.jfree.data.xy.{XYDataset, XYSeries, XYSeriesCollection}
+import org.jfree.data.xy.XYSeriesCollection
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
-
-/**
-  *
-  * @param excludeVariables
-  * @param mustExcludeVariables if true, it's an error if a variable was included
-  *                             in excludeVariables but could not be found
-  * @param charts
-  */
-case class ChartConfig(comparator: Comparator[Any],
-                       excludeVariables: Set[String],
-                       charts: Set[VariablePairChart],
-                       convertToNumber: InterpreterResult => Either[SimError, Number],
-                       mustExcludeVariables: Boolean,
-                       failOnIncompleteData: Boolean,
-                       allowEmptyCharts: Boolean = false)
-
-case class VariablePairChart(title: String,
-                             xVarName: String, yVarName: String,
-                             altXAxisLabel: Option[String] = None,
-                             altYAxisLabel: Option[String] = None,
-                             plotOrientation: PlotOrientation = PlotOrientation.VERTICAL,
-                             legend: Boolean = true,
-                             tooltips: Boolean = false,
-                             urls: Boolean = false) {
-  val xAxisLabel = altXAxisLabel.getOrElse(xVarName)
-  val yAxisLabel = altYAxisLabel.getOrElse(yVarName)
-
-  lazy val xySeries: XYSeries = new XYSeries(title, false, true)
-}
-
-object ChartConfig {
-  sealed trait Output
-  case object Display extends Output
-  case class WriteToFile(where: String) extends Output
-}
 
 class ChartProcessor(val chartConfig: ChartConfig)
   extends ResultProcessor[OutputType] {
