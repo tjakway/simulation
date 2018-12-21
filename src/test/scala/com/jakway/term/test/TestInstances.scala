@@ -56,6 +56,7 @@ package instances {
     * NumericTypeTest is even necessary...
     */
   package double {
+    import com.jakway.term.test.framework.gen.BaseProperties
     import com.jakway.term.test.gen.{EvalProperties, SimulationRunProperties}
     import com.jakway.term.test.instances.DoubleInst._
     import org.scalacheck.Properties
@@ -68,27 +69,22 @@ package instances {
     }
 
     class DoubleEvalProperties
-      extends Properties("DoubleEvalProperties")
+      extends BaseProperties[N, M]("DoubleEvalProperties", inst)
       with EvalProperties[N, M] {
-      override val numericType: N = inst
-
       override protected def preventOverflow: Boolean = false
     }
 
     class DoubleNumericTypeCmpProperties
-      extends Properties("DoubleNumericTypeCmpProperties")
-      with NumericTypeCmpProperties[N, M] {
-      override val numericType: N = inst
-    }
+      extends BaseProperties[N, M]("DoubleNumericTypeCmpProperties", inst)
+      with NumericTypeCmpProperties[N, M]
 
     class DoubleSimulationRunProperties
-      extends Properties("DoubleSimulationRunProperties")
-      with SimulationRunProperties[N, M] {
-      override val numericType: N = inst
-    }
+      extends BaseProperties[N, M]("DoubleSimulationRunProperties", inst)
+      with SimulationRunProperties[N, M]
   }
 
   package bigdecimal {
+    import com.jakway.term.test.framework.gen.BaseProperties
     import com.jakway.term.test.gen.{EvalProperties, SimulationRunProperties}
     import com.jakway.term.test.instances.BigDecimalInst._
     import org.scalacheck.Properties
@@ -102,25 +98,19 @@ package instances {
     }
 
     class BigDecimalEvalProperties
-      extends Properties("BigDecimalEvalProperties")
+      extends BaseProperties[N, M]("BigDecimalEvalProperties", inst)
         with EvalProperties[N, M] {
-      override val numericType: N = inst
-
       override protected def preventOverflow: Boolean = true
     }
 
 
     class BigDecimalNumericTypeCmpProperties
-      extends Properties("BigDecimalNumericTypeCmpProperties")
-        with NumericTypeCmpProperties[N, M] {
-      override val numericType: N = inst
-    }
+      extends BaseProperties[N, M]("BigDecimalNumericTypeCmpProperties", inst)
+        with NumericTypeCmpProperties[N, M]
 
 
     class BigDecimalSimulationRunProperties
-      extends Properties("BigDecimalSimulationRunProperties")
-        with SimulationRunProperties[N, M] {
-      override val numericType: N = inst
-    }
+      extends BaseProperties[N, M]("BigDecimalSimulationRunProperties", inst)
+        with SimulationRunProperties[N, M]
   }
 }
