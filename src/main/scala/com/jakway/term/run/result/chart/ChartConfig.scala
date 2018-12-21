@@ -49,13 +49,6 @@ sealed trait WriteChartsConfig {
   def getDest(inputVariable: String): Option[File]
 
   def checkConfig(): Either[SimError, WriteChartsConfig] = Right(this)
-
-  val fileChecks: Seq[(String, File => Boolean)] = {
-    Seq(
-      ("Cannot write", _.canWrite()),
-      ("Already exists", !_.exists())
-    )
-  }
 }
 
 object WriteChartsConfig {
