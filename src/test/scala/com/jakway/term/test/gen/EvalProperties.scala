@@ -3,7 +3,7 @@ package com.jakway.term.test.gen
 import com.jakway.term.elements.{NumericTerm, Term}
 import com.jakway.term.interpreter.Interpreter.SymbolTable
 import com.jakway.term.numeric.types.NumericType
-import com.jakway.term.test.framework.gen.{ArbitraryTermInstances, GenEval, HasInterpreter}
+import com.jakway.term.test.framework.gen.{ArbitraryTermInstances, BasePropertiesTrait, GenEval, HasInterpreter}
 import org.scalacheck.{Arbitrary, Gen, Properties}
 
 import scala.util.matching.Regex
@@ -15,7 +15,8 @@ import org.scalacheck.Prop.forAll
 trait EvalProperties[N <: NumericType[M], M]
   extends ArbitraryTermInstances[N, M]
     with HasInterpreter[N, M]
-    with GenEval[N, M] {
+    with GenEval[N, M]
+    with BasePropertiesTrait {
   this: Properties =>
 
   import GenEval._

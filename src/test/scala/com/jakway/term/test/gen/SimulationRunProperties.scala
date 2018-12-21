@@ -1,20 +1,24 @@
 package com.jakway.term.test.gen
 
+import java.util.Locale
+
 import com.jakway.term.interpreter.Interpreter
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.run.SimulationRun
-import com.jakway.term.test.framework.gen.{GenError, GenEval, GenSimulationRun, HasInterpreter}
+import com.jakway.term.test.framework.gen._
 import com.jakway.term.test.gen.SimulationRunProperties.GenSimulationRunError
 import org.scalacheck.{Arbitrary, Gen, Properties}
 import org.scalacheck.Prop.forAll
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContext
 
 trait SimulationRunProperties[N <: NumericType[M], M]
   extends HasInterpreter[N, M]
     with GenSimulationRun[N, M]
-    with GenEval[N, M] {
+    with GenEval[N, M]
+    with BasePropertiesTrait {
   this: Properties =>
   import SimulationRunProperties._
 
@@ -36,7 +40,29 @@ trait SimulationRunProperties[N <: NumericType[M], M]
       checkNumericType[N, M](numericType)
       checkInterpreter(interpreter)
 
-      SimulationRun.run(simulationRun, interpreter).isRight
+      checkRun(simulationRun, interpreter)
+  }
+
+  /**
+    * throws AbstractMethodError if checkRun is private...
+    * @param run
+    * @param interpreter
+    * @return
+    */
+  def checkRun(run: SimulationRun, interpreter: Interpreter): Boolean = {
+    val res = SimulationRun.run(run, interpreter)
+    //warn on error
+    res match {
+      case Left(e) =>  {
+        val fmt = new java.util.Formatter(new StringBuffer(), Locale.getDefault())
+        fmt.format(s"Scalacheck run failed for SimulationRun=$run:\n")
+        fmt.format(s"\tError: $e")
+        logger.warn(fmt.toString)
+      }
+      case _ => {}
+    }
+
+    res.isRight
   }
 
 }

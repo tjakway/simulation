@@ -4,7 +4,7 @@ import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.test.TestNumericTypeCmp.TestNumericTypeCmpError
 import com.jakway.term.test.framework.TestError
-import com.jakway.term.test.framework.gen.HasNumericType
+import com.jakway.term.test.framework.gen.{BasePropertiesTrait, HasNumericType}
 import org.scalacheck.{Arbitrary, Gen, Properties}
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
@@ -104,9 +104,8 @@ object TestNumericTypeCmp {
 
 trait NumericTypeCmpProperties[N <: NumericType[M], M]
   extends HasNumericType[N, M]
+    with BasePropertiesTrait
     with SymmetricCmp[N, M] { this: Properties =>
-
-  val logger: Logger = LoggerFactory.getLogger(getClass())
 
   import org.scalacheck.Prop.forAll
   import SymmetricCmp._
