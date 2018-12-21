@@ -7,10 +7,8 @@ import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.run.SimulationRun
 import com.jakway.term.test.framework.gen._
-import com.jakway.term.test.gen.SimulationRunProperties.GenSimulationRunError
-import org.scalacheck.{Arbitrary, Gen, Properties}
 import org.scalacheck.Prop.forAll
-import org.slf4j.{Logger, LoggerFactory}
+import org.scalacheck.{Arbitrary, Gen, Properties}
 
 import scala.concurrent.ExecutionContext
 
