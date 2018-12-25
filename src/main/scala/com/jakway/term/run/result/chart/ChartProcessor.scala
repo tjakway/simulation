@@ -25,7 +25,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
       chartConfig.failOnIncompleteData)
 
   override def apply(results: RunResultType)
-                    (implicit ec: ExecutionContext): Future[OutputType] = {
+                    (implicit ec: ExecutionContext): Future[Either[SimError, OutputType]] = {
     results.map(_.flatMap(apply))
   }
 
@@ -207,7 +207,7 @@ class ChartProcessor(val chartConfig: ChartConfig)
 }
 
 object ChartProcessor {
-  type OutputType = Either[SimError, Map[VariablePairChart, JFreeChart]]
+  type OutputType = Map[VariablePairChart, JFreeChart]
   trait ResultProcessor[A] extends GenericResultProcessor[OutputType, A]
 
   class VariablePair(val inputVariable: String,
