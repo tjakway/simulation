@@ -17,13 +17,11 @@ class WriteCharts(val config: WriteChartsConfig)
   override def apply(results: ChartProcessor.OutputType)
                     (implicit ec: ExecutionContext): Future[Either[SimError, WriteCharts.OutputType]] = {
     Future {
-      results.map { r =>
-        for {
-          dests <- getDests(r)
-          _ <- checkAllOutputFiles(dests.keySet)
-          out <- writeCharts(dests)
-        } yield out
-      }
+      for {
+        dests <- getDests(results)
+        _ <- checkAllOutputFiles(dests.keySet)
+        out <- writeCharts(dests)
+      } yield out
     }
   }
 
@@ -104,7 +102,7 @@ class WriteCharts(val config: WriteChartsConfig)
 }
 
 object WriteCharts {
-  type OutputType = Either[SimError, Seq[File]]
+  type OutputType = Seq[File]
 
   case class OutputFileErrors(override val msg: String)
     extends SimError(msg) {
