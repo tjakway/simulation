@@ -46,6 +46,8 @@ object ChartConfig {
 }
 
 sealed trait WriteChartsConfig {
+  val encoding: String = "UTF-8"
+
   def getDest(inputVariable: String): Option[File]
 
   def checkConfig(): Either[SimError, WriteChartsConfig] = Right(this)

@@ -22,6 +22,12 @@ libraryDependencies ++=
       "ch.obermuhlner" % "big-math" % "2.0.1",
 
       "org.jfree" % "jfreechart" % "1.5.0",
+      "org.apache.xmlgraphics" % "batik-svggen" % "1.10",
+      "org.apache.xmlgraphics" % "batik-dom" % "1.10",
+      "org.apache.xmlgraphics" % "batik-awt-util" % "1.10",
+      "org.apache.xmlgraphics" % "batik-util" % "1.10",
+      "org.apache.xmlgraphics" % "batik-xml" % "1.10",
+
 
       //enable reflection
       //otherwise can't import scala.reflect.runtime
