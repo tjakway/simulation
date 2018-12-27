@@ -12,7 +12,7 @@ import org.scalacheck.{Arbitrary, Gen, Properties}
 
 import scala.concurrent.ExecutionContext
 
-trait SimulationRunProperties[N <: NumericType[M], M]
+trait SimulationRunPropertiesHelper[N <: NumericType[M], M]
   extends HasInterpreter[N, M]
     with GenSimulationRun[N, M]
     with GenEval[N, M]
@@ -27,7 +27,7 @@ trait SimulationRunProperties[N <: NumericType[M], M]
   val maxNumDynamicVariables: Option[Int] = Some(4)
   //******************************************************
 
-  private def getGenSimulationRun(): Gen[SimulationRun] = {
+  protected def getGenSimulationRun(): Gen[SimulationRun] = {
     val res = genSimulationRun(false,
       maxNumConstantVariables, maxNumDynamicVariables) match {
       case Right(x) => x
@@ -36,18 +36,10 @@ trait SimulationRunProperties[N <: NumericType[M], M]
     res.filter(_ != null)
   }
 
-  private implicit val arbSimulationRun: Arbitrary[SimulationRun] =
+  protected implicit val arbSimulationRun: Arbitrary[SimulationRun] =
     Arbitrary(getGenSimulationRun())
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-  property("execute SimulationRun without error") =
-    forAll { (simulationRun: SimulationRun) =>
-      assert(simulationRun != null)
-      checkNumericType[N, M](numericType)
-      checkInterpreter(interpreter)
-
-      checkRun(simulationRun, interpreter)
-  }
 
   /**
     * throws AbstractMethodError if checkRun is private...
@@ -55,7 +47,7 @@ trait SimulationRunProperties[N <: NumericType[M], M]
     * @param interpreter
     * @return
     */
-  def checkRun(run: SimulationRun, interpreter: Interpreter): Boolean = {
+  protected def checkRun(run: SimulationRun, interpreter: Interpreter): Boolean = {
     val res = SimulationRun.run(run, interpreter)
     //warn on error
     res match {
@@ -71,6 +63,33 @@ trait SimulationRunProperties[N <: NumericType[M], M]
     res.isRight
   }
 
+
+  protected def checkNumericType[N <: NumericType[M], M](n: N): Unit =
+    if(n == null) {
+      throw NullNumericTypeError
+    } else {}
+
+  protected def checkInterpreter(interpreter: Interpreter): Unit = {
+    if(interpreter == null) {
+      throw NullInterpreterError
+    } else {}
+  }
+}
+
+trait SimulationRunProperties[N <: NumericType[M], M]
+  extends SimulationRunPropertiesHelper[N, M]
+    with BasePropertiesTrait {
+  this: Properties =>
+  import SimulationRunProperties._
+
+  property("execute SimulationRun without error") =
+    forAll { (simulationRun: SimulationRun) =>
+      assert(simulationRun != null)
+      checkNumericType[N, M](numericType)
+      checkInterpreter(interpreter)
+
+      checkRun(simulationRun, interpreter)
+    }
 }
 
 object SimulationRunProperties {
@@ -91,15 +110,4 @@ object SimulationRunProperties {
   case object NullInterpreterError
     extends SimulationRunPropertiesError(
       "interpreter was null at beginning of property execution")
-
-  def checkNumericType[N <: NumericType[M], M](n: N): Unit =
-    if(n == null) {
-      throw NullNumericTypeError
-    } else {}
-
-  def checkInterpreter(interpreter: Interpreter): Unit = {
-    if(interpreter == null) {
-      throw NullInterpreterError
-    } else {}
-  }
 }
