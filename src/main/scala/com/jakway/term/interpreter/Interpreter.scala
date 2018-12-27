@@ -17,21 +17,37 @@ object Interpreter {
     }
   }
 
-  class InterpreterError(override val msg: String,
-                         val table: SymbolTable,
-                         val term: Term)
-    extends SimError(s"Error occurred in interpretation" +
+  class InterpreterError(override val msg: String)
+    extends SimError(msg) {
+    def this(msg: String, table: SymbolTable, term: Term) {
+      this(s"Error occurred in interpretation" +
       s" of term < $term > with symbol table < $table >: $msg")
+    }
+  }
 
   class SymbolNotFoundError[N <: NumericType[M], M]
                            (val variable: Variable[N, M],
-                            override val table: SymbolTable,
-                            override val term: Term)
+                            val table: SymbolTable,
+                            val term: Term)
     extends InterpreterError(variable.toString, table, term)
+
+  class ConvertToNumberError(override val msg: String)
+    extends InterpreterError(msg) {
+
+    def this(result: InterpreterResult, msg: String) {
+      this(s"Could not convert $result to a Number: $msg")
+    }
+
+    def this(result: InterpreterResult, error: SimError) {
+      this(result, error.toString)
+    }
+  }
 }
 
 trait Interpreter {
   def eval(table: SymbolTable)(t: Term): Either[SimError, Term]
+
+  def convertToNumber(result: InterpreterResult): Either[SimError, Number]
 }
 
 /**

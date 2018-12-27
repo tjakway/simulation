@@ -88,6 +88,8 @@ private class DoublePrecision(override val builtinLiterals: BuiltinLiterals[Doub
 
   override val min: Option[Double] = Some(Double.MinValue)
   override val max: Option[Double] = Some(Double.MaxValue)
+
+  override def toNumber(x: Double): Either[SimError, Number] = Right(x)
 }
 
 private object DoublePrecisionImplementation {

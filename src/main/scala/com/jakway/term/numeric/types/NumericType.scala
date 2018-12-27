@@ -38,6 +38,13 @@ trait NumericType[M] {
 
   val min: Option[M]
   val max: Option[M]
+
+  /**
+    * trivial if M is a subtype of Number
+    * @param x
+    * @return
+    */
+  def toNumber(x: M): Either[SimError, Number]
 }
 
 object NumericType {

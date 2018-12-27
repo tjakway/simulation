@@ -66,6 +66,13 @@ class Eval[N <: NumericType[M], M](val n: NumericType[M])
   def containsRaw(ts: Seq[Term]): Boolean =
     ts.find(_.isInstanceOf[Raw[N, M]]).isDefined
 
+  def convertToNumber(result: InterpreterResult): Either[SimError, Number] = {
+    result match {
+      case r: Raw[N @unchecked, M @unchecked] => n.toNumber(r.value)
+      case _ => Left(new ConvertToNumberError(result,
+        "$result is not an instance of Raw"))
+    }
+  }
 
   def eval(table: SymbolTable)(t: Term): EvalType = {
     def recurse(t: Term): EvalType = eval(table)(t)

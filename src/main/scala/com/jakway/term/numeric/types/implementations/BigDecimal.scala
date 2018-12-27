@@ -117,6 +117,8 @@ private class BigDecimalPrecision(
 
   override val min: Option[BigDecimal] = None
   override val max: Option[BigDecimal] = None
+
+  override def toNumber(x: BigDecimal): Either[SimError, Number] = Right(x)
 }
 
 object BigDecimalPrecisionImplementation {

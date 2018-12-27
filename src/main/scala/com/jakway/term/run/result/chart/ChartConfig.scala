@@ -17,8 +17,7 @@ import org.jfree.data.xy.XYSeries
   *                             in excludeVariables but could not be found
   * @param charts
   */
-case class ChartConfig(comparator: Comparator[Any],
-                       excludeVariables: Set[String],
+case class ChartConfig(excludeVariables: Set[String],
                        charts: Set[VariablePairChart],
                        convertToNumber: InterpreterResult => Either[SimError, Number],
                        mustExcludeVariables: Boolean,

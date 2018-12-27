@@ -12,6 +12,11 @@ import org.scalacheck.{Arbitrary, Gen, Properties}
 
 import scala.concurrent.ExecutionContext
 
+/**
+  * base trait for anything that checks SimulationRun and related classes
+  * @tparam N
+  * @tparam M
+  */
 trait SimulationRunPropertiesHelper[N <: NumericType[M], M]
   extends HasInterpreter[N, M]
     with GenSimulationRun[N, M]

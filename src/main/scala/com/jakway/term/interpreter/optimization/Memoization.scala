@@ -2,7 +2,7 @@ package com.jakway.term.interpreter.optimization
 
 import com.jakway.term.elements.Term
 import com.jakway.term.interpreter.Interpreter.SymbolTable
-import com.jakway.term.interpreter.{Interpreter, Optimization}
+import com.jakway.term.interpreter.{Interpreter, InterpreterResult, Optimization}
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.numeric.types.NumericType
 
@@ -44,6 +44,9 @@ class Memoization[N <: NumericType[M], M] extends Optimization {
           }
         }
       }
+
+      override def convertToNumber(result: InterpreterResult): Either[SimError, Number] =
+        originalInterpreter.convertToNumber(result)
     }
   }
 }
