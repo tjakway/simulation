@@ -137,6 +137,19 @@ object SimulationRun {
       case _ => Left((Map(), ExpectedInterpreterResultError(t)))
     }
 
+  /**
+    * The return type contains 2 Eithers
+    * (Either[SimError, Future[Either[SimError, AllRunOutput]]])
+    * the outer Either indicates run() failed before creating a Future
+    * the outer Either wraps a Future computation that can fail, indicated by
+    * the inner Either type
+    * @param runData
+    * @param interpreter
+    * @param formatter
+    * @param errorBehavior
+    * @param executor
+    * @return
+    */
   def run(runData: SimulationRun,
           interpreter: Interpreter,
           formatter: RunResultFormatter = formatRunResults,
@@ -184,4 +197,8 @@ object SimulationRun {
 class SimulationRun(val inputs: ValueStreams,
                     val outputVariable: String,
                     val toRun: Solvable,
-                    val computeValues: ComputeValues = new Combinations())
+                    val computeValues: ComputeValues = new Combinations()) {
+
+  val constants = computeValues.constants.keySet
+  lazy val dynamicVariables = inputs.keySet.diff(constants)
+}
