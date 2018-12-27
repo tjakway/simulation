@@ -27,6 +27,7 @@ libraryDependencies ++=
       "org.apache.xmlgraphics" % "batik-awt-util" % "1.10",
       "org.apache.xmlgraphics" % "batik-util" % "1.10",
       "org.apache.xmlgraphics" % "batik-xml" % "1.10",
+      "org.apache.xmlgraphics" % "batik-anim" % "1.10" % "test",
 
 
       //enable reflection
