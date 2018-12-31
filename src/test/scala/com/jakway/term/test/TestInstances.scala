@@ -57,7 +57,7 @@ package instances {
     */
   package double {
     import com.jakway.term.test.framework.gen.BaseProperties
-    import com.jakway.term.test.gen.{EvalProperties, SimulationRunProperties}
+    import com.jakway.term.test.gen.{ChartProperties, EvalProperties, SimulationRunProperties}
     import com.jakway.term.test.instances.DoubleInst._
     import org.scalacheck.Properties
     import org.scalactic.Equality
@@ -81,11 +81,15 @@ package instances {
     class DoubleSimulationRunProperties
       extends BaseProperties[N, M]("DoubleSimulationRunProperties", inst)
       with SimulationRunProperties[N, M]
+
+    class DoubleChartProperties
+      extends BaseProperties[N, M]("DoubleChartProperties", inst)
+        with ChartProperties[N, M]
   }
 
   package bigdecimal {
     import com.jakway.term.test.framework.gen.BaseProperties
-    import com.jakway.term.test.gen.{EvalProperties, SimulationRunProperties}
+    import com.jakway.term.test.gen.{ChartProperties, EvalProperties, SimulationRunProperties}
     import com.jakway.term.test.instances.BigDecimalInst._
     import org.scalacheck.Properties
     import org.scalactic.Equality
@@ -112,5 +116,10 @@ package instances {
     class BigDecimalSimulationRunProperties
       extends BaseProperties[N, M]("BigDecimalSimulationRunProperties", inst)
         with SimulationRunProperties[N, M]
+
+
+    class BigDecimalChartProperties
+      extends BaseProperties[N, M]("BigDecimalChartProperties", inst)
+        with ChartProperties[N, M]
   }
 }
