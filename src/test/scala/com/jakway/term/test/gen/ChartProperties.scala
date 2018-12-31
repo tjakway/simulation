@@ -10,19 +10,31 @@ import com.jakway.term.run.result.chart._
 import com.jakway.term.test.framework.gen._
 import com.jakway.term.test.gen.ChartProperties.ChartPropertiesSetupError
 import org.jfree.chart.plot.PlotOrientation
-import org.scalacheck.{Gen, Properties}
+import org.scalacheck.{Arbitrary, Gen, Properties}
 import org.scalacheck.Prop.forAll
 
+import scala.concurrent.{Future, Await}
 import scala.util.{Failure, Success, Try}
 
 trait ChartProperties[N <: NumericType[M], M]
   extends SimulationRunPropertiesHelper[N, M]
     with HasInterpreter[N, M]
     with HasNumericType[N, M]
+    with CheckRun
     with BasePropertiesTrait {
   this: Properties =>
 
   val maxNumCharts: Option[Int] = Some(5)
+
+  //WARNING: will throw on class initialization
+  checkMaxNumCharts() match {
+    case Left(t) => throw t
+    case _ => {}
+  }
+
+  //5 seconds
+  val timeOutMillis: Long = 5000
+
 
   case class SimulationRunWithCharts(simulationRun: SimulationRun,
                                      chartConfig: ChartConfig,
@@ -64,7 +76,7 @@ trait ChartProperties[N <: NumericType[M], M]
 
   }
 
-  def genSimulationRunWithCharts(maxCharts: Option[Int]): Gen[SimulationRunWithCharts] = {
+  def genSimulationRunWithCharts(maxCharts: Option[Int]): Gen[SimulationRunWithCharts] = Gen lzy {
     val genSimRun: Gen[SimulationRun] = getGenSimulationRun()
     val genDyVariables: Gen[Seq[String]] = genSimRun.map(_.dynamicVariables.toSeq)
     def genBool: Gen[Boolean] = Gen.oneOf(true, false)
@@ -138,10 +150,29 @@ trait ChartProperties[N <: NumericType[M], M]
     }
   }
 
+  implicit val arbSimulationRunWithCharts: Arbitrary[SimulationRunWithCharts] =
+    Arbitrary(genSimulationRunWithCharts(maxNumCharts))
+
   property("generate charts from a SimulationRun") =
-    forAll { (simulationRun: SimulationRun) =>
-      //TODO
-      ???
+    forAll { (simulationRunWithCharts: SimulationRunWithCharts) =>
+      val simulationRun = simulationRunWithCharts.simulationRun
+      val chartConfig = simulationRunWithCharts.chartConfig
+      val writeChartsConfig = simulationRunWithCharts.writeChartsConfig
+
+      lazy val chartProcessor = new ChartProcessor(chartConfig)
+      lazy val writeCharts = new WriteCharts(writeChartsConfig)
+
+      import com.jakway.term.run.result.GenericResultProcessor._
+      val res =
+        mapResults(
+          mapResults(Future(SimulationRun.run(simulationRun, interpreter)), chartProcessor.apply),
+            writeCharts.apply)
+
+
+      //for millis
+      import scala.concurrent.duration._
+      import scala.language.postfixOps
+      checkRun(Await.result(res, timeOutMillis millis)).isRight
     }
 
   private def checkMaxNumCharts(): Either[SimError, Option[Int]] = maxNumCharts match {
