@@ -34,7 +34,7 @@ object GenUtils {
           //sanity check to make sure we don't loop forever
           if(numIt > xs.length) {
             throw new GenError(s"too many loop iterations (possible infinite loop?)" +
-              s" for scramble($genXs")
+              s" for scramble($genXs): iterated $numIt times for input of length ${xs.length}")
           }
 
           val newAcc = acc.flatMap { m =>
