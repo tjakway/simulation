@@ -1,5 +1,6 @@
 package com.jakway.term.test.framework.gen
 
+import com.jakway.term.test.framework.gen.GenTerm.GenMError
 import org.scalacheck.Gen
 
 object GenUtils {
@@ -26,13 +27,21 @@ object GenUtils {
       val genScrambledIndices: Gen[Seq[Int]] = {
         //(accumulated scrambled indices, remaining indices)
         var acc: Gen[(Seq[Int], Seq[Int])] = genXs.map(_ => (Seq(), indices))
-        var stop: Boolean = false
+
+        //dont run if input is empty
+        var stop: Boolean = {
+          if(xs.length == 0) {
+            true
+          } else {
+            false
+          }
+        }
         var numIt: Int = 0
 
         //build a random list of indexes (sample without replacement)
         while(!stop) {
           //sanity check to make sure we don't loop forever
-          if(numIt > xs.length) {
+          if((numIt + 1) > xs.length) {
             throw new GenError(s"too many loop iterations (possible infinite loop?)" +
               s" for scramble($genXs): iterated $numIt times for input of length ${xs.length}")
           }
@@ -66,8 +75,21 @@ object GenUtils {
 
       genScrambledIndices.map { scrambledIndices =>
         //take each index from the original list
-        scrambledIndices.map(xs(_))
+        val res = scrambledIndices.map(xs(_))
+
+
+        lazy val occurrenceMapXs = occurrenceMap(xs)
+        lazy val occurrenceMapRes = occurrenceMap(res)
+        if(occurrenceMapXs != occurrenceMapRes) {
+          throw new GenError(s"occurrence maps differ: expected=$occurrenceMapXs " +
+            s"vs actual=$occurrenceMapRes")
+        }
+
+        res
       }
     }
   }
+
+  private def occurrenceMap[A](xs: Seq[A]): Map[A, Int] =
+    xs.zipWithIndex.toMap
 }

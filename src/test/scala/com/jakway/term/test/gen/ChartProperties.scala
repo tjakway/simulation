@@ -44,8 +44,12 @@ trait ChartProperties[N <: NumericType[M], M]
 
     //set up a writeable temp dir with the +x bit set
     def mkTempDir(): Either[SimError, File] = {
+      val tempDirPrefix: String = "genwritechartsconfig"
       for {
-        dir <- Try(Files.createTempDirectory(null, "genwritechartsconfig")) match {
+        dir <- Try(Files.createTempDirectory(tempDirPrefix)) match {
+          case Success(x) if x == null =>
+            Left(ChartPropertiesSetupError(s"Files.createTempDirectory returned null for " +
+              s"prefix = $tempDirPrefix"))
           case Success(x) => Right(x)
           case Failure(t) => Left(new ChartPropertiesSetupError(t))
         }
