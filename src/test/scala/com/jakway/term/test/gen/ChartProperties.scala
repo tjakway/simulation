@@ -64,11 +64,11 @@ trait ChartProperties[N <: NumericType[M], M]
 
   }
 
-  def genSimulationRunWithCharts(maxCharts: Option[Int]): Either[SimError, Gen[SimulationRunWithCharts]] = {
+  def genSimulationRunWithCharts(maxCharts: Option[Int]): Gen[SimulationRunWithCharts] = {
     val genSimRun: Gen[SimulationRun] = getGenSimulationRun()
     val genDyVariables: Gen[Seq[String]] = genSimRun.map(_.dynamicVariables.toSeq)
     def genBool: Gen[Boolean] = Gen.oneOf(true, false)
-    for {
+    val genChartConfig: Gen[(SimulationRun, ChartConfig)] = for {
       simulationRun <- genSimRun
       mustExcludeVariables <- genBool
       failOnIncompleteData <- genBool
@@ -117,8 +117,24 @@ trait ChartProperties[N <: NumericType[M], M]
           .toSet
 
 
-      ChartConfig(excludeVariables, charts, interpreter.convertToNumber _,
+      val chartConfig = ChartConfig(excludeVariables, charts, interpreter.convertToNumber _,
         mustExcludeVariables, failOnIncompleteData, allowEmptyCharts)
+
+      (simulationRun, chartConfig)
+    }
+
+    genChartConfig.flatMap {
+      case (simulationRun, chartConfig) => {
+        genWriteChartsConfig(chartConfig.charts.map(_.xVarName).toSeq)
+          .map(_.map( writeChartsConfig =>
+            SimulationRunWithCharts(simulationRun, chartConfig, writeChartsConfig)))
+      }
+        //throw errors
+    }.flatMap { e =>
+      e match {
+        case Right(genX) => genX
+        case Left(e) => throw e
+      }
     }
   }
 
