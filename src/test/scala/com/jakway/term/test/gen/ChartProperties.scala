@@ -1,14 +1,19 @@
 package com.jakway.term.test.gen
 
+import java.io.File
+import java.nio.file.Files
+
 import com.jakway.term.numeric.errors.SimError
 import com.jakway.term.numeric.types.NumericType
 import com.jakway.term.run.SimulationRun
-import com.jakway.term.run.result.chart.{ChartConfig, VariablePairChart, WriteChartsConfig}
+import com.jakway.term.run.result.chart._
 import com.jakway.term.test.framework.gen._
 import com.jakway.term.test.gen.ChartProperties.ChartPropertiesSetupError
 import org.jfree.chart.plot.PlotOrientation
 import org.scalacheck.{Gen, Properties}
 import org.scalacheck.Prop.forAll
+
+import scala.util.{Failure, Success, Try}
 
 trait ChartProperties[N <: NumericType[M], M]
   extends SimulationRunPropertiesHelper[N, M]
@@ -23,7 +28,43 @@ trait ChartProperties[N <: NumericType[M], M]
                                      chartConfig: ChartConfig,
                                      writeChartsConfig: WriteChartsConfig)
 
-  def genSimulationRunWithCharts(maxCharts: Option[Int]): Gen[SimulationRunWithCharts] = {
+  def genWriteChartsConfig(forCharts: Seq[String]): Either[SimError, Gen[WriteChartsConfig]] = {
+
+    //set up a writeable temp dir with the +x bit set
+    def mkTempDir(): Either[SimError, File] = {
+      for {
+        dir <- Try(Files.createTempDirectory(null, "genwritechartsconfig")) match {
+          case Success(x) => Right(x)
+          case Failure(t) => Left(new ChartPropertiesSetupError(t))
+        }
+
+        _ <- if(!dir.toFile.canWrite) {
+              if(!dir.toFile.setWritable(true)) {
+                Left(ChartPropertiesSetupError(s"Cannot set $dir writeable"))
+              } else { Right({}) }
+            } else { Right({}) }
+
+        _ <- if(!dir.toFile.canExecute) {
+              if(!dir.toFile.setExecutable(true)) {
+                Left(ChartPropertiesSetupError(s"Cannot set $dir executable"))
+              } else { Right({}) }
+            } else { Right({}) }
+
+      } yield {
+        dir.toFile
+      }
+    }
+
+    //use that temp dir to initialize an instance of WriteChartsConfig
+    mkTempDir().map { tempDir =>
+
+      lazy val files = forCharts.map(c => (c, new File(tempDir, c))).toMap
+      Gen.oneOf(ToDirectory(tempDir), ToFiles(files))
+    }
+
+  }
+
+  def genSimulationRunWithCharts(maxCharts: Option[Int]): Either[SimError, Gen[SimulationRunWithCharts]] = {
     val genSimRun: Gen[SimulationRun] = getGenSimulationRun()
     val genDyVariables: Gen[Seq[String]] = genSimRun.map(_.dynamicVariables.toSeq)
     def genBool: Gen[Boolean] = Gen.oneOf(true, false)
@@ -116,5 +157,10 @@ trait ChartProperties[N <: NumericType[M], M]
 
 object ChartProperties {
   case class ChartPropertiesSetupError(override val msg: String)
-    extends GenError(msg)
+    extends GenError(msg) {
+    def this(t: Throwable) {
+      this(s"Error caused by $t")
+    }
+  }
+
 }
